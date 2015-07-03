@@ -2,18 +2,19 @@
   "name": "snutt",
   "version": "1.0.0",
   "dependencies": {
+    "async": "^1.2.1",
+    "cookies": "0.5.0",
+    "ejs": "2.1.4",
+    "grunt": "0.4.5",
+    "icalendar": "0.7.1",
     "mime": "1.2.11",
-    "restler": "3.2.2",
-    "routes": "2.0.0",
-    "underscore": "1.7.0",
-    "node-jquery-deparam": "0.0.3",
     "mkdirp": "0.5.0",
     "mongodb": "1.4.28",
     "mongoose": "3.8.21",
-    "grunt": "0.4.5",
-    "cookies": "0.5.0",
-    "ejs": "2.1.4",
-    "icalendar": "0.7.1",
-    "pm2": "*"
+    "node-jquery-deparam": "0.0.3",
+    "pm2": "*",
+    "restler": "3.2.2",
+    "routes": "2.0.0",
+    "underscore": "1.7.0"
   }
 }
