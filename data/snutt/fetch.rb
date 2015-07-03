@@ -5,6 +5,7 @@
 require 'net/http'
 require 'roo'
 require 'json'
+require 'roo-xls'
 
 if ARGV.length != 2 then
   puts "Argument error !"
