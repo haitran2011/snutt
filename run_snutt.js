@@ -33,6 +33,7 @@ var router = Router();
 // api
 router.addRoute("/api/init_client", controllers.api_controller.initClient);
 router.addRoute("/api/search_query?", controllers.api_controller.searchQuery);
+router.addRoute("/api/search_query_db?", require('./controllers/api/lecture'));
 router.addRoute("/api/export_timetable?", controllers.api_controller.exportTimetable);
 router.addRoute("/api/publish_to_facebook", controllers.api_controller.publishToFacebook)
 // view

@@ -188,13 +188,12 @@ function refresh_my_courses_table()
 //TODO : duplicate code
 function set_result_table(data)
 {
-	if (data.page == 1){
-		$('#search_result_table tbody').children().remove();
-		$('#lectures_content').scrollTop(0);
-		if (selected_row) selected_row.removeClass('selected');
-		selected_row = null;
-		lectures = [];
-	}
+	$('#search_result_table tbody').children().remove();
+	$('#lectures_content').scrollTop(0);
+	if (selected_row) selected_row.removeClass('selected');
+	selected_row = null;
+	lectures = [];
+	
 	lectures = lectures.concat(data.lectures);
 	for (var i=0;i<data.lectures.length;i++){
 		var lecture = data.lectures[i];

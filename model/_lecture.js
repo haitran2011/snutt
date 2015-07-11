@@ -6,7 +6,7 @@ var Lecture = db.model('Lecture', {
 	department: String,
 	academic_year: String,
 	course_number: { type: String, required: true },
-	lecture_number: Number,
+	lecture_number: String,
 	course_title: { type:String, required: true },
 	credit: Number,
 	class_time: String,

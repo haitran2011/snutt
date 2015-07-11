@@ -649,17 +649,14 @@ $(function(){
 
   // send search_query
   var sendSearchQuery = function(params) {
-    apiClient.get('search_query', params,
+    apiClient.get('search_query_db', params,
     function(data){
-      page_loading_requesting = false;
-      if (data.lectures.length == 0 && data.page > 1)
-        page_loading_complete = true;
-      else {
-        set_result_table(data);
-        $('#nav_search_result').tab('show');
-      }
-    });
-  };
+		page_loading_requesting = false;
+		set_result_table(data);
+		$('#nav_search_result').tab('show');
+		page_loading_complete = true;
+      })
+    };
 
   //scroll change
   $('#lectures_content').scroll(function(){
@@ -671,21 +668,7 @@ $(function(){
       var difference = scrollHeight - scrollBottom;
       //현재 scroll 위치 갱신
       search_result_scroll_top = scrollTop;
-      //스크롤이 충분히 밑으로 내려가면 다음 페이지 로딩
-      if (difference < 200 && !page_loading_requesting && !page_loading_complete){
-        page++;
-        sendSearchQuery({
-          year:current_year,
-          semester:current_semester,
-          filter:filter,
-          type:search_type,
-          query_text:query_text,
-          page:page,
-          per_page:per_page
-        });
-        page_loading_requesting = true;
-      }
-    }
+	}
   });
 
   //search query

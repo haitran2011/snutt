@@ -64,10 +64,6 @@ var Timetable = mongoose.model('Timetable', timetableSchema);
 
 NaiveLectureModel.prototype = {
   init: function () {
-    this._load_data(2013, '1');
-    this._load_data(2013, 'S');
-    this._load_data(2013, '2');
-    this._load_data(2013, 'W');
     this._load_data(2014, '1');
     this._load_data(2014, 'S');
     this._load_data(2014, '2');
