@@ -29,7 +29,7 @@ module.exports = function(params, renderer, request) {
 			query.lecture_number = time_query[1];
 	}
 
-	Lecture.find(query).lean().exec(function (err, lectures) {
+	Lecture.find(query).sort('course_number').lean().exec(function (err, lectures) {
 		if (err) 
 			console.log(err)
 
