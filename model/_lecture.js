@@ -1,4 +1,5 @@
 var db = require('../db')
+
 var Lecture = db.model('Lecture', {
 	year: { type: Number, required: true },
 	semester: { type: String, required: true },
