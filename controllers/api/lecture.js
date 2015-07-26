@@ -1,5 +1,5 @@
 var Lecture = require('../../model/_lecture')
-
+var QueryLog = require('../../model/queryLog')
 module.exports = function(params, renderer, request) {
 
 	//something similar to LIKE query in SQL
@@ -29,6 +29,10 @@ module.exports = function(params, renderer, request) {
 			query.lecture_number = time_query[1];
 	}
 
+	// save query
+	var queryLog = new QueryLog({ year: query.year, semester: query.semester, type: params.type, body: params.query_text })
+	queryLog.save();
+	
 	Lecture.find(query).sort('course_number').lean().exec(function (err, lectures) {
 		if (err) 
 			console.log(err)

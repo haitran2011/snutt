@@ -44,6 +44,12 @@ fs.readFile(datapath, function (err, data) {
 	});
 })
 
+//TODO
+function parse_class_time(str)
+{
+	var ret = new Object();
+}
+
 function insert_course(lines, year, semester, next)
 {
 	var cnt = 0, err_cnt = 0;
