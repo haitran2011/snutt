@@ -10,3 +10,8 @@ Time table web application for SNU
     ```sh
     npm install
     sudo npm install -g
+    ```
+
+#### License
+
+SNUTT is available under the MIT license. See the LICENSE file for more info.
