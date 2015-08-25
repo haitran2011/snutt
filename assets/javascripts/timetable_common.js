@@ -674,6 +674,10 @@ $(function(){
   //search query
   $('#search_form').submit(function(){
     query_text = $('#search_query_text').val();
+    if (query_text.length < 2) {
+      alert("2자 이상 입력해주세요");
+      return false;
+    }
     page = 1;
     page_loading_complete = false;
     filter = get_filter();
