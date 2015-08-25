@@ -1,51 +1,35 @@
-var fs = require('fs');
-var async = require('async');
-var config = require('../config')
-var Lecture = require('./_lecture')
+function time_str_to_array(str)
+{
+	var start_times = [0, 0, 0, 0, 0, 0];
+	var durations = [0, 0, 0, 0, 0, 0];
 
-if (process.argv.length != 4) {
-	console.log("Invalid arguments")
-	console.log("usage: $ node importTxt.js 2015 S");
-	process.exit(1);
-}
+	var strings_by_day = str.split("/");
+	strings_by_day.forEach(function(day_str) {
+		var day_index = ["월", "화", "수", "목", "금", "토"].indexOf(day_str[0]);
+		var time_str = day_str.substring(2, day_str.length - 1);
+		var start_time = Number(time_str.split('-')[0]);
+		var duration = Number(time_str.split('-')[1]);
 
-var year = Number(process.argv[2])
-var semester = process.argv[3]
-var datapath = config.snutt.ROOT_DATA_PATH + "/txt/"+year+"_"+semester+".txt";
-
-fs.readFile(datapath, function (err, data) {
-	if (err) {
-		console.log('DATA LOAD FAILED: ' + year + '_' + semester);
-		process.exit(1);
-	}
-	console.log("Importing " + year + " " + semester)
-
-	var lines = data.toString().split("\n");
-	var header = lines.slice(0, 3);
-	var courses = lines.slice(3);
-
-	if (year != header[0].split("/")[0].trim() || 
-		semester != header[0].split("/")[1].trim()) {
-		console.log("Textfile does not match with given parameter")
-		process.exit(1);
-	}
-	var updated_time = header[1];
-
-	//delete existing courserbook of input semester before update
-	Lecture.remove({ year: year, semester: semester}, function(err) {
-		if (err) 
-			console.log(err)
-		else {
-			console.log("removed existing coursebook for this semester")
-			insert_course(courses, year, semester, function(){
-				process.exit(0);
-			})
+		if(start_times[day_index] == 0) {
+			start_times[day_index] = start_time;
+			durations[day_index] = duration;
+		} else {
+			durations[day_index] += duration;
 		}
-	});
-})
+	})
+
+	var class_times = [];
+	for (var i = 0; i < 6; i++) {
+		class_times.push({start: start_times[i], len:durations[i]});
+	}
+	return class_times;
+}
 
 function insert_course(lines, year, semester, next)
 {
+	var async = require('async');
+	var Lecture = require('../../model/_lecture');
+
 	var cnt = 0, err_cnt = 0;
 	/*For those who are not familiar with async.each
 	async.each(elements, 
@@ -93,4 +77,4 @@ function insert_course(lines, year, semester, next)
 	})
 }
 
-
+module.exports = { time_str_to_array: time_str_to_array, insert_course: insert_course};

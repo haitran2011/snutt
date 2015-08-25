@@ -1,9 +1,8 @@
 var Cookies = require("cookies");
-var router = require('./router');
 var deparam = require('node-jquery-deparam');
 var url = require('url');
 var _ = require("underscore");
-
+var router = require('./router');
 
 //http server handler
 function handler (req, res) {

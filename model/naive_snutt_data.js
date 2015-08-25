@@ -3,7 +3,6 @@ var _ = require("underscore");
 var fs = require("fs");
 var config = require("../config.js");
 var utils = require("../utils.js");
-var mongoose = require('mongoose');
 // var FB = require('fb');
 var Cookies = require("cookies");
 var safeString = utils.safeString;
@@ -12,7 +11,11 @@ var increasingOrderInclusion = utils.increasingOrderInclusion;
 var stringToObject = utils.stringToObject;
 var objectToString = utils.objectToString;
 
+
+// Import models
 var Lecture = require("./lecture.js").Lecture;
+var QueryLog = require('./queryLog');
+var Timetable = require('./timeTable');
 
 /* In-memory&File system style lecture model */
 function NaiveLectureModel() {
@@ -36,38 +39,8 @@ if (!(global.hasOwnProperty('NaiveLectureModel_userdata_cnt'))) {
     0]);
 }
 
-/* DB initialization for logging users' search query requests
- * TODO make the db address shared across all modules */
-
-mongoose.connect('mongodb://localhost/snuttdb');
-var db = mongoose.connection;
-db.on ('error', function () {
-  console.error.bind(console, 'connection error! ');
-  throw "Failed to open DB";
-});
-
-var queryLogSchema = mongoose.Schema ({
-  lastQueryTime: { type: Date, default: Date.now },
-  count: { type: Number, min: 1, default: 1 },
-  year: { type: Number, min: 2000, max: 2999 },
-  semester: { type: String },
-  type: { type: String },
-  body: String
-});
-var timetableSchema = mongoose.Schema({
-  nameid: Number,
-  contents: String
-});
-
-var QueryLog = mongoose.model('QueryLog', queryLogSchema);
-var Timetable = mongoose.model('Timetable', timetableSchema);
-
 NaiveLectureModel.prototype = {
   init: function () {
-    this._load_data(2013, '1');
-    this._load_data(2013, 'S');
-    this._load_data(2013, '2');
-    this._load_data(2013, 'W');
     this._load_data(2014, '1');
     this._load_data(2014, 'S');
     this._load_data(2014, '2');
