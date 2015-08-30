@@ -15,7 +15,7 @@ module.exports = function(params, renderer, request) {
 	query.year = params.year;
 	query.semester = params.semester;
 	if (params.type == 'course_title') {
-		query.course_title = like(params.query_text, true)
+		query.course_title = like(params.query_text, false)
 	} else if (params.type == 'department') {
 		query.department = like(params.query_text, false)
 	} else if (params.type == 'instructor') {
