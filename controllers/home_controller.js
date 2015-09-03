@@ -177,7 +177,7 @@ module.exports = {
         ical.addProperty('TZID', 'Asia/Seoul');
         ical.addProperty('CALSCALE', 'GREGORIAN');
         ical.addProperty('METHOD', 'PUBLISH');
-        var semesterEndedAt = "20150731T000000Z"
+        var semesterEndedAt = "20151214T000000Z"
         // end initialize
         // constant
         var WEEKDAY = new Array(7);
@@ -223,7 +223,7 @@ module.exports = {
             var runningMinutes = parseFloat(times.split("-")[1]) * 60;
             
             // NOTE : if sem starts at 2015 06 22 -> the zeroHour below should be 2015, 6-1, 20 + day, 8, 00
-            var zeroHour = new Date(2015, 6 - 1, 20 + day, 8, 00); // 0교시
+            var zeroHour = new Date(2015, 8 - 1, 31 - 2 + day, 8, 00); // 0교시
             var startedAt = new Date(zeroHour.getTime() + startHour * 60000);
             var endedAt = new Date(startedAt.getTime() + runningMinutes * 60000);
             var rrule = {FREQ: 'WEEKLY', UNTIL: semesterEndedAt, BYDAY: WEEKDAY[startedAt.getDay()]};
