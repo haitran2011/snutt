@@ -7,6 +7,7 @@ function course_detail_plan_button_handler(){
 		course_number:ele.attr('course-number'),
 		lecture_number:ele.attr('lecture-number')
 	});
+  ga('send', 'event', 'button', 'click', 'course_detail_plan');
 }
 
 function set_dropdown_handler(){

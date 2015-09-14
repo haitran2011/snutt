@@ -58,6 +58,10 @@ function export_timetable()
 	$(imgPNG).appendTo($('#export_image_wrapper')).addClass('timetable-image');
 
 	$('#export_save_button').attr('href', imgPNG.src);
+  $('#export_save_button').click(function(){
+    ga('send', 'event', 'button', 'click', 'export_image');
+    return true;
+  });
 }
 
 function set_rect_style(color)
@@ -192,5 +196,6 @@ function exportCal(serviceType) {
     {'type': serviceType,
     'lectures': my_lectures}
   );
+  ga('send', 'event', 'button', 'click', 'export_calendar');
   window.open("/calendar/export?" + params, "_blank");
 }
