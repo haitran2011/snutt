@@ -379,6 +379,7 @@ function generate_timecell(lectures)
   $('.timecell').addSwipeEvents().bind('doubletap', function(event, touch) {
     event.stopPropagation();
     timecell_delete_handler($(this));
+    ga('send', 'event', 'lecture', 'delete', 'double_click');
   })
 
   //timecell hover event bind
@@ -390,6 +391,7 @@ function generate_timecell(lectures)
           sbl.find(".del_hover").click(function(event) {
             event.stopPropagation();
             timecell_delete_handler(sbl);
+            ga('send', 'event', 'lecture', 'delete', 'button_x');
           })
         })
       }, function() { //mouse-out
@@ -475,6 +477,7 @@ function my_courses_row_dblclick_handler(ele)
 {
   var selected_lecture = get_my_lecture_by_course_number(ele.attr('course-number'), ele.attr('lecture-number'));
   remove_lecture_from_my_lectures(selected_lecture);
+  ga('send', 'event', 'lecture', 'delete', 'button_my_courses');
 }
 
 function row_dblclick_handler(ele)
@@ -495,6 +498,7 @@ function row_dblclick_handler(ele)
       generate_timecell(my_lectures);
       refresh_my_courses_table();
       my_course_tooltip_message("강의가 추가되었습니다.");
+      ga('send', 'event', 'lecture', 'add', String(selected_lecture.course_number) + ' ' + String(selected_lecture.lecture_number));
     }
   }
 }
@@ -604,6 +608,14 @@ $(function(){
     else generate_timecell(my_lectures);
   });
 
+  $('#nav_my_courses').click(function(){
+    ga('send', 'event', 'tab', 'my_courses');
+  });
+
+  $('#nav_search_result').click(function(){
+    ga('send', 'event', 'tab', 'search_result');
+  });
+
   //tab transition
   $('a[data-toggle="tab"]').on('show', function (e) {
     switch ($(e.target).attr('href')){
@@ -690,6 +702,7 @@ $(function(){
       page:page,
       per_page:per_page
     });
+    ga('send', 'event', 'search', search_type, query_text);
     cancel_lecture_selection();
     return false;
   });
@@ -987,6 +1000,7 @@ $(function(){
     generate_timecell(my_lectures);
     my_course_tooltip_message("강의가 추가되었습니다.");
     $('#custom_lecture_modal').dialog('close');
+    ga('send', 'event', 'lecture', 'custom_cell', 'create');
     return false;
   });
   
@@ -1040,6 +1054,7 @@ $(function(){
   //내보내기 네비게이션
   $('#nav_export').click(function(){
     //브라우저가 canvas.toDataURL을 지원할 때에만..
+    ga('send', 'event', 'tab', 'export');
    	supportsToDataURL(); 
 		if (!supportsToDataURL()){
       alert("현재 사용중인 브라우저에선 이미지 내보내기 기능을 지원하지 않습니다.");
