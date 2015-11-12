@@ -8,20 +8,20 @@ module.exports = function(params, renderer, request) {
 		var reg = str.replace(/(?!^)(.)/g, '.*$1');
 		if (first_char)
 			reg = '^' + reg;
-		return new RegExp(reg);
+		return new RegExp(reg, 'i');
 	}
 
 	var query = new Object();
 	query.year = params.year;
 	query.semester = params.semester;
 	if (params.type == 'course_title') {
-		query.course_title = like(params.query_text, false)
+		query.course_title = like(params.query_text, false);
 	} else if (params.type == 'department') {
-		query.department = like(params.query_text, false)
+		query.department = like(params.query_text, false);
 	} else if (params.type == 'instructor') {
-		query.instructor = new RegExp(params.query_text)
+		query.instructor = new RegExp(params.query_text, 'i');
 	} else if (params.type == 'class_time') {
-		query.class_time = new RegExp(params.query_text)
+		query.class_time = new RegExp(params.query_text);
 	} else if (params.type == 'course_number') {
 		var time_query = params.query_text.split(" ");
 		query.course_number = time_query[0];
@@ -32,9 +32,9 @@ module.exports = function(params, renderer, request) {
 	// save query
 	var queryLog = new QueryLog({ year: query.year, semester: query.semester, type: params.type, body: params.query_text })
 	queryLog.save();
-	
+
 	Lecture.find(query).sort('course_number').lean().exec(function (err, lectures) {
-		if (err) 
+		if (err)
 			console.log(err)
 
 		var res = new Object();
