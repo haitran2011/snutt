@@ -5,3 +5,4 @@ config/secretKey.js
 .idea
 *.log
 data/xls/*
+*.xls
