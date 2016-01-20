@@ -24,6 +24,7 @@ function timeRangesToBinaryConditions(timeJson) {
 }
 
 module.exports = router.post('/', function(req, res, next) {
+  console.log(req.body)
   var query = {}
   query.year = req.body.year
   query.semester = req.body.semester
