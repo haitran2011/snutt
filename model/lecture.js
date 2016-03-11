@@ -21,7 +21,8 @@ var LectureSchema = mongoose.Schema({
   remark: String,                                   // 비고
   category: String,
   created_at: Date,
-  updated_at: Date
+  updated_at: Date,
+  color: {fg : String, bg : String}
 });
 
 /*
