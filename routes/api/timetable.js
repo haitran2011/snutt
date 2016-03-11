@@ -31,9 +31,9 @@ router.post('/', function(req, res, next) { //create
     title : req.body.title,
     lecture_list : []
   });
-  timetable.save(function(err) {
+  timetable.save(function(err, doc) {
     if(err) return res.status(500).send('insert timetable failed');
-    res.json(timetable);
+    res.send(doc._id);
   });
 });
 

@@ -32,7 +32,6 @@ var object_new_id = function(object) {
     //for array length is defined however for objects length is undefined
     if (typeof(object.length) == 'undefined' && '_id' in object) {
       object._id = mongoose.Types.ObjectId();
-      object.isNew = true;
       for (var key in object) {
         if (object.hasOwnProperty(key)) object_new_id(object[key]); //recursive del calls on object elements
       }
