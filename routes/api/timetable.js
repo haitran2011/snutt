@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
-var timeJsonToMask = require('../../data/update_lectures.js').timeJsonToMask
+var timeJsonToMask = require('../../data/update_lectures.js').timeJsonToMask;
 
 var Timetable = require('../../model/timetable');
 var Lecture = require('../../model/lecture');
@@ -9,7 +9,7 @@ var Lecture = require('../../model/lecture');
 router.get('/', function(req, res, next) { //timetable list
   Timetable.find({'user_id' : req.user._id}).select('year semester title _id')
   .exec(function(err, timetables) {
-    if(err) return next(err);
+    if(err) return res.status(500).send('fetch timetable list failed');
     res.json(timetables);
   });
 });
@@ -17,8 +17,8 @@ router.get('/', function(req, res, next) { //timetable list
 router.get('/:id', function(req, res, next) { //get
   Timetable.findOne({'user_id': req.user._id, '_id' : req.params.id})
   .exec(function(err, timetable) {
-    if(err) return next(err);
-    if(!timetable) return res.json({success : false});
+    if(err) return res.status(500).send("find table failed");
+    if(!timetable) return res.status(404).send('timetable not found');
     res.json(timetable);
   });
 });
@@ -32,8 +32,8 @@ router.post('/', function(req, res, next) { //create
     lecture_list : []
   });
   timetable.save(function(err) {
-    if(err) return res.status(500).json({success: false, message : 'Timetable save failed'});
-    res.json({success : true, timetable : timetable});
+    if(err) return res.status(500).send('insert timetable failed');
+    res.json(timetable);
   });
 });
 
@@ -46,16 +46,15 @@ router.post('/', function(req, res, next) { //create
 router.post('/:id/lecture', function(req, res, next) {
   Timetable.findOne({'user_id': req.user_id, '_id' : req.params.id})
     .exec(function(err, timetable){
-      if(err) return next(err);
-      if(!timetable) return res.json({success : false});
-      var json = req.body['lecture']
-      json.class_time_mask = timeJsonToMask(json.class_time_json)
-      console.log(json)
+      if(err) return res.status(500).send("find table failed");
+      if(!timetable) return res.status(404).send("timetable not found");
+      var json = req.body['lecture'];
+      json.class_time_mask = timeJsonToMask(json.class_time_json);
       var lecture = new Lecture(json);
       lecture.save(function(err, doc){
         timetable.add_lecture(doc, function(err){
-          if(err) return next(err);
-          res.json({success : true });
+          if(err) return res.status(500).send("insert lecture failed");
+          res.send("ok");
         });
       });
     })
@@ -70,17 +69,18 @@ router.post('/:id/lecture', function(req, res, next) {
 router.post('/:id/lectures', function(req, res, next) {
   Timetable.findOne({'user_id': req.user_id, '_id' : req.params.id})
     .exec(function(err, timetable){
-      if(err) return next(err);
-      if(!timetable) return res.json({success : false});
+      if(err) return res.status(500).send("find table failed");
+      if(!timetable) return res.status(404).send("timetable not found");
       var lectures = [];
       var lectures_raw = req.body['lectures'];
       for (var lecture_raw in lectures_raw) {
+        lecture_raw.class_time_mask = timeJsonToMask(lecture_raw.class_time_json);
         var lecture = new Lecture(lecture_raw);
         lectures.push(lecture);
       }
       timetable.add_lectures(lectures, function(err){
-        if(err) return next(err);
-        res.json({success : true });
+        if(err) return res.status(500).send("insert lecture failed");
+        res.send("ok");
       });
   })
 });
@@ -94,12 +94,12 @@ router.post('/:id/lectures', function(req, res, next) {
 router.put('/:id/lecture', function(req, res, next) {
   Timetable.findOne({'user_id': req.user_id, '_id' : req.params.id})
     .exec(function(err, timetable){
-      if(err) return next(err);
-      if(!timetable) return res.json({success : false});
+      if(err) return res.status(500).send("find table failed");
+      if(!timetable) return res.status(404).send("timetable not found");
       var lecture_raw = req.body['lecture'];
       timetable.update_lecture(lecture_raw, function(err){
-        if(err) return next(err);
-        res.json({success : true });
+        if(err) return res.status(500).send("update lecture failed");
+        res.send("ok");
       });
     })
 });
@@ -113,11 +113,11 @@ router.put('/:id/lecture', function(req, res, next) {
 router.delete('/:id/lecture', function(req, res, next) {
   Timetable.findOne({'user_id': req.user_id, '_id' : req.params.id})
     .exec(function(err, timetable){
-      if(err) return next(err);
-      if(!timetable) return res.json({success : false});
+      if(err) return res.status(500).send("find table failed");
+      if(!timetable) return res.status(404).send("timetable not found");
       timetable.delete_lecture(req.body.lecture_id, function(err){
-        if(err) return next(err);
-        res.json({success : true });
+        if(err) return res.status(500).send("delete lecture failed");
+        res.send("ok");
       });
     })
 });
@@ -129,8 +129,8 @@ router.delete('/:id/lecture', function(req, res, next) {
 router.delete('/:id', function(req, res, next) { // delete
   Timetable.findOneAndRemove({'user_id': req.user._id, '_id' : req.params.id})
   .exec(function(err) {
-    if(err) return next(err);
-    res.json({success : true });
+    if(err) return res.status(500).send("delete timetable failed");
+    res.send("ok");
   });
 });
 
@@ -141,11 +141,11 @@ router.delete('/:id', function(req, res, next) { // delete
 router.post('/:id/copy', function(req, res, next) {
   Timetable.findOne({'user_id': req.user_id, '_id' : req.params.id})
     .exec(function(err, timetable){
-      if(err) return next(err);
-      if(!timetable) return res.json({success : false});
+      if(err) return res.status(500).send("find table failed");
+      if(!timetable) return res.status(404).send("timetable not found");
       timetable.copy(timetable.title, function(err, doc) {
-        if(err) return next(err);
-        else res.json({success : true, timetable : doc});
+        if(err) return res.status(500).send("timetable copy failed");
+        else res.json(doc);
       });
     })
 });
@@ -156,8 +156,8 @@ router.put('/:id', function(req, res, next) {
       title : req.body.title
     }
     , function(err, timetable) {
-      if(err) return res.json({success : false, message : 'FIXME'});
-      res.json({success : true, timetable : timetable});
+      if(err) return res.status(500).send("update timetable title failed");
+      res.json(timetable);
     });
   
 });
