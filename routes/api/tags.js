@@ -9,7 +9,7 @@ router.get('/:year/:semester/update_time', function(req, res, next) {
   TagList.findOne({'year' : req.params.year, 'semester' : req.params.semester},'updated_at', function (err, docs) {
     if (err) return res.status(500).send('unknown error');
     if (docs == null) res.status(404).send('not found');
-    else res.send(docs.updated_at);
+    else res.send(docs.updated_at.toString());
   });
 });
 

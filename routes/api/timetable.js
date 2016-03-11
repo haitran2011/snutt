@@ -38,7 +38,7 @@ router.post('/', function(req, res, next) { //create
 });
 
 /*
- * POST /timetable/:id/lecture
+ * POST /tables/:id/lecture
  * add a lecture into a timetable
  * param ===================================
  * lecture : json object of lecture to add
@@ -61,7 +61,7 @@ router.post('/:id/lecture', function(req, res, next) {
 });
 
 /*
- * POST /timetable/:id/lectures
+ * POST /tables/:id/lectures
  * add lectures into a timetable
  * param ===================================
  * lectures : array of lectures to add
@@ -86,7 +86,7 @@ router.post('/:id/lectures', function(req, res, next) {
 });
 
 /*
- * PUT /timetable/:id/lecture
+ * PUT /tables/:id/lecture
  * update a lecture of a timetable
  * param ===================================
  * lecture : json object of lecture to update
@@ -105,7 +105,7 @@ router.put('/:id/lecture', function(req, res, next) {
 });
 
 /*
- * DELETE /timetable/:id/lecture
+ * DELETE /tables/:id/lecture
  * delete a lecture from a timetable
  * param ===================================
  * lecture_id :id of lecture to delete
@@ -123,7 +123,7 @@ router.delete('/:id/lecture', function(req, res, next) {
 });
 
 /*
- * DELETE /timetable/:id
+ * DELETE /tables/:id
  * delete a timetable
  */
 router.delete('/:id', function(req, res, next) { // delete
@@ -135,7 +135,7 @@ router.delete('/:id', function(req, res, next) { // delete
 });
 
 /*
- * POST /timetable/:id/copy
+ * POST /tables/:id/copy
  * copy a timetable
  */
 router.post('/:id/copy', function(req, res, next) {
@@ -145,7 +145,7 @@ router.post('/:id/copy', function(req, res, next) {
       if(!timetable) return res.status(404).send("timetable not found");
       timetable.copy(timetable.title, function(err, doc) {
         if(err) return res.status(500).send("timetable copy failed");
-        else res.json(doc);
+        else res.send(doc._id);
       });
     })
 });
