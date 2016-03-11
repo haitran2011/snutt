@@ -97,6 +97,7 @@ router.put('/:id/lecture', function(req, res, next) {
       if(err) return res.status(500).send("find table failed");
       if(!timetable) return res.status(404).send("timetable not found");
       var lecture_raw = req.body['lecture'];
+      lecture_raw.class_time_mask = timeJsonToMask(lecture_raw.class_time_json);
       timetable.update_lecture(lecture_raw, function(err){
         if(err) return res.status(500).send("update lecture failed");
         res.send("ok");
@@ -157,7 +158,7 @@ router.put('/:id', function(req, res, next) {
     }
     , function(err, timetable) {
       if(err) return res.status(500).send("update timetable title failed");
-      res.json(timetable);
+      res.send("ok");
     });
   
 });
