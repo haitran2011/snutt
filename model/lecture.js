@@ -6,8 +6,8 @@ var LectureSchema = mongoose.Schema({
   classification: { type: String, required: true }, // 교과 구분
   department: String,                               // 학부
   academic_year: String,                            // 학년
-  course_number: { type: String, required: true },  // 교과목 번호
-  lecture_number: String,                           // 강좌 번호
+  course_number: { type: String, required: true, unique: true },  // 교과목 번호
+  lecture_number: { type: String, required: true, unique: true },                           // 강좌 번호
   course_title: { type: String, required: true },   // 과목명
   credit: Number,                                   // 학점
   class_time: String,
