@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
-var timeJsonToMask = require('../../data/update_lectures.js').timeJsonToMask;
+var timeJsonToMask = require('../../lib/util').timeJsonToMask;
 
 var Timetable = require('../../model/timetable');
 var Lecture = require('../../model/lecture');

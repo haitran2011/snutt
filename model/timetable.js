@@ -1,7 +1,7 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var Lecture = require('./lecture');
-var Util = require('../util/util');
+var Util = require('../lib/util');
 
 var TimetableSchema = mongoose.Schema({
 	user_id : { type: Schema.Types.ObjectId, ref: 'User' },

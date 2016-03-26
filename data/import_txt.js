@@ -37,15 +37,8 @@ fs.readFile(datapath, function (err, data) {
 			console.log(err);
 		else {
 			console.log("removed existing tags for this semester");
-			Lecture.remove({ year: year, semester: semesterIndex}, function(err) {
-				if (err)
-					console.log(err);
-				else {
-					console.log("removed existing coursebook for this semester");
-					updateLectures(courses, year, semesterIndex, function(){
-						process.exit(0);
-					})
-				}
+			updateLectures(courses, year, semesterIndex, function(){
+				process.exit(0);
 			});
 		}
 	});

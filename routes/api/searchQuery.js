@@ -1,6 +1,6 @@
 var router = require('express').Router();
 var Lecture = require('../../model/lecture');
-var timeJsonToMask = require('../../data/update_lectures').timeJsonToMask;
+var timeJsonToMask = require('../../lib/util').timeJsonToMask;
 
 //something similar to LIKE query in SQL
 function like(str, option) {
