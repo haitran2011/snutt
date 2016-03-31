@@ -60,7 +60,10 @@ function insert_course(lines, year, semesterIndex, next)
         var components = line.split(";");
         if (components.length == 1) continue;
 
+        // 교양영역 번역
         components[13] = str_category[components[13]];
+        // null(과학교육계) 고침
+        components[1] = components[1].replace("null", "");
 
         var new_tag = {
           classification : components[0],
