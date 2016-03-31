@@ -3,6 +3,34 @@ var Lecture = require('../model/lecture');
 var TagList = require('../model/tagList');
 var Util = require('../lib/util');
 
+/*
+ * 교양 영역을 한글로 번역.
+ * fetch.rb를 수정하게 되면
+ * 지난 수강편람을 모두 새로고침해야 하므로
+ * 일단은 update_lectures에서 두번 해석
+ */
+
+var str_category = {
+  "" : "",
+  "foundation_writing":"사고와 표현",
+  "foundation_language":"외국어",
+  "foundation_math":"수량적 분석과 추론",
+  "foundation_science":"과학적 사고와 실험",
+  "foundation_computer":"컴퓨터와 정보 활용",
+  "knowledge_literature":"언어와 문학",
+  "knowledge_art":"문화와 예술",
+  "knowledge_history":"역사와 철학",
+  "knowledge_politics":"정치와 경제",
+  "knowledge_human":"인간과 사회",
+  "knowledge_nature":"자연과 기술",
+  "knowledge_life":"생명과 환경",
+  "general_physical":"체육",
+  "general_art":"예술실기",
+  "general_college":"대학과 리더십",
+  "general_creativity":"창의와 융합",
+  "general_korean":"한국의 이해"
+};
+
 function insert_course(lines, year, semesterIndex, next)
 {
   var cnt = 0, saved_cnt = 0, err_cnt = 0;
@@ -11,7 +39,8 @@ function insert_course(lines, year, semesterIndex, next)
     department : [],
     academic_year : [],
     credit : [],
-    instructor : []
+    instructor : [],
+    category : []
   };
   var old_lectures;
   var new_lectures = new Array(lines.length);
@@ -31,26 +60,29 @@ function insert_course(lines, year, semesterIndex, next)
         var components = line.split(";");
         if (components.length == 1) continue;
 
-        var new_tags = {
+        components[13] = str_category[components[13]];
+
+        var new_tag = {
           classification : components[0],
           department : components[1],
           academic_year : components[2],
           credit : components[6]+'학점',
-          instructor : components[9]
+          instructor : components[9],
+          category : components[13]
         };
 
         for (var key in tags) {
           if (tags.hasOwnProperty(key)){
             var existing_tag = undefined;
             for (var j=0; j<tags[key].length; j++) {
-              if (tags[key][j] == new_tags[key]){
-                existing_tag = new_tags[key];
+              if (tags[key][j] == new_tag[key]){
+                existing_tag = new_tag[key];
                 break;
               }
             }
             if (existing_tag == undefined) {
-              if (new_tags[key].length < 2) continue;
-              tags[key].push(new_tags[key]);
+              if (new_tag[key].length < 2) continue;
+              tags[key].push(new_tag[key]);
             }
           }
         }

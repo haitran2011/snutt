@@ -37,6 +37,8 @@ module.exports = router.post('/', function(req, res, next) {
     query.academic_year = { $in : req.body.academic_year };
   if (req.body.classification && req.body.classification.length)
     query.classification = { $in : req.body.classification };
+  if (req.body.category && req.body.category.length)
+    query.category = { $in : req.body.category };
   if (req.body.department && req.body.department.length) { // in this case result should be sorted by departments
     var orRegex = '(' +
       req.body.department.map(function(dep, idx) {

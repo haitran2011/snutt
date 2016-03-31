@@ -12,7 +12,8 @@ var TagListSchema = mongoose.Schema({
     department: {type: [String]},
     academic_year: {type: [String]},
     credit: {type: [String]},
-    instructor: {type: [String]}
+    instructor: {type: [String]},
+    category: {type: [String]}
   }
 });
 
