@@ -99,12 +99,12 @@ function insert_course(lines, year, semesterIndex, next)
           callback();
           return;
         }
-        process.stdout.write("Inserting " + (++saved_cnt) + "th course\r");
         lecture.save(function (err, lecture) {
           if (err) {
             console.log(err);
             err_cnt++
           }
+          process.stdout.write("Inserting " + (++saved_cnt) + "th course\r");
           callback();
         });
       }, function(err) {

@@ -27,13 +27,17 @@ module.exports = router.post('/', function(req, res, next) {
   var query = {};
   query.year = req.body.year;
   query.semester = req.body.semester;
-  if (req.body.title && req.body.title != [])
+  if (req.body.title)
     query.course_title = { $regex: like(req.body.title), $options: 'i' };
-  if (req.body.credit && req.body.credit != [])
+  if (req.body.credit && req.body.credit.length)
     query.credit = { $in: req.body.credit };
-  if (req.body.professor && req.body.professor != [])
-    query.instructor = like(req.body.professor);
-  if (req.body.department && req.body.department != []) { // in this case result should be sorted by departments
+  if (req.body.instructor && req.body.instructor.length)
+    query.instructor = { $in : req.body.instructor };
+  if (req.body.academic_year && req.body.academic_year.length)
+    query.academic_year = { $in : req.body.academic_year };
+  if (req.body.classification && req.body.classification.length)
+    query.classification = { $in : req.body.classification };
+  if (req.body.department && req.body.department.length) { // in this case result should be sorted by departments
     var orRegex = '(' +
       req.body.department.map(function(dep, idx) {
         return like(dep);

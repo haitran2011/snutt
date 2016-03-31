@@ -6,7 +6,7 @@ var Util = require('../lib/util');
 var TimetableSchema = mongoose.Schema({
 	user_id : { type: Schema.Types.ObjectId, ref: 'User' },
   year : {type : Number, required : true },
-  semester : {type : Number, required : true },
+  semester : {type : Number, required : true, min:1, max:4 },
   title : {type : String, required : true },
 	lecture_list: [Lecture.schema]
 });
