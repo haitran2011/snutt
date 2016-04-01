@@ -6,3 +6,4 @@ config/secretKey.js
 *.log
 data/xls/*
 *.xls
+*.db
