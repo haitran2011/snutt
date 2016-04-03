@@ -1,6 +1,4 @@
 var fs = require('fs');
-var Lecture = require('../model/lecture');
-var Tags = require('../model/tagList');
 var updateLectures = require('./update_lectures').insert_course;
 
 if (process.argv.length != 4) {
@@ -30,16 +28,7 @@ fs.readFile(datapath, function (err, data) {
 		process.exit(1);
 	}
 	var semesterIndex = ['1', 'S', '2', 'W'].indexOf(semester) + 1;
-	//delete existing coursebook of input semester before update
-
-	Tags.remove({ year: year, semester: semesterIndex}, function(err) {
-		if (err)
-			console.log(err);
-		else {
-			console.log("removed existing tags for this semester");
-			updateLectures(courses, year, semesterIndex, function(){
-				process.exit(0);
-			});
-		}
+	updateLectures(courses, year, semesterIndex, function(){
+		process.exit(0);
 	});
 });

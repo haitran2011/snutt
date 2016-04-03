@@ -3,8 +3,6 @@ var router = express.Router();
 
 var path = require('path');
 var CourseBook = require(path.join(__dirname, 'model/courseBook'));
-var Lecture = require(path.join(__dirname, 'model/lecture'));
-var Timetable = require(path.join(__dirname, 'model/timetable'));
 
 
 router.get('/course_books', function(req, res, next) {

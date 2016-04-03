@@ -19,10 +19,7 @@ var LectureSchema = mongoose.Schema({
   quota: Number,                                    // 정원
   enrollment: Number,                               // 신청인원
   remark: String,                                   // 비고
-  category: String,
-  created_at: Date,
-  updated_at: Date,
-  color: {fg : String, bg : String}
+  category: String
 });
 
 /*
@@ -49,4 +46,16 @@ LectureSchema.index({ year: 1, semester: 1, classification: 1 });
 LectureSchema.index({ year: 1, semester: 1, department: 1 });
 LectureSchema.index({ year: 1, semester: 1, course_title: 1 });
 
-module.exports = mongoose.model('Lecture', LectureSchema);
+var Lecture = mongoose.model('Lecture', LectureSchema);
+
+LectureSchema.add({
+  created_at: Date,
+  updated_at: Date,
+  color: {fg : String, bg : String}
+});
+var UserLecture = mongoose.model('UserLecture', LectureSchema);
+
+module.exports = {
+  Lecture : Lecture,
+  UserLecture : UserLecture
+};

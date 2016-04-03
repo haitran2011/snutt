@@ -3,7 +3,6 @@ var router = express.Router();
 var jwt = require('jsonwebtoken');
 
 var CourseBook = require('../../model/courseBook');
-var Lecture = require('../../model/lecture');
 var secretKey = require('../../config/secretKey');
 
 var authRouter = require('./auth');

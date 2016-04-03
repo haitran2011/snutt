@@ -4,7 +4,9 @@ var router = express.Router();
 var timeJsonToMask = require('../../lib/util').timeJsonToMask;
 
 var Timetable = require('../../model/timetable');
-var Lecture = require('../../model/lecture');
+var LectureModel = require('../../model/lecture');
+var Lecture = LectureModel.Lecture;
+var UserLecture = LectureModel.UserLecture;
 
 router.get('/', function(req, res, next) { //timetable list
   Timetable.find({'user_id' : req.user._id}).select('year semester title _id')
@@ -50,11 +52,11 @@ router.post('/:id/lecture', function(req, res, next) {
       if(!timetable) return res.status(404).send("timetable not found");
       var json = req.body['lecture'];
       json.class_time_mask = timeJsonToMask(json.class_time_json);
-      var lecture = new Lecture(json);
+      var lecture = new UserLecture(json);
       lecture.save(function(err, doc){
         timetable.add_lecture(doc, function(err){
           if(err) return res.status(500).send("insert lecture failed");
-          res.send("ok");
+          res.send(doc._id);
         });
       });
     })
@@ -66,6 +68,7 @@ router.post('/:id/lecture', function(req, res, next) {
  * param ===================================
  * lectures : array of lectures to add
  */
+/*
 router.post('/:id/lectures', function(req, res, next) {
   Timetable.findOne({'user_id': req.user_id, '_id' : req.params.id})
     .exec(function(err, timetable){
@@ -84,6 +87,7 @@ router.post('/:id/lectures', function(req, res, next) {
       });
   })
 });
+*/
 
 /*
  * PUT /tables/:id/lecture
@@ -98,9 +102,9 @@ router.put('/:id/lecture', function(req, res, next) {
       if(!timetable) return res.status(404).send("timetable not found");
       var lecture_raw = req.body['lecture'];
       lecture_raw.class_time_mask = timeJsonToMask(lecture_raw.class_time_json);
-      timetable.update_lecture(lecture_raw, function(err){
+      timetable.update_lecture(lecture_raw, function(err, doc){
         if(err) return res.status(500).send("update lecture failed");
-        res.send("ok");
+        res.send(doc._id);
       });
     })
 });
@@ -116,7 +120,7 @@ router.delete('/:id/lecture', function(req, res, next) {
     .exec(function(err, timetable){
       if(err) return res.status(500).send("find table failed");
       if(!timetable) return res.status(404).send("timetable not found");
-      timetable.delete_lecture(req.body.lecture_id, function(err){
+      timetable.delete_lecture(req.body.lecture_id, function(err, timetable){
         if(err) return res.status(500).send("delete lecture failed");
         res.send("ok");
       });
@@ -158,7 +162,7 @@ router.put('/:id', function(req, res, next) {
     }
     , function(err, timetable) {
       if(err) return res.status(500).send("update timetable title failed");
-      res.send("ok");
+      res.send(timetable._id);
     });
   
 });

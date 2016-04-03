@@ -1,6 +1,7 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
-var Lecture = require('./lecture');
+var LectureModel = require('./lecture');
+var UserLecture = LectureModel.UserLecture;
 var Util = require('../lib/util');
 
 var TimetableSchema = mongoose.Schema({
@@ -8,7 +9,7 @@ var TimetableSchema = mongoose.Schema({
   year : {type : Number, required : true },
   semester : {type : Number, required : true, min:1, max:4 },
   title : {type : String, required : true },
-	lecture_list: [Lecture.schema]
+	lecture_list: [UserLecture.schema]
 });
 
 /*
@@ -33,7 +34,7 @@ TimetableSchema.pre('save', function(next) {
 });
 
 /*
- * Timetable.add_lecture(lecture, callback)
+ * Timetable.copy(new_title, callback)
  * param =======================================
  * new_title : New title.
  * callback : callback for timetable.save()
@@ -72,6 +73,7 @@ TimetableSchema.methods.add_lecture = function(lecture, next) {
  *            If a same lecture already exist, skip it.
  * callback : callback for timetable.save()
  */
+/*
 TimetableSchema.methods.add_lectures = function(lectures, next) {
   for (var i = 0; i<lectures.length; i++){
     var is_exist = false;
@@ -85,27 +87,35 @@ TimetableSchema.methods.add_lectures = function(lectures, next) {
   }
   this.save(next);
 };
+*/
 
 /*
  * Timetable.update_lecture(lecture_raw, callback)
  * param =======================================
  * lecture : a partial update for lecture.
  *            If a same lecture doesn't exist, error.
- * callback : callback for timetable.update(err, numAffected)
+ * callback : callback (doc, err) when finished
  */
 TimetableSchema.methods.update_lecture = function(lecture_raw, next) {
+  var err = null;
   for (var i = 0; i<this.lecture_list.length; i++){
-    if (Lecture.is_equal(this.lecture_list[i], lecture_raw)) {
+    if (UserLecture.is_equal(this.lecture_list[i], lecture_raw)) {
       var update_set = {};
       for (var field in lecture_raw) {
         update_set['lecture_list.'+i+'.' + field] = lecture_raw[field];
       }
-      this.update({$set: update_set}, next);
+      (function (doc) {
+        this.update({$set: update_set}, function (err, numAffected){
+          if (numAffected < 1)
+            err = new Error("Update lecture failed");
+          next(err, doc);
+        });
+      }) (this.lecture_list[i]);
       return;
     }
   }
-  var err = new Error("The lecture doesn't exist in the timetable.");
-  next(err);
+  err = new Error("The lecture doesn't exist in the timetable.");
+  next(err, null);
 };
 
 /*

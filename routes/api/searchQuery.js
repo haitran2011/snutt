@@ -39,14 +39,8 @@ module.exports = router.post('/', function(req, res, next) {
     query.classification = { $in : req.body.classification };
   if (req.body.category && req.body.category.length)
     query.category = { $in : req.body.category };
-  if (req.body.department && req.body.department.length) { // in this case result should be sorted by departments
-    var orRegex = '(' +
-      req.body.department.map(function(dep, idx) {
-        return like(dep);
-      }).join('|')
-      + ')';
-    query.department = { $regex: orRegex, $options: 'i'};
-  }
+  if (req.body.department && req.body.department.length) // in this case result should be sorted by departments
+    query.department = { $in : req.body.department };
   if (req.body.time && req.body.time != []) {
     var conditions = timeRangesToBinaryConditions(req.body.time);
     conditions.forEach(function(condition, idx) {

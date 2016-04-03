@@ -1,5 +1,12 @@
+if (!module.parent) {
+  console.log("Not to be executed directly. Instead call import_txt.js");
+  console.log("usage: $ node import_txt.js 2016 1");
+  process.exit(1);
+}
+
 var async = require('async');
-var Lecture = require('../model/lecture');
+var LectureModel = require('../model/lecture');
+var Lecture = LectureModel.Lecture;
 var TagList = require('../model/tagList');
 var Util = require('../lib/util');
 
@@ -48,13 +55,7 @@ function insert_course(lines, year, semesterIndex, next)
   // Do each function step by step
   async.series([
     function (callback) {
-      console.log ("Pulling existing lectures...");
-      Lecture.find({year : year, semester : semesterIndex}, function(err, docs) {
-        old_lectures = docs;
-        callback();
-      });
-    },
-    function (callback) {
+      console.log ("Loading new lectures...");
       for (var i=0; i<lines.length; i++) {
         var line = lines[i];
         var components = line.split(";");
@@ -114,8 +115,21 @@ function insert_course(lines, year, semesterIndex, next)
         });
         process.stdout.write("Loading " + cnt + "th course\r");
       }
-      console.log("\nLoading complete with "+cnt+" courses");
+      console.log("\nLoad complete with "+cnt+" courses");
       callback();
+    },
+    function (callback) {
+      console.log ("Pulling existing lectures...");
+      Lecture.find({year : year, semester : semesterIndex}, function(err, docs) {
+        old_lectures = docs;
+        callback();
+      });
+    },
+    function (callback){
+      // TODO : compare existing lecture and new_lecture
+      console.log("Comparing existing lectures and new lectures...");
+      console.log("Not implemented yet");
+      callback(null);
     },
     function (callback){
       Lecture.remove({ year: year, semester: semesterIndex}, function(err) {
@@ -123,12 +137,13 @@ function insert_course(lines, year, semesterIndex, next)
           console.log(err);
           callback(err, 'remove lectures');
         } else {
-          console.log("Removed existing coursebook for this semester");
+          console.log("Removed existing lecture for this semester");
           callback(null, 'remove lectures');
         }
       });
     },
     function (callback){
+      console.log("Inserting new lectures...");
       async.each(new_lectures, function(lecture, callback) {
         if(lecture == undefined) {
           callback();
@@ -153,6 +168,14 @@ function insert_course(lines, year, semesterIndex, next)
       });
     },
     function (callback){
+      TagList.remove({ year: year, semester: semesterIndex}, function(err) {
+        if (err) callback(err, 'tag remove');
+        console.log("Removed existing tags");
+        callback(null, 'tag remove');
+      });
+    },
+    function (callback){
+      console.log("Inserting tags from new lectures...");
       var tagList = new TagList({
         year: Number(year),
         semester: semesterIndex,
@@ -162,7 +185,7 @@ function insert_course(lines, year, semesterIndex, next)
       tagList.save(function (err, docs) {
         if (err) callback(err, 'tags');
         else {
-          console.log("Tags successfully inserted");
+          console.log("Inserted tags");
           callback(null, 'tags');
         }
       });
