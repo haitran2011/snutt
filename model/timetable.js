@@ -1,5 +1,6 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
+var Timetable = require('./timetable');
 var LectureModel = require('./lecture');
 var UserLecture = LectureModel.UserLecture;
 var Util = require('../lib/util');
@@ -94,34 +95,36 @@ TimetableSchema.methods.add_lectures = function(lectures, next) {
  * param =======================================
  * lecture : a partial update for lecture.
  *            If a same lecture doesn't exist, error.
- * callback : callback (doc, err) when finished
+ * callback : callback (err) when finished
  */
 TimetableSchema.methods.update_lecture = function(lecture_raw, next) {
   var err = null;
-  for (var i = 0; i<this.lecture_list.length; i++){
-    if (UserLecture.is_equal(this.lecture_list[i], lecture_raw)) {
-      var update_set = {};
-      for (var field in lecture_raw) {
-        update_set['lecture_list.'+i+'.' + field] = lecture_raw[field];
-      }
-      (function (doc) {
-        this.update({$set: update_set}, function (err, numAffected){
-          if (numAffected < 1)
-            err = new Error("Update lecture failed");
-          next(err, doc);
-        });
-      }) (this.lecture_list[i]);
-      return;
-    }
+  if (!lecture_raw._id) {
+    err = new Error("_id must be provided");
+    next(err, null);
+    return;
   }
-  err = new Error("The lecture doesn't exist in the timetable.");
-  next(err, null);
+  var update_set = {};
+  for (var field in lecture_raw) {
+    update_set['lecture_list.$.' + field] = lecture_raw[field];
+  }
+
+  (function (timetable, lecture, patch) {
+    mongoose.model("Timetable").findOneAndUpdate({ "_id" : timetable._id, "lecture_list._id" : lecture._id},
+      {$set : patch}, function (err, numAffected) {
+        if (!err) {
+          if (numAffected < 1)
+            err = new Error("lecture not found");
+        }
+        next(err, lecture);
+      });
+  }) (this, lecture_raw, update_set);
 };
 
 /*
  * Timetable.delete_lecture(lecture_id, callback)
  * param =======================================
- * lecture : a Lecture._id to delete.
+ * lecture_id : a Lecture._id to delete.
  *            If a lecture doesn't exist, skip.
  * callback : callback for timetable.save()
  */

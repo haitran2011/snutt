@@ -1,5 +1,6 @@
 var router = require('express').Router();
-var Lecture = require('../../model/lecture');
+var LectureModel = require('../../model/lecture');
+var Lecture = LectureModel.Lecture;
 var timeJsonToMask = require('../../lib/util').timeJsonToMask;
 
 //something similar to LIKE query in SQL

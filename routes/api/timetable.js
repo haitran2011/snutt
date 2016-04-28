@@ -43,14 +43,14 @@ router.post('/', function(req, res, next) { //create
  * POST /tables/:id/lecture
  * add a lecture into a timetable
  * param ===================================
- * lecture : json object of lecture to add
+ * json object of lecture to add
  */
 router.post('/:id/lecture', function(req, res, next) {
   Timetable.findOne({'user_id': req.user_id, '_id' : req.params.id})
     .exec(function(err, timetable){
       if(err) return res.status(500).send("find table failed");
       if(!timetable) return res.status(404).send("timetable not found");
-      var json = req.body['lecture'];
+      var json = req.body;
       json.class_time_mask = timeJsonToMask(json.class_time_json);
       var lecture = new UserLecture(json);
       lecture.save(function(err, doc){
@@ -93,17 +93,24 @@ router.post('/:id/lectures', function(req, res, next) {
  * PUT /tables/:id/lecture
  * update a lecture of a timetable
  * param ===================================
- * lecture : json object of lecture to update
+ * json object of lecture to update
  */
 router.put('/:id/lecture', function(req, res, next) {
   Timetable.findOne({'user_id': req.user_id, '_id' : req.params.id})
     .exec(function(err, timetable){
       if(err) return res.status(500).send("find table failed");
       if(!timetable) return res.status(404).send("timetable not found");
-      var lecture_raw = req.body['lecture'];
-      lecture_raw.class_time_mask = timeJsonToMask(lecture_raw.class_time_json);
+      var lecture_raw = req.body;
+      if (!lecture_raw._id) {
+        return res.status(400).send("need lecture._id");
+      }
+      if (lecture_raw.class_time_json)
+        lecture_raw.class_time_mask = timeJsonToMask(lecture_raw.class_time_json);
       timetable.update_lecture(lecture_raw, function(err, doc){
-        if(err) return res.status(500).send("update lecture failed");
+        if(err) {
+          console.log(err);
+          return res.status(500).send("update lecture failed");
+        }
         res.send(doc._id);
       });
     })
@@ -133,7 +140,8 @@ router.delete('/:id/lecture', function(req, res, next) {
  */
 router.delete('/:id', function(req, res, next) { // delete
   Timetable.findOneAndRemove({'user_id': req.user._id, '_id' : req.params.id})
-  .exec(function(err) {
+  .exec(function(err, doc) {
+    if (!doc) return res.status(404).send("timetable not found");
     if(err) return res.status(500).send("delete timetable failed");
     res.send("ok");
   });
