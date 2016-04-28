@@ -54,6 +54,10 @@ router.post('/:id/lecture', function(req, res, next) {
       json.class_time_mask = timeJsonToMask(json.class_time_json);
       var lecture = new UserLecture(json);
       lecture.save(function(err, doc){
+        if (err) {
+          console.log(err.errmsg);
+          return res.status(500).send("lecture save failed");
+        }
         timetable.add_lecture(doc, function(err){
           if(err) return res.status(500).send("insert lecture failed");
           res.send(doc._id);
@@ -123,15 +127,21 @@ router.put('/:id/lecture', function(req, res, next) {
  * lecture_id :id of lecture to delete
  */
 router.delete('/:id/lecture', function(req, res, next) {
-  Timetable.findOne({'user_id': req.user_id, '_id' : req.params.id})
-    .exec(function(err, timetable){
-      if(err) return res.status(500).send("find table failed");
-      if(!timetable) return res.status(404).send("timetable not found");
-      timetable.delete_lecture(req.body.lecture_id, function(err, timetable){
-        if(err) return res.status(500).send("delete lecture failed");
-        res.send("ok");
-      });
-    })
+  if (!req.query["lecture_id"])
+    return res.status(403).send("please provide 'lecture_id' param");
+  Timetable.findOneAndUpdate(
+    {'user_id': req.user_id, '_id' : req.params.id},
+    { $pull: {"lecture_list" : {_id: req.query["lecture_id"]} } },
+    function (err, doc) {
+      if (err) {
+        console.log(err);
+        return res.status(500).send("delete lecture failed");
+      }
+      if (!doc) return res.status(404).send("timetable not found");
+      if (!doc.lecture_list.id(req.query["lecture_id"]))
+        return res.status(404).send("lecture not found");
+      res.send("ok");
+    });
 });
 
 /*
@@ -141,8 +151,11 @@ router.delete('/:id/lecture', function(req, res, next) {
 router.delete('/:id', function(req, res, next) { // delete
   Timetable.findOneAndRemove({'user_id': req.user._id, '_id' : req.params.id})
   .exec(function(err, doc) {
+    if(err) {
+      console.log(err);
+      return res.status(500).send("delete timetable failed");
+    }
     if (!doc) return res.status(404).send("timetable not found");
-    if(err) return res.status(500).send("delete timetable failed");
     res.send("ok");
   });
 });

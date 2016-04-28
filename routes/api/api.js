@@ -40,7 +40,7 @@ router.use(function(req, res, next) {
       } else {
         // if everything is good, save to request for use in other routes
         req.user = decoded;
-        console.log(decoded);
+        //console.log(decoded);
         next();
       }
     });

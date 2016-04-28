@@ -121,16 +121,4 @@ TimetableSchema.methods.update_lecture = function(lecture_raw, next) {
   }) (this, lecture_raw, update_set);
 };
 
-/*
- * Timetable.delete_lecture(lecture_id, callback)
- * param =======================================
- * lecture_id : a Lecture._id to delete.
- *            If a lecture doesn't exist, skip.
- * callback : callback for timetable.save()
- */
-TimetableSchema.methods.delete_lecture = function(lecture_id, next) {
-  this.lecture_list.pull({_id : lecture_id});
-  this.save(next);
-};
-
 module.exports = mongoose.model('Timetable', TimetableSchema);
