@@ -55,12 +55,15 @@ router.post('/:id/lecture', function(req, res, next) {
       var lecture = new UserLecture(json);
       lecture.save(function(err, doc){
         if (err) {
-          console.log(err.errmsg);
+          console.log(err);
           return res.status(500).send("lecture save failed");
         }
         timetable.add_lecture(doc, function(err){
-          if(err) return res.status(500).send("insert lecture failed");
-          res.send(doc._id);
+          if(err) {
+            console.log(err);
+            return res.status(500).send("insert lecture failed");
+          }
+          res.send(doc);
         });
       });
     })
