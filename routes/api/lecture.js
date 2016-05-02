@@ -1,6 +1,12 @@
+/**
+ * routes/api/lecture.js
+ * this file is unused yet
+ */
+
 var express = require('express');
 var router = express.Router();
 
+/*
 var path = require('path');
 var CourseBook = require(path.join(__dirname, 'model/courseBook'));
 
@@ -10,5 +16,6 @@ router.get('/course_books', function(req, res, next) {
     res.send(200, courseBooks)
   });
 });
+*/
 
 module.exports = router;

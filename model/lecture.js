@@ -1,4 +1,4 @@
-var mongoose = require('../db');
+var mongoose = require('mongoose');
 function BaseSchema(add){
   var schema = mongoose.Schema({
     classification: { type: String, required: true }, // 교과 구분

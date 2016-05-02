@@ -6,5 +6,5 @@ module.exports = mongoose.connect('mongodb://localhost/snutt', function(err) {
     console.log(err);
     throw err;
   }
-  console.log('mongodb connected');
+  //console.log('mongodb connected');
 });
