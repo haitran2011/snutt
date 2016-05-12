@@ -42,19 +42,23 @@ UserSchema.methods.verify_password = function(password, cb) {
 	});
 };
 
-UserSchema.statics.methods.get_local = function(id, callback) {
+UserSchema.statics.get_local = function(id, callback) {
   mongoose.model('User').findOne({'local.id' : id }, callback);
 };
 
-UserSchema.statics.methods.create_local = function(id, password, callback) {
+UserSchema.statics.create_local = function(id, password, callback) {
   var User = mongoose.model('User');
-  var user = new User({
-    local : {
-      id : id,
-      password: password
-    }
+  User.get_local(id, function(err, user) {
+    if (err) return callback(err);
+    if (user) return callback(new Error("same id already exists"));
+    user = new User({
+      local : {
+        id : id,
+        password: password
+      }
+    });
+    user.save(callback);
   });
-  user.save(callback);
 };
 
 module.exports = mongoose.model('User', UserSchema);

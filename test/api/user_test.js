@@ -8,9 +8,20 @@
 var assert = require('assert');
 
 module.exports = function(app, db, request) {
-  it('Check DB Connected', function() {
-    assert(db.connection.readyState);
+  it('Duplicate ID register fails', function(done) {
+    request.post('/api/auth/register_local')
+      .send({id:"snutt", password:"1234"})
+      .expect(500, 'same id already exists')
+      .end(function(err, res){
+        done(err);
+      });
   });
-  // TODO : return actual token
-  return "false token";
+  it('Log-in succeeds', function(done) {
+    request.post('/api/auth/login_local')
+      .send({id:"snutt", password:"1234"})
+      .expect(200)
+      .end(function(err, res){
+        done(err);
+      });
+  });
 };

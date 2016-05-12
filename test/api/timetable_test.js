@@ -7,13 +7,17 @@
 
 var assert = require('assert');
 
-module.exports = function(app, db, request, token) {
-  it('Check DB Connected', function() {
-    assert(db.connection.readyState);
+module.exports = function(app, db, request) {
+  var token;
+  before(function(done) {
+    request.post('/api/auth/login_local')
+      .send({id:"snutt", password:"1234"})
+      .expect(200)
+      .end(function(err, res){
+        token = res.body;
+        done(err);
+      });
   });
-  // TODO : check actual token
-  it('Check Token', function() {
-    assert.equal(token, "true token");
-  });
+  
   // TODO : Lecture CRUD
 };
