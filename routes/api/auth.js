@@ -13,10 +13,10 @@ router.post('/login_local', function(req, res, next) {
   User.get_local(req.body.id, function(err, user) {
     if(err) return res.status(500).send('unknown error');
     if(!user) {
-      res.status(403).send('Authentication failed. User not found.');
+      res.status(404).send('user not found');
     } else if (user) {
       user.verify_password(req.body.password, function(err, is_match) {
-        if(!is_match) res.status(403).send('Authentication failed. Wrong password.');
+        if(!is_match) res.status(403).send('wrong password');
         else {
           var token = jwt.sign(user, secretKey.jwtSecret, {
             expiresIn : '180d' //FIXME : expire time
