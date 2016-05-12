@@ -17,15 +17,15 @@ var TimetableSchema = mongoose.Schema({
  * No timetable with same title in the same semester
  */
 TimetableSchema.pre('save', function(next) {
-  this.model('Timetable').find(
+  this.model('Timetable').findOne(
     {
       user_id : this.user_id,
       year : this.year,
       semester: this.semester,
       title: this.title
-    }, function (err, docs) {
+    }, function (err, doc) {
       if (err) next(err);
-      if (docs != [] && docs._id != this._id) {
+      if (doc && doc._id != this._id) {
         var new_err = new Error('A timetable with the same title already exists');
         next(new_err);
       } else {

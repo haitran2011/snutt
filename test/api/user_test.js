@@ -75,7 +75,7 @@ module.exports = function(app, db, request) {
 
     it('Too long ID', function(done) {
       request.post('/api/auth/register_local')
-        .send({id:"Thisisverylongidyouknothatthisisfreakinglongmanverylong", password:"1234"})
+        .send({id:"ThisIsVeryLongIdYouKnowThatThisIsFreakingLongManVeryLong", password:"1234"})
         .expect(500, 'incorrect id')
         .end(function(err, res){
           done(err);
