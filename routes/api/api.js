@@ -27,6 +27,12 @@ router.get('/app_version', function(req, res, next) {
 
 router.use('/auth', authRouter);
 
+/*
+ * Token Authenticator
+ * Checks if the user is logged in
+ * Which means all routers below this need authentication
+ * If the user object is modified, you should re-login!!
+ */
 router.use(function(req, res, next) {
   if(req.user) return next();
   var token = req.body.token || req.query.token || req.headers['x-access-token'];
