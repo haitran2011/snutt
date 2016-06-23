@@ -25,6 +25,9 @@ function timeRangesToBinaryConditions(timeJson) {
 }
 
 module.exports = router.post('/', function(req, res, next) {
+  if (!req.body.year || !req.body.semester) {
+    return res.status(400).send('no year and semester');
+  }
   var query = {};
   query.year = req.body.year;
   query.semester = req.body.semester;

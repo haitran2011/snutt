@@ -5,6 +5,7 @@ var timeJsonToMask = require('../../lib/util').timeJsonToMask;
 
 var Timetable = require('../../model/timetable');
 var LectureModel = require('../../model/lecture');
+var util = require('../../lib/util');
 var Lecture = LectureModel.Lecture;
 var UserLecture = LectureModel.UserLecture;
 
@@ -52,6 +53,7 @@ router.post('/:id/lecture', function(req, res, next) {
       if(!timetable) return res.status(404).send("timetable not found");
       var json = req.body;
       json.class_time_mask = timeJsonToMask(json.class_time_json);
+      util.object_del_id(json); // sanitize json
       var lecture = new UserLecture(json);
       lecture.save(function(err, doc){
         if (err) {

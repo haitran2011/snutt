@@ -16,6 +16,7 @@ var TimetableSchema = mongoose.Schema({
 /*
  * No timetable with same title in the same semester
  */
+/*
 TimetableSchema.pre('save', function(next) {
   this.model('Timetable').findOne(
     {
@@ -33,6 +34,7 @@ TimetableSchema.pre('save', function(next) {
       }
     });
 });
+*/
 
 /*
  * Timetable.copy(new_title, callback)
@@ -41,17 +43,20 @@ TimetableSchema.pre('save', function(next) {
  * callback : callback for timetable.save()
  */
 TimetableSchema.methods.copy = function(new_title, next) {
-  Util.object_new_id(this);
-  // TODO : 인텔리하게 이름짓기 - 현재는 같은 테이블 두번 복사하면 에러
-  if (new_title == this.title) this.title += "(copy)";
-  else this.title = new_title;
-  this.save(next);
+  if (new_title == this.title) {
+    var new_err = new Error('A timetable with the same title already exists');
+    next(new_err);
+  } else {
+    Util.object_new_id(this);
+    this.title = new_title;
+    this.save(next);
+  }
 };
 
 /*
  * Timetable.add_lecture(lecture, callback)
  * param =======================================
- * lecture : a Lecture to merge.
+ * lecture : a UserLecture to add.
  *            If a same lecture already exist, error.
  * callback : callback for timetable.save()
  */
