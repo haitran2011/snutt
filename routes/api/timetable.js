@@ -53,7 +53,13 @@ router.post('/:id/lecture', function(req, res, next) {
       if(!timetable) return res.status(404).send("timetable not found");
       var json = req.body;
       json.class_time_mask = timeJsonToMask(json.class_time_json);
-      util.object_del_id(json); // sanitize json
+      /*
+       * Sanitize json using object_del_id.
+       * If you don't do it,
+       * the existing lecture gets overwritten
+       * which is potential security breach.
+       */
+      util.object_del_id(json);
       var lecture = new UserLecture(json);
       lecture.save(function(err, doc){
         if (err) {
@@ -110,12 +116,11 @@ router.put('/:id/lecture', function(req, res, next) {
       if(err) return res.status(500).send("find table failed");
       if(!timetable) return res.status(404).send("timetable not found");
       var lecture_raw = req.body;
-      if (!lecture_raw._id) {
+      if (!lecture_raw._id)
         return res.status(400).send("need lecture._id");
-      }
       if (lecture_raw.class_time_json)
         lecture_raw.class_time_mask = timeJsonToMask(lecture_raw.class_time_json);
-      timetable.update_lecture(lecture_raw, function(err, doc){
+      timetable.update_lecture(lecture_raw, function(err, doc) {
         if(err) {
           console.log(err);
           return res.status(500).send("update lecture failed");

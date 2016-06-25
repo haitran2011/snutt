@@ -155,6 +155,9 @@ module.exports = function(app, db, request) {
         "category": "",
         "created_at": "2016-03-31T07:56:44.137Z",
         "updated_at": "2016-03-31T07:56:44.137Z",
+        /*
+         * See to it that the server removes _id fields correctly
+         */
         "_id": "56fcd83c041742971bd20a86",
         "class_time_mask": [
           0,
@@ -185,9 +188,43 @@ module.exports = function(app, db, request) {
       .expect(200)
       .end(function(err, res) {
         if (err) done(err);
+        lecture = res.body;
         assert.equal(res.body.course_number, "400.320");
         assert.equal(res.body.class_time_json[0].place, "302-308");
         done();
       })
   });
+
+  it ('Copy timetable', function(done) {
+    request.post('/api/tables/'+table_id+'/copy/')
+      .set('x-access-token', token)
+      .expect(200)
+      .end(function(err, res) {
+        request.get('/api/tables/'+table_id)
+          .set('x-access-token', token)
+          .expect(200)
+          .end(function(err, res) {
+            assert.equal(res.body.lecture_list[0].course_number, "400.320");
+            assert.equal(res.body.lecture_list[0].class_time_json[0].place, "302-308");
+            done(err);
+          });
+      });
+  });
+
+  it ('Modify a lecture', function(done) {
+    request.put('/api/tables/'+table_id+'/lecture/')
+      .set('x-access-token', token)
+      .send({_id:lecture._id, })
+      .expect(200)
+      .end(function(err, res) {
+        request.get('/api/tables/'+table_id)
+          .set('x-access-token', token)
+          .expect(200)
+          .end(function(err, res) {
+            assert.equal(res.body.lecture_list[0].course_number, "400.320");
+            assert.equal(res.body.lecture_list[0].class_time_json[0].place, "302-308");
+            done(err);
+          });
+      });
+  })
 };

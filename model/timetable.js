@@ -16,7 +16,6 @@ var TimetableSchema = mongoose.Schema({
 /*
  * No timetable with same title in the same semester
  */
-/*
 TimetableSchema.pre('save', function(next) {
   this.model('Timetable').findOne(
     {
@@ -34,7 +33,6 @@ TimetableSchema.pre('save', function(next) {
       }
     });
 });
-*/
 
 /*
  * Timetable.copy(new_title, callback)
@@ -47,6 +45,12 @@ TimetableSchema.methods.copy = function(new_title, next) {
     var new_err = new Error('A timetable with the same title already exists');
     next(new_err);
   } else {
+    /*
+     * Sanitize json object, then save it
+     * -> Cannot recognize existing entry
+     * -> Create new entry
+     * -> Copy!!
+     */
     Util.object_new_id(this);
     this.title = new_title;
     this.save(next);
