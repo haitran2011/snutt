@@ -92,6 +92,15 @@ function insert_course(lines, year, semesterIndex, next)
         }
 
         var timeJson = Util.timeAndPlaceToJson(components[7], components[8]);
+        // TimeMask limit is 13*2
+        for (var j=0; j<timeJson.length; j++) {
+          var t_end = parseFloat(timeJson[j].start)+parseFloat(timeJson[j].len);
+          if (t_end > 15) {
+            console.log("Warning: ("+components[3]+", "+components[4]+", "+components[5]+
+              ") ends at "+t_end);
+          }
+        }
+
         new_lectures[cnt++] = new Lecture({
           year: Number(year),
           semester: semesterIndex,
