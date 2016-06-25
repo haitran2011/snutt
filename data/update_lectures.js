@@ -4,6 +4,7 @@ if (!module.parent) {
   process.exit(1);
 }
 
+var db = require('../db');
 var async = require('async');
 var LectureModel = require('../model/lecture');
 var Lecture = LectureModel.Lecture;
@@ -131,7 +132,7 @@ function insert_course(lines, year, semesterIndex, next)
       console.log ("Pulling existing lectures...");
       Lecture.find({year : year, semester : semesterIndex}, function(err, docs) {
         old_lectures = docs;
-        callback();
+        callback(err);
       });
     },
     function (callback){
@@ -200,6 +201,10 @@ function insert_course(lines, year, semesterIndex, next)
       });
     }
   ], function (err, results){
+    if (err) {
+      console.log(err);
+      process.exit(1);
+    }
     next();
   });
 }

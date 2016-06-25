@@ -71,7 +71,7 @@ router.post('/:id/lecture', function(req, res, next) {
             console.log(err);
             return res.status(500).send("insert lecture failed");
           }
-          res.send(doc);
+          res.json(doc);
         });
       });
     })
@@ -105,13 +105,13 @@ router.post('/:id/lectures', function(req, res, next) {
 */
 
 /*
- * PUT /tables/:id/lecture
+ * PUT /tables/:table_id/lecture/:lecture_id
  * update a lecture of a timetable
  * param ===================================
  * json object of lecture to update
  */
-router.put('/:id/lecture', function(req, res, next) {
-  Timetable.findOne({'user_id': req.user_id, '_id' : req.params.id})
+router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
+  Timetable.findOne({'user_id': req.user_id, '_id' : req.params["table_id"]})
     .exec(function(err, timetable){
       if(err) return res.status(500).send("find table failed");
       if(!timetable) return res.status(404).send("timetable not found");
@@ -120,35 +120,31 @@ router.put('/:id/lecture', function(req, res, next) {
         return res.status(400).send("need lecture._id");
       if (lecture_raw.class_time_json)
         lecture_raw.class_time_mask = timeJsonToMask(lecture_raw.class_time_json);
-      timetable.update_lecture(lecture_raw, function(err, doc) {
+      timetable.update_lecture(req.params["lecture_id"], lecture_raw, function(err, doc) {
         if(err) {
           console.log(err);
           return res.status(500).send("update lecture failed");
         }
-        res.send(doc._id);
+        res.json(doc);
       });
     })
 });
 
 /*
- * DELETE /tables/:id/lecture
+ * DELETE /tables/:table_id/lecture/:lecture_id
  * delete a lecture from a timetable
- * param ===================================
- * lecture_id :id of lecture to delete
  */
-router.delete('/:id/lecture', function(req, res, next) {
-  if (!req.query["lecture_id"])
-    return res.status(403).send("please provide 'lecture_id' param");
+router.delete('/:table_id/lecture/:lecture_id', function(req, res, next) {
   Timetable.findOneAndUpdate(
-    {'user_id': req.user_id, '_id' : req.params.id},
-    { $pull: {"lecture_list" : {_id: req.query["lecture_id"]} } },
+    {'user_id': req.user_id, '_id' : req.params["table_id"]},
+    { $pull: {"lecture_list" : {_id: req.params["lecture_id"]} } },
     function (err, doc) {
       if (err) {
         console.log(err);
         return res.status(500).send("delete lecture failed");
       }
       if (!doc) return res.status(404).send("timetable not found");
-      if (!doc.lecture_list.id(req.query["lecture_id"]))
+      if (!doc.lecture_list.id(req.params["lecture_id"]))
         return res.status(404).send("lecture not found");
       res.send("ok");
     });

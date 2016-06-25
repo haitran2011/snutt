@@ -106,28 +106,22 @@ TimetableSchema.methods.add_lectures = function(lectures, next) {
  *            If a same lecture doesn't exist, error.
  * callback : callback (err) when finished
  */
-TimetableSchema.methods.update_lecture = function(lecture_raw, next) {
-  var err = null;
-  if (!lecture_raw._id) {
-    err = new Error("_id must be provided");
-    next(err, null);
-    return;
-  }
+TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, next) {
   var update_set = {};
+  Util.object_del_id(lecture_raw);
   for (var field in lecture_raw) {
     update_set['lecture_list.$.' + field] = lecture_raw[field];
   }
 
-  (function (timetable, lecture, patch) {
-    mongoose.model("Timetable").findOneAndUpdate({ "_id" : timetable._id, "lecture_list._id" : lecture._id},
-      {$set : patch}, function (err, numAffected) {
-        if (!err) {
-          if (numAffected < 1)
-            err = new Error("lecture not found");
+  (function (timetable_id, lecture_id, lecture, patch) {
+    mongoose.model("Timetable").findOneAndUpdate({ "_id" : timetable_id, "lecture_list._id" : lecture_id},
+      {$set : patch}, {new: true}, function (err, doc) {
+        if (!err && !doc) {
+          err = new Error("lecture not found");
         }
-        next(err, lecture);
+        next(err, doc);
       });
-  }) (this, lecture_raw, update_set);
+  }) (this._id, lecture_id, lecture_raw, update_set);
 };
 
 module.exports = mongoose.model('Timetable', TimetableSchema);

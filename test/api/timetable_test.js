@@ -11,7 +11,7 @@ var async = require('async');
 module.exports = function(app, db, request) {
   var token;
   var table_id;
-  var lecture;
+  var lecture_id;
   before(function(done) {
     async.series([
       function(callback) {
@@ -161,9 +161,9 @@ module.exports = function(app, db, request) {
         "_id": "56fcd83c041742971bd20a86",
         "class_time_mask": [
           0,
+          12,
           0,
-          0,
-          0,
+          12,
           0,
           0
         ],
@@ -188,7 +188,7 @@ module.exports = function(app, db, request) {
       .expect(200)
       .end(function(err, res) {
         if (err) done(err);
-        lecture = res.body;
+        lecture_id = res.body._id;
         assert.equal(res.body.course_number, "400.320");
         assert.equal(res.body.class_time_json[0].place, "302-308");
         done();
@@ -212,19 +212,114 @@ module.exports = function(app, db, request) {
   });
 
   it ('Modify a lecture', function(done) {
-    request.put('/api/tables/'+table_id+'/lecture/')
+    request.put('/api/tables/'+table_id+'/lecture/'+lecture_id)
       .set('x-access-token', token)
-      .send({_id:lecture._id, })
+      .send({_id:lecture_id, title:"abcd"})
       .expect(200)
       .end(function(err, res) {
         request.get('/api/tables/'+table_id)
           .set('x-access-token', token)
           .expect(200)
           .end(function(err, res) {
-            assert.equal(res.body.lecture_list[0].course_number, "400.320");
-            assert.equal(res.body.lecture_list[0].class_time_json[0].place, "302-308");
-            done(err);
+            if (err) done(err);
+            if (res.body.lecture_list[0].title == "abcd") done();
+            else done(new Error("lecture not updated"));
           });
       });
-  })
+  });
+
+  it ('Modifying course/lecture number should fail', function(done) {
+    request.put('/api/tables/'+table_id+'/lecture/'+lecture_id)
+      .set('x-access-token', token)
+      .send({course_number: "400.333", title:"abcd"})
+      .expect(403)
+      .end(function(err, res) {
+        if (err) done(err);
+      });
+    request.put('/api/tables/'+table_id+'/lecture/'+lecture_id)
+      .set('x-access-token', token)
+      .send({lecture_number: "010", title:"abcd"})
+      .expect(403)
+      .end(function(err, res) {
+        if (err) done(err);
+      });
+    done();
+  });
+
+  it ('Creating a same lecture should fail', function(done) {
+    request.post('/api/tables/'+table_id+'/lecture/')
+      .set('x-access-token', token)
+      .send({
+        "year": 2016,
+        "semester": 1,
+        "classification": "전선",
+        "department": "컴퓨터공학부",
+        "academic_year": "3학년",
+        "course_number": "400.320",
+        "lecture_number": "002",
+        "course_title": "공학연구의 실습 1",
+        "credit": 1,
+        "class_time": "화(13-1)/목(13-1)",
+        "instructor": "이제희",
+        "quota": 15,
+        "enrollment": 0,
+        "remark": "컴퓨터공학부 및 제2전공생만 수강가능",
+        "category": "",
+        "created_at": "2016-03-31T07:56:44.137Z",
+        "updated_at": "2016-03-31T07:56:44.137Z",
+        /*
+         * See to it that the server removes _id fields correctly
+         */
+        "_id": "56fcd83c041742971bd20a86",
+        "class_time_mask": [
+          0,
+          12,
+          0,
+          12,
+          0,
+          0
+        ],
+        "class_time_json": [
+          {
+            "day": 1,
+            "start": 13,
+            "len": 1,
+            "place": "302-308",
+            "_id": "56fcd83c041742971bd20a88"
+          },
+          {
+            "day": 3,
+            "start": 13,
+            "len": 1,
+            "place": "302-308",
+            "_id": "56fcd83c041742971bd20a87"
+          }
+        ],
+        "__v": 0
+      })
+      .expect(403)
+      .end(function(err, res) {
+        if (err) done(err);
+      })
+  });
+
+  it ('Delete a lecture', function(done) {
+    request.delete('/api/tables/'+table_id+'/lecture/'+lecture_id)
+      .set('x-access-token', token)
+      .expect(200, "ok")
+      .end(function(err, res) {
+        if (err) {
+          done(err);
+          return;
+        }
+        request.get('/api/tables/'+table_id)
+          .set('x-access-token', token)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) done(err);
+            assert.equal(res.body.lecture_list.length, 0);
+            done();
+          });
+      })
+  });
 };
