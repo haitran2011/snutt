@@ -36,7 +36,7 @@ router.post('/login_local', function(req, res, next) {
 router.post('/register_local', function (req, res, next) {
   User.create_local(req.body.id, req.body.password, function(err, user) {
     if (err) {
-      return res.status(500).send(err.message);
+      return res.status(403).send(err.message);
     }
     return res.send("ok");
   });

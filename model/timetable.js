@@ -16,6 +16,7 @@ var TimetableSchema = mongoose.Schema({
 /*
  * No timetable with same title in the same semester
  */
+/*
 TimetableSchema.pre('save', function(next) {
   this.model('Timetable').findOne(
     {
@@ -33,6 +34,26 @@ TimetableSchema.pre('save', function(next) {
       }
     });
 });
+*/
+
+TimetableSchema.methods.checkDuplicate = function(next) {
+  (function (timetable) {
+    mongoose.model('Timetable').findOne(
+      {
+        user_id : timetable.user_id,
+        year : timetable.year,
+        semester: timetable.semester,
+        title: timetable.title
+      }, function (err, doc) {
+        if (err) return next(err);
+        if (doc && !doc._id.equals(timetable._id)) {
+          var new_err = new Error('A timetable with the same title already exists');
+          return next(new_err);
+        }
+        return next(null);
+      });
+  } )(this);
+};
 
 /*
  * Timetable.copy(new_title, callback)
@@ -107,6 +128,9 @@ TimetableSchema.methods.add_lectures = function(lectures, next) {
  * callback : callback (err) when finished
  */
 TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, next) {
+  if (lecture_raw.course_number || lecture_raw.lecture_number)
+    return next(new Error("modifying identities forbidden"));
+
   var update_set = {};
   Util.object_del_id(lecture_raw);
   for (var field in lecture_raw) {
@@ -119,7 +143,7 @@ TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, next)
         if (!err && !doc) {
           err = new Error("lecture not found");
         }
-        next(err, doc);
+        return next(err, doc);
       });
   }) (this._id, lecture_id, lecture_raw, update_set);
 };

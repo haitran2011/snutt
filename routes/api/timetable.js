@@ -34,10 +34,14 @@ router.post('/', function(req, res, next) { //create
     title : req.body.title,
     lecture_list : []
   });
-  timetable.save(function(err, doc) {
-    if(err) return res.status(500).send('insert timetable failed');
-    res.send(doc._id);
+  timetable.checkDuplicate(function (err) {
+    if (err) return res.status(403).send('duplicate title');
+    timetable.save(function(err, doc) {
+      if(err) return res.status(500).send('insert timetable failed');
+      res.send(doc._id);
+    });
   });
+
 });
 
 /*
@@ -61,18 +65,11 @@ router.post('/:id/lecture', function(req, res, next) {
        */
       util.object_del_id(json);
       var lecture = new UserLecture(json);
-      lecture.save(function(err, doc){
-        if (err) {
-          console.log(err);
-          return res.status(500).send("lecture save failed");
+      timetable.add_lecture(lecture, function(err){
+        if(err) {
+          return res.status(403).send("insert lecture failed");
         }
-        timetable.add_lecture(doc, function(err){
-          if(err) {
-            console.log(err);
-            return res.status(500).send("insert lecture failed");
-          }
-          res.json(doc);
-        });
+        res.json(lecture);
       });
     })
 });
@@ -116,12 +113,16 @@ router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
       if(err) return res.status(500).send("find table failed");
       if(!timetable) return res.status(404).send("timetable not found");
       var lecture_raw = req.body;
-      if (!lecture_raw._id)
-        return res.status(400).send("need lecture._id");
+      if (!req.params["lecture_id"])
+        return res.status(400).send("need lecture_id");
       if (lecture_raw.class_time_json)
         lecture_raw.class_time_mask = timeJsonToMask(lecture_raw.class_time_json);
       timetable.update_lecture(req.params["lecture_id"], lecture_raw, function(err, doc) {
         if(err) {
+          if (err.message == "modifying identities forbidden")
+            return res.status(403).send(err.message);
+          if (err.message == "lecture not found")
+            return res.status(404).send(err.message);
           console.log(err);
           return res.status(500).send("update lecture failed");
         }
@@ -137,7 +138,7 @@ router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
 router.delete('/:table_id/lecture/:lecture_id', function(req, res, next) {
   Timetable.findOneAndUpdate(
     {'user_id': req.user_id, '_id' : req.params["table_id"]},
-    { $pull: {"lecture_list" : {_id: req.params["lecture_id"]} } },
+    { $pull: {lecture_list : {_id: req.params["lecture_id"]} } },
     function (err, doc) {
       if (err) {
         console.log(err);
@@ -183,13 +184,18 @@ router.post('/:id/copy', function(req, res, next) {
 });
 
 router.put('/:id', function(req, res, next) {
-  Timetable.findOneAndUpdate({'user_id': req.user._id, '_id' : req.params.id},
-    {
-      title : req.body.title
-    }
-    , function(err, timetable) {
+  if (!req.body.title) return res.status(400).send("should provide title");
+  Timetable.findOne({'user_id': req.user._id, '_id' : req.params.id})
+    .exec(function(err, timetable) {
       if(err) return res.status(500).send("update timetable title failed");
-      res.send(timetable._id);
+      timetable.title = req.body.title;
+      timetable.checkDuplicate(function(err) {
+        if (err) return res.status(403).send("duplicate title");
+        timetable.save(function (err, doc) {
+          if (err) return res.status(500).send("update timetable title failed");
+          res.send(timetable._id);
+        });
+      });
     });
   
 });

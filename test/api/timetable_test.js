@@ -75,11 +75,11 @@ module.exports = function(app, db, request) {
       })
   });
 
-  it ('Create timetable fails with the same title', function(done){
+  it ('Create timetable with the same title should fail', function(done){
     request.post('/api/tables/')
       .set('x-access-token', token)
       .send({year:2016, semester:1, title:"MyTimeTable"})
-      .expect(500, 'insert timetable failed')
+      .expect(403, 'duplicate title')
       .end(function(err, res) {
         done(err);
       })
@@ -103,20 +103,15 @@ module.exports = function(app, db, request) {
       })
   });
 
-  it ('Update timetable with the same title fails', function(done){
+  it ('Updating timetable with the same title should fail', function(done){
     request.put('/api/tables/'+table_id)
       .set('x-access-token', token)
       .send({title:"MyTimeTable2"})
-      .expect(500, 'update timetable title failed')
+      .expect(403, 'duplicate title')
       .end(function(err, res) {
-        assert.equal(res.body, table_id);
         done(err);
       })
   });
-
-  /* TODO : Lecture CRUD. Copy must be done after lecture CRUD
-   * because we should see whether the lecture contents copied correctly
-   */
 
   /* Search query does not work on test db
   it ('Get 글쓰기의 기초', function(done) {
@@ -214,7 +209,7 @@ module.exports = function(app, db, request) {
   it ('Modify a lecture', function(done) {
     request.put('/api/tables/'+table_id+'/lecture/'+lecture_id)
       .set('x-access-token', token)
-      .send({_id:lecture_id, title:"abcd"})
+      .send({_id:lecture_id, course_title:"abcd"})
       .expect(200)
       .end(function(err, res) {
         request.get('/api/tables/'+table_id)
@@ -222,7 +217,7 @@ module.exports = function(app, db, request) {
           .expect(200)
           .end(function(err, res) {
             if (err) done(err);
-            if (res.body.lecture_list[0].title == "abcd") done();
+            if (res.body.lecture_list[0].course_title == "abcd") done();
             else done(new Error("lecture not updated"));
           });
       });
@@ -234,16 +229,19 @@ module.exports = function(app, db, request) {
       .send({course_number: "400.333", title:"abcd"})
       .expect(403)
       .end(function(err, res) {
-        if (err) done(err);
+        if (err) {
+          done(err);
+        } else {
+          request.put('/api/tables/' + table_id + '/lecture/' + lecture_id)
+            .set('x-access-token', token)
+            .send({lecture_number: "010", title: "abcd"})
+            .expect(403)
+            .end(function (err, res) {
+              if (err) done(err);
+            });
+          done();
+        }
       });
-    request.put('/api/tables/'+table_id+'/lecture/'+lecture_id)
-      .set('x-access-token', token)
-      .send({lecture_number: "010", title:"abcd"})
-      .expect(403)
-      .end(function(err, res) {
-        if (err) done(err);
-      });
-    done();
   });
 
   it ('Creating a same lecture should fail', function(done) {
@@ -299,7 +297,7 @@ module.exports = function(app, db, request) {
       })
       .expect(403)
       .end(function(err, res) {
-        if (err) done(err);
+        done(err);
       })
   });
 
@@ -317,8 +315,11 @@ module.exports = function(app, db, request) {
           .expect(200)
           .end(function(err, res) {
             if (err) done(err);
-            assert.equal(res.body.lecture_list.length, 0);
-            done();
+            if (res.body.lecture_list.length != 0 &&
+              res.body.lecture_list[0]._id == lecture_id) {
+              err = new Error("lecture not deleted");
+            }
+            done(err);
           });
       })
   });

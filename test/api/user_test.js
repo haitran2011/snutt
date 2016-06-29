@@ -49,7 +49,7 @@ module.exports = function(app, db, request) {
     it('Duplicate ID', function(done) {
       request.post('/api/auth/register_local')
         .send({id:"snutt", password:"1234"})
-        .expect(500, 'same id already exists')
+        .expect(403, 'same id already exists')
         .end(function(err, res){
           done(err);
         });
@@ -58,7 +58,7 @@ module.exports = function(app, db, request) {
     it('Weird ID', function(done) {
       request.post('/api/auth/register_local')
         .send({id:"snutt##*", password:"1234"})
-        .expect(500, 'incorrect id')
+        .expect(403, 'incorrect id')
         .end(function(err, res){
           done(err);
         });
@@ -67,7 +67,7 @@ module.exports = function(app, db, request) {
     it('Too short ID', function(done) {
       request.post('/api/auth/register_local')
         .send({id:"tt", password:"1234"})
-        .expect(500, 'incorrect id')
+        .expect(403, 'incorrect id')
         .end(function(err, res){
           done(err);
         });
@@ -76,7 +76,7 @@ module.exports = function(app, db, request) {
     it('Too long ID', function(done) {
       request.post('/api/auth/register_local')
         .send({id:"ThisIsVeryLongIdYouKnowThatThisIsFreakingLongManVeryLong", password:"1234"})
-        .expect(500, 'incorrect id')
+        .expect(403, 'incorrect id')
         .end(function(err, res){
           done(err);
         });
@@ -85,7 +85,7 @@ module.exports = function(app, db, request) {
     it('No password', function(done) {
       request.post('/api/auth/register_local')
         .send({id:"IDontNeedPw", password:""})
-        .expect(500, 'incorrect password')
+        .expect(403, 'incorrect password')
         .end(function(err, res){
           done(err);
         });

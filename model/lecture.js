@@ -33,17 +33,19 @@ function BaseSchema(add){
    * lecture : target for comparison
    */
   schema.methods.is_equal = function(lecture) {
-    return (this.year == lecture.year &&
-    this.semester == lecture.semester &&
+    var ret = true;
+    if (this.year && lecture.year)
+      ret &= this.year == lecture.year;
+    if (this.semester && lecture.semester)
+      ret &= this.semester  == lecture.semester;
+    return (ret &&
     this.course_number == lecture.course_number &&
     this.lecture_number == lecture.lecture_number);
   };
 
   schema.statics.is_equal = function(lecture1, lecture2) {
-    return (lecture1.year == lecture2.year &&
-    lecture1.semester == lecture2.semester &&
-    lecture1.course_number == lecture2.course_number &&
-    lecture1.lecture_number == lecture2.lecture_number);
+    if (!lecture1.is_equal) return false;
+    return lecture1.is_equal(lecture2);
   };
 
   schema.index({ year: 1, semester: 1, classification: 1 });
