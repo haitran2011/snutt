@@ -10,7 +10,7 @@ var Lecture = LectureModel.Lecture;
 var UserLecture = LectureModel.UserLecture;
 
 router.get('/', function(req, res, next) { //timetable list
-  Timetable.find({'user_id' : req.user._id}).select('year semester title _id')
+  Timetable.find({'user_id' : req.user._id}).select('year semester title _id updated_at')
   .exec(function(err, timetables) {
     if(err) return res.status(500).send('fetch timetable list failed');
     res.json(timetables);

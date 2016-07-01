@@ -11,6 +11,7 @@ var async = require('async');
 module.exports = function(app, db, request) {
   var token;
   var table_id;
+  var table_updated_at;
   var lecture_id;
   before(function(done) {
     async.series([
@@ -61,6 +62,7 @@ module.exports = function(app, db, request) {
         if (err) done(err);
         if (res.body.title != "MyTimeTable")
           done(new Error("timetable title differs"));
+        table_updated_at = res.body.updated_at;
         done();
       })
   });
@@ -100,6 +102,18 @@ module.exports = function(app, db, request) {
             assert.equal(res.body.title, "MyTimeTable3");
             done(err);
           });
+      })
+  });
+  
+  it ('Table updated_at updated correctly', function(done) {
+    request.get('/api/tables/'+table_id)
+      .set('x-access-token', token)
+      .expect(200)
+      .end(function(err, res) {
+        if (err) return done(err);
+        if (res.body.updated_at == table_updated_at)
+          return done(new Error("update time does not differ"));
+        done();
       })
   });
 

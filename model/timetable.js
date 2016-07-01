@@ -10,31 +10,14 @@ var TimetableSchema = mongoose.Schema({
   year : {type : Number, required : true },
   semester : {type : Number, required : true, min:1, max:4 },
   title : {type : String, required : true },
-	lecture_list: [UserLecture.schema]
+	lecture_list: [UserLecture.schema],
+  updated_at : {type: Date, default: Date.now()}
 });
 
-/*
- * No timetable with same title in the same semester
- */
-/*
 TimetableSchema.pre('save', function(next) {
-  this.model('Timetable').findOne(
-    {
-      user_id : this.user_id,
-      year : this.year,
-      semester: this.semester,
-      title: this.title
-    }, function (err, doc) {
-      if (err) next(err);
-      if (doc && doc._id != this._id) {
-        var new_err = new Error('A timetable with the same title already exists');
-        next(new_err);
-      } else {
-        next();
-      }
-    });
+  this.updated_at = Date.now();
+  next();
 });
-*/
 
 TimetableSchema.methods.checkDuplicate = function(next) {
   (function (timetable) {
