@@ -1,7 +1,7 @@
 var router = require('express').Router();
 var LectureModel = require('../../model/lecture');
 var Lecture = LectureModel.Lecture;
-var timeJsonToMask = require('../../lib/util').timeJsonToMask;
+var Util = require('../../lib/util');
 
 //something similar to LIKE query in SQL
 function like(str, option) {
@@ -14,15 +14,13 @@ function like(str, option) {
   return reg
 }
 
+// deprecated
 function timeRangesToBinaryConditions(timeJson) {
-  return timeJsonToMask(timeJson).map(function(bit, idx) {
-    var condition = {};
-    if (bit != 0)
-      condition['$bitsAnySet'] = bit;
-    condition['$bitsAllClear'] = (~(bit << 6))>>>6;
-    return condition
+  return Util.timeJsonToMask(timeJson).map(function(bit, idx) {
+    return {$bitsAllClear : ~bit<<1>>>1};
   })
 }
+
 
 module.exports = router.post('/', function(req, res, next) {
   if (!req.body.year || !req.body.semester) {
@@ -45,15 +43,19 @@ module.exports = router.post('/', function(req, res, next) {
     query.category = { $in : req.body.category };
   if (req.body.department && req.body.department.length) // in this case result should be sorted by departments
     query.department = { $in : req.body.department };
-  if (req.body.time && req.body.time != []) {
-    var conditions = timeRangesToBinaryConditions(req.body.time);
+  if (req.body.time_mask && req.body.time_mask.length == 6) {
+    var conditions = Util.timeMasksToBinaryConditions(req.body.time_mask);
     conditions.forEach(function(condition, idx) {
+      console.log(condition);
       query['class_time_mask.' + idx] = condition;
     })
   }
 
   Lecture.find(query).sort('course_number').lean().exec(function (err, lectures) {
-    if (err) next(err);
+    if (err) {
+      console.log(err);
+      return res.status(500).send("search error");
+    }
     return res.json(lectures);
   })
 });

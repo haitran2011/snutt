@@ -10,7 +10,7 @@ var Lecture = LectureModel.Lecture;
 var UserLecture = LectureModel.UserLecture;
 
 router.get('/', function(req, res, next) { //timetable list
-  Timetable.find({'user_id' : req.user._id}).select('year semester title _id updated_at')
+  Timetable.find({'user_id' : req.user._id}).select('year semester title _id updated_at').lean()
   .exec(function(err, timetables) {
     if(err) return res.status(500).send('fetch timetable list failed');
     res.json(timetables);
@@ -18,7 +18,7 @@ router.get('/', function(req, res, next) { //timetable list
 });
 
 router.get('/:id', function(req, res, next) { //get
-  Timetable.findOne({'user_id': req.user._id, '_id' : req.params.id})
+  Timetable.findOne({'user_id': req.user._id, '_id' : req.params.id}).lean()
   .exec(function(err, timetable) {
     if(err) return res.status(500).send("find table failed");
     if(!timetable) return res.status(404).send('timetable not found');
@@ -44,7 +44,7 @@ router.post('/', function(req, res, next) { //create
 
 });
 
-/*
+/**
  * POST /tables/:id/lecture
  * add a lecture into a timetable
  * param ===================================
@@ -56,7 +56,8 @@ router.post('/:id/lecture', function(req, res, next) {
       if(err) return res.status(500).send("find table failed");
       if(!timetable) return res.status(404).send("timetable not found");
       var json = req.body;
-      json.class_time_mask = timeJsonToMask(json.class_time_json);
+      if (json.class_time_json) json.class_time_mask = timeJsonToMask(json.class_time_json);
+      else if (json.class_time_mask) delete json.class_time_mask;
       /*
        * Sanitize json using object_del_id.
        * If you don't do it,
@@ -74,7 +75,7 @@ router.post('/:id/lecture', function(req, res, next) {
     })
 });
 
-/*
+/**
  * POST /tables/:id/lectures
  * add lectures into a timetable
  * param ===================================
@@ -101,18 +102,21 @@ router.post('/:id/lectures', function(req, res, next) {
 });
 */
 
-/*
+/**
  * PUT /tables/:table_id/lecture/:lecture_id
  * update a lecture of a timetable
  * param ===================================
  * json object of lecture to update
  */
+
+// TODO : duplicate timetable query fix
 router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
+  var lecture_raw = req.body;
+  if(!lecture_raw || Object.keys(lecture_raw).length < 1) return res.status(400).send("empty body");
   Timetable.findOne({'user_id': req.user_id, '_id' : req.params["table_id"]})
     .exec(function(err, timetable){
       if(err) return res.status(500).send("find table failed");
       if(!timetable) return res.status(404).send("timetable not found");
-      var lecture_raw = req.body;
       if (!req.params["lecture_id"])
         return res.status(400).send("need lecture_id");
       if (lecture_raw.class_time_json)
@@ -131,15 +135,15 @@ router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
     })
 });
 
-/*
+/**
  * DELETE /tables/:table_id/lecture/:lecture_id
  * delete a lecture from a timetable
  */
 router.delete('/:table_id/lecture/:lecture_id', function(req, res, next) {
   Timetable.findOneAndUpdate(
     {'user_id': req.user_id, '_id' : req.params["table_id"]},
-    { $pull: {lecture_list : {_id: req.params["lecture_id"]} } },
-    function (err, doc) {
+    { $pull: {lecture_list : {_id: req.params["lecture_id"]} } })
+    .exec(function (err, doc) {
       if (err) {
         console.log(err);
         return res.status(500).send("delete lecture failed");
@@ -151,12 +155,12 @@ router.delete('/:table_id/lecture/:lecture_id', function(req, res, next) {
     });
 });
 
-/*
+/**
  * DELETE /tables/:id
  * delete a timetable
  */
 router.delete('/:id', function(req, res, next) { // delete
-  Timetable.findOneAndRemove({'user_id': req.user._id, '_id' : req.params.id})
+  Timetable.findOneAndRemove({'user_id': req.user._id, '_id' : req.params.id}).lean()
   .exec(function(err, doc) {
     if(err) {
       console.log(err);
@@ -167,7 +171,7 @@ router.delete('/:id', function(req, res, next) { // delete
   });
 });
 
-/*
+/**
  * POST /tables/:id/copy
  * copy a timetable
  */

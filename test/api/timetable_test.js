@@ -223,7 +223,7 @@ module.exports = function(app, db, request) {
   it ('Modify a lecture', function(done) {
     request.put('/api/tables/'+table_id+'/lecture/'+lecture_id)
       .set('x-access-token', token)
-      .send({_id:lecture_id, course_title:"abcd"})
+      .send({course_title:"abcd"})
       .expect(200)
       .end(function(err, res) {
         request.get('/api/tables/'+table_id)

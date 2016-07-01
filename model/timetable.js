@@ -76,6 +76,8 @@ TimetableSchema.methods.add_lecture = function(lecture, next) {
       return;
     }
   }
+  lecture.created_at = Date.now();
+  lecture.updated_at = Date.now();
   this.lecture_list.push(lecture);
   this.save(next);
 };
@@ -114,6 +116,8 @@ TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, next)
   if (lecture_raw.course_number || lecture_raw.lecture_number)
     return next(new Error("modifying identities forbidden"));
 
+  lecture_raw.updated_at = Date.now();
+
   var update_set = {};
   Util.object_del_id(lecture_raw);
   for (var field in lecture_raw) {
@@ -123,9 +127,9 @@ TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, next)
   (function (timetable_id, lecture_id, lecture, patch) {
     mongoose.model("Timetable").findOneAndUpdate({ "_id" : timetable_id, "lecture_list._id" : lecture_id},
       {$set : patch}, {new: true}, function (err, doc) {
-        if (!err && !doc) {
-          err = new Error("lecture not found");
-        }
+        if (err) return next(err);
+        if (!doc) err = new Error("timetable not found");
+        else if (!doc.lecture_list.id(lecture_id)) err = new Error("lecture not found");
         return next(err, doc);
       });
   }) (this._id, lecture_id, lecture_raw, update_set);

@@ -8,15 +8,16 @@ process.env.NODE_ENV = 'mocha';
 
 var assert = require('assert');
 var request = require('supertest');
-var app = require('../../app');
 var db = require('../../db');
+var app = require('../../app');
 
 request = request(app);
 describe('API Test', function() {
-  
+
   // Change connection into test DB in order not to corrupt production DB
   before(function(done) {
-    assert(db.connection.readyState);
+    if (!db.connection.readyState)
+      return done(new Error("DB not connected"));
     db.disconnect(function() {
       db.connect('mongodb://localhost/snutt_test', function(err){
         if (err) return done(err);
@@ -38,6 +39,17 @@ describe('API Test', function() {
       .end(function(err, res){
         done(err);
       });
+  });
+
+  it('MongoDB >= 3.2', function(done) {
+    var admin = db.connection.db.admin();
+    admin.buildInfo(function (err, info) {
+      if (err)
+        return done(err);
+      if (parseFloat(info.version) < 3.2)
+        return done(new Error("MongoDB version("+info.version+") is outdated(< 3.2). Service might not work properly"));
+      done();
+    });
   });
   
   describe('User', function () {
