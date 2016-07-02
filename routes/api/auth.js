@@ -5,7 +5,7 @@ var secretKey = require('../../config/secretKey');
 
 var User = require('../../model/user');
 
-/*
+/**
  * POST
  * id, password
  */
@@ -28,7 +28,7 @@ router.post('/login_local', function(req, res, next) {
   });
 });
 
-/*
+/**
  * register local user
  * Registerations should be defined in this 'auth', not 'user', because
  * it needs to be accessed without token

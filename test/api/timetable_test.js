@@ -17,7 +17,7 @@ module.exports = function(app, db, request) {
     async.series([
       function(callback) {
         request.post('/api/auth/login_local')
-          .send({id:"snutt", password:"1234"})
+          .send({id:"snutt", password:"abc1234"})
           .expect(200)
           .end(function(err, res){
             token = res.body;

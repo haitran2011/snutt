@@ -38,7 +38,7 @@ TimetableSchema.methods.checkDuplicate = function(next) {
   } )(this);
 };
 
-/*
+/**
  * Timetable.copy(new_title, callback)
  * param =======================================
  * new_title : New title.
@@ -49,7 +49,7 @@ TimetableSchema.methods.copy = function(new_title, next) {
     var new_err = new Error('A timetable with the same title already exists');
     next(new_err);
   } else {
-    /*
+    /**
      * Sanitize json object, then save it
      * -> Cannot recognize existing entry
      * -> Create new entry
@@ -61,7 +61,7 @@ TimetableSchema.methods.copy = function(new_title, next) {
   }
 };
 
-/*
+/**
  * Timetable.add_lecture(lecture, callback)
  * param =======================================
  * lecture : a UserLecture to add.
@@ -82,7 +82,7 @@ TimetableSchema.methods.add_lecture = function(lecture, next) {
   this.save(next);
 };
 
-/*
+/**
  * Timetable.add_lectures(lectures, callback)
  * param =======================================
  * lectures : an array of lectures to merge.
@@ -105,7 +105,7 @@ TimetableSchema.methods.add_lectures = function(lectures, next) {
 };
 */
 
-/*
+/**
  * Timetable.update_lecture(lecture_raw, callback)
  * param =======================================
  * lecture : a partial update for lecture.

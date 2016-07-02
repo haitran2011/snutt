@@ -22,10 +22,10 @@ var UserSchema = new mongoose.Schema({
 UserSchema.pre('save', function (callback) {
 	var user = this;
 
-  if (!user.local.id.match(/^[a-z0-9]{4,32}$/i))
+  if (!user.local.id || !user.local.id.match(/^[a-z0-9]{4,32}$/i))
 		return callback(new Error("incorrect id"));
 
-  if (!user.local.password.match(/^\S{4,32}$/i))
+  if (!user.local.password || !user.local.password.match(/^(?=.*\d)(?=.*[a-z])\S{6,20}$/i))
     return callback(new Error("incorrect password"));
 
 	if (!user.isModified('local.password')) return callback();

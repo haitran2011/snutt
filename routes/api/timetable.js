@@ -113,12 +113,14 @@ router.post('/:id/lectures', function(req, res, next) {
 router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
   var lecture_raw = req.body;
   if(!lecture_raw || Object.keys(lecture_raw).length < 1) return res.status(400).send("empty body");
+
+  if (!req.params["lecture_id"])
+    return res.status(400).send("need lecture_id");
+
   Timetable.findOne({'user_id': req.user_id, '_id' : req.params["table_id"]})
     .exec(function(err, timetable){
       if(err) return res.status(500).send("find table failed");
       if(!timetable) return res.status(404).send("timetable not found");
-      if (!req.params["lecture_id"])
-        return res.status(400).send("need lecture_id");
       if (lecture_raw.class_time_json)
         lecture_raw.class_time_mask = timeJsonToMask(lecture_raw.class_time_json);
       timetable.update_lecture(req.params["lecture_id"], lecture_raw, function(err, doc) {
