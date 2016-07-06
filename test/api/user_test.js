@@ -46,6 +46,15 @@ module.exports = function(app, db, request) {
   });
 
   describe('Register fails when', function() {
+    it('No ID', function(done) {
+      request.post('/api/auth/register_local')
+        .send({password:"IDontNeedID"})
+        .expect(403, 'incorrect id')
+        .end(function(err, res){
+          done(err);
+        });
+    });
+
     it('Duplicate ID', function(done) {
       request.post('/api/auth/register_local')
         .send({id:"snutt", password:"abc1234"})
