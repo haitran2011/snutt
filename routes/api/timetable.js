@@ -36,7 +36,10 @@ router.post('/', function(req, res, next) { //create
     if (err) return res.status(403).send('duplicate title');
     timetable.save(function(err, doc) {
       if(err) return res.status(500).send('insert timetable failed');
-      res.send(doc._id);
+      Timetable.getTimetables(req.user._id, {lean:true}, function(err, timetables){
+        if (err) return res.status(500).send('get timetable list failed');
+        res.json(timetables);
+      });
     });
   });
 
@@ -64,11 +67,11 @@ router.post('/:id/lecture', function(req, res, next) {
        */
       util.object_del_id(json);
       var lecture = new UserLecture(json);
-      timetable.add_lecture(lecture, function(err){
+      timetable.add_lecture(lecture, function(err, timetable){
         if(err) {
           return res.status(403).send("insert lecture failed");
         }
-        res.json(lecture);
+        res.json(timetable);
       });
     })
 });
@@ -142,15 +145,13 @@ router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
 router.delete('/:table_id/lecture/:lecture_id', function(req, res, next) {
   Timetable.findOneAndUpdate(
     {'user_id': req.user_id, '_id' : req.params["table_id"]},
-    { $pull: {lecture_list : {_id: req.params["lecture_id"]} } })
+    { $pull: {lecture_list : {_id: req.params["lecture_id"]} } }, {new: true})
     .exec(function (err, doc) {
       if (err) {
         console.log(err);
         return res.status(500).send("delete lecture failed");
       }
       if (!doc) return res.status(404).send("timetable not found");
-      if (!doc.lecture_list.id(req.params["lecture_id"]))
-        return res.status(404).send("lecture not found");
       res.json(doc);
     });
 });

@@ -31,7 +31,7 @@ module.exports = function(app, db, request) {
           .send({year:2016, semester:1, title:"MyTimeTable"})
           .expect(200)
           .end(function(err, res){
-            table_id = res.body;
+            table_id = res.body[0]._id;
             if (err) done(err);
             callback(err);
           });
@@ -59,11 +59,11 @@ module.exports = function(app, db, request) {
       .set('x-access-token', token)
       .expect(200)
       .end(function(err, res) {
-        if (err) done(err);
+        if (err) return done(err);
         if (res.body.title != "MyTimeTable")
-          done(new Error("timetable title differs"));
+          err = new Error("timetable title differs");
         table_updated_at = res.body.updated_at;
-        done();
+        done(err);
       })
   });
 
@@ -94,7 +94,6 @@ module.exports = function(app, db, request) {
       .expect(200)
       .end(function(err, res) {
         if(err) done(err);
-        assert.equal(res.body, table_id);
         request.get('/api/tables/'+table_id)
           .set('x-access-token', token)
           .expect(200)
@@ -197,9 +196,10 @@ module.exports = function(app, db, request) {
       .expect(200)
       .end(function(err, res) {
         if (err) done(err);
-        lecture_id = res.body._id;
-        assert.equal(res.body.course_number, "400.320");
-        assert.equal(res.body.class_time_json[0].place, "302-308");
+        var lecture = res.body.lecture_list[0];
+        lecture_id = lecture._id;
+        assert.equal(lecture.course_number, "400.320");
+        assert.equal(lecture.class_time_json[0].place, "302-308");
         done();
       })
   });
@@ -318,23 +318,17 @@ module.exports = function(app, db, request) {
   it ('Delete a lecture', function(done) {
     request.delete('/api/tables/'+table_id+'/lecture/'+lecture_id)
       .set('x-access-token', token)
-      .expect(200, "ok")
+      .expect(200)
       .end(function(err, res) {
         if (err) {
           done(err);
           return;
         }
-        request.get('/api/tables/'+table_id)
-          .set('x-access-token', token)
-          .expect(200)
-          .end(function(err, res) {
-            if (err) done(err);
-            if (res.body.lecture_list.length != 0 &&
-              res.body.lecture_list[0]._id == lecture_id) {
-              err = new Error("lecture not deleted");
-            }
-            done(err);
-          });
+        if (res.body.lecture_list.length != 0 &&
+          res.body.lecture_list[0]._id == lecture_id) {
+          err = new Error("lecture not deleted");
+        }
+        done(err);
       })
   });
 };

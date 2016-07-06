@@ -44,15 +44,15 @@ TimetableSchema.methods.checkDuplicate = function(next) {
  * @flags {lean}
  */
 TimetableSchema.statics.getTimetables = function(user_id, flags, callback) {
-  var result = Timetable.find({'user_id' : user_id}).select('year semester title _id updated_at');
-  if (flags && flags.lean == true) result = result.lean();
-  result.exec(callback);
+  var query = mongoose.model("Timetable").where('user_id', user_id).select('year semester title _id updated_at');
+  if (flags && flags.lean == true) query = query.lean();
+  query.exec(callback);
 };
 
 TimetableSchema.statics.getTimetable = function(user_id, timetable_id, flags, callback) {
-  var result = Timetable.findOne({'user_id': user_id, '_id' : timetable_id});
-  if (flags && flags.lean == true) result = result.lean();
-  result.exec(callback);
+  var query = mongoose.model("Timetable").findOne({'user_id': user_id, '_id' : timetable_id});
+  if (flags && flags.lean == true) query = query.lean();
+  query.exec(callback);
 };
 
 /**
