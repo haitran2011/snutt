@@ -10,16 +10,14 @@ var Lecture = LectureModel.Lecture;
 var UserLecture = LectureModel.UserLecture;
 
 router.get('/', function(req, res, next) { //timetable list
-  Timetable.find({'user_id' : req.user._id}).select('year semester title _id updated_at').lean()
-  .exec(function(err, timetables) {
+  Timetable.getTimetables(req.user._id, {lean:true}, function(err, timetables) {
     if(err) return res.status(500).send('fetch timetable list failed');
     res.json(timetables);
   });
 });
 
 router.get('/:id', function(req, res, next) { //get
-  Timetable.findOne({'user_id': req.user._id, '_id' : req.params.id}).lean()
-  .exec(function(err, timetable) {
+  Timetable.getTimetable(req.user._id, req.params.id, {lean:true}, function(err, timetable) {
     if(err) return res.status(500).send("find table failed");
     if(!timetable) return res.status(404).send('timetable not found');
     res.json(timetable);
@@ -153,7 +151,7 @@ router.delete('/:table_id/lecture/:lecture_id', function(req, res, next) {
       if (!doc) return res.status(404).send("timetable not found");
       if (!doc.lecture_list.id(req.params["lecture_id"]))
         return res.status(404).send("lecture not found");
-      res.send("ok");
+      res.json(doc);
     });
 });
 
@@ -163,13 +161,13 @@ router.delete('/:table_id/lecture/:lecture_id', function(req, res, next) {
  */
 router.delete('/:id', function(req, res, next) { // delete
   Timetable.findOneAndRemove({'user_id': req.user._id, '_id' : req.params.id}).lean()
-  .exec(function(err, doc) {
-    if(err) {
-      console.log(err);
-      return res.status(500).send("delete timetable failed");
-    }
-    if (!doc) return res.status(404).send("timetable not found");
-    res.send("ok");
+  .exec(function(err, timetable) {
+    if(err) return res.status(500).send("delete timetable failed");
+    if (!timetable) return res.status(404).send("timetable not found");
+    Timetable.getTimetables(req.user._id, {lean:true}, function(err, timetables) {
+      if (err) return res.status(500).send("failed to get list");
+      res.json(timetables);
+    });
   });
 });
 
@@ -184,7 +182,10 @@ router.post('/:id/copy', function(req, res, next) {
       if(!timetable) return res.status(404).send("timetable not found");
       timetable.copy(timetable.title, function(err, doc) {
         if(err) return res.status(500).send("timetable copy failed");
-        else res.send(doc._id);
+        Timetable.getTimetables(req.user._id, {lean:true}, function(err, timetables) {
+          if (err) return res.status(500).send("failed to get list");
+          res.json(timetables);
+        });
       });
     })
 });
@@ -199,11 +200,13 @@ router.put('/:id', function(req, res, next) {
         if (err) return res.status(403).send("duplicate title");
         timetable.save(function (err, doc) {
           if (err) return res.status(500).send("update timetable title failed");
-          res.send(timetable._id);
+          Timetable.getTimetables(req.user._id, {lean:true}, function(err, timetables) {
+            if (err) return res.status(500).send("failed to get list");
+            res.json(timetables);
+          });
         });
       });
     });
-  
 });
 
 module.exports = router;

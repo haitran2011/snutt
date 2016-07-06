@@ -15,11 +15,13 @@ function like(str, option) {
 }
 
 // deprecated
+/*
 function timeRangesToBinaryConditions(timeJson) {
   return Util.timeJsonToMask(timeJson).map(function(bit, idx) {
     return {$bitsAllClear : ~bit<<1>>>1};
   })
 }
+*/
 
 
 module.exports = router.post('/', function(req, res, next) {
