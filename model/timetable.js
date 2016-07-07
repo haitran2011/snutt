@@ -11,7 +11,7 @@ var TimetableSchema = mongoose.Schema({
   semester : {type : Number, required : true, min:1, max:4 },
   title : {type : String, required : true },
 	lecture_list: [UserLecture.schema],
-  updated_at : {type: Date, default: Date.now()}
+  updated_at : {type: Date, required : true }
 });
 
 TimetableSchema.index({ year: 1, semester: 1, user_id: 1 });
@@ -124,14 +124,7 @@ TimetableSchema.methods.add_lectures = function(lectures, next) {
 };
 */
 
-/**
- * Timetable.update_lecture(lecture_raw, callback)
- * param =======================================
- * lecture : a partial update for lecture.
- *            If a same lecture doesn't exist, error.
- * callback : callback (err) when finished
- */
-TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, next) {
+TimetableSchema.statics.update_lecture = function(timetable_id, lecture_id, lecture_raw, next) {
   if (lecture_raw.course_number || lecture_raw.lecture_number)
     return next(new Error("modifying identities forbidden"));
 
@@ -151,7 +144,18 @@ TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, next)
         else if (!doc.lecture_list.id(lecture_id)) err = new Error("lecture not found");
         return next(err, doc);
       });
-  }) (this._id, lecture_id, lecture_raw, update_set);
+  }) (timetable_id, lecture_id, lecture_raw, update_set);
+};
+
+/**
+ * Timetable.update_lecture(lecture_raw, callback)
+ * param =======================================
+ * lecture : a partial update for lecture.
+ *            If a same lecture doesn't exist, error.
+ * callback : callback (err) when finished
+ */
+TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, next) {
+  mongoose.model('Timetable').update_lecture(this._id, lecture_id, lecture_raw, next);
 };
 
 module.exports = mongoose.model('Timetable', TimetableSchema);

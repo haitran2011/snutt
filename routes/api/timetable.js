@@ -25,6 +25,8 @@ router.get('/:id', function(req, res, next) { //get
 });
 
 router.post('/', function(req, res, next) { //create
+  if (!req.body.year || !req.body.semester || !req.body.title)
+    return res.status(400).send('not enough parameters');
   var timetable = new Timetable({
     user_id : req.user._id, 
     year : req.body.year,
@@ -35,7 +37,10 @@ router.post('/', function(req, res, next) { //create
   timetable.checkDuplicate(function (err) {
     if (err) return res.status(403).send('duplicate title');
     timetable.save(function(err, doc) {
-      if(err) return res.status(500).send('insert timetable failed');
+      if(err) {
+        console.log(err);
+        return res.status(500).send('insert timetable failed');
+      }
       Timetable.getTimetables(req.user._id, {lean:true}, function(err, timetables){
         if (err) return res.status(500).send('get timetable list failed');
         res.json(timetables);
@@ -43,6 +48,40 @@ router.post('/', function(req, res, next) { //create
     });
   });
 
+});
+
+/**
+ * POST /tables/:timetable_id/lecture/:lecture_id
+ * add a lecture into a timetable
+ * param ===================================
+ * Lecture id from search query
+ */
+router.post('/:timetable_id/lecture/:lecture_id', function(req, res, next) {
+  Timetable.findOne({'user_id': req.user_id, '_id' : req.params.timetable_id}).exec()
+    .then(function(err, timetable){
+      if(err) return res.status(500).send("find table failed");
+      if(!timetable) return res.status(404).send("timetable not found");
+      Lecture.findOne({'_id': req.params.lecture_id}).lean()
+        .exec(function(err, lecture){
+          var json = req.body;
+          if (json.class_time_json) json.class_time_mask = timeJsonToMask(json.class_time_json);
+          else if (json.class_time_mask) delete json.class_time_mask;
+          /*
+           * Sanitize json using object_del_id.
+           * If you don't do it,
+           * the existing lecture gets overwritten
+           * which is potential security breach.
+           */
+          util.object_del_id(json);
+          var lecture = new UserLecture(json);
+          timetable.add_lecture(lecture, function(err, timetable){
+            if(err) {
+              return res.status(403).send("insert lecture failed");
+            }
+            res.json(timetable);
+          });
+        });
+    })
 });
 
 /**

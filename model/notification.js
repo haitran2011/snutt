@@ -1,45 +1,61 @@
 /**
  * Notification Model
  * Jang Ryeol, ryeolj5911@gmail.com
- *
- * Types
- * - 0 : Normal Messages. Detail would be null
- * - 1 : Course Book Changes. Detail contains lecture difference
  */
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
+var User = require('./user');
+var async = require('async');
 
 var NotificationSchema = mongoose.Schema({
-  user_id : { type: Schema.Types.ObjectId, ref: 'User', default : null },
+  user_id : { type: Schema.Types.ObjectId, ref: 'User', required : true },
   message : { type : String, required : true },
   created_at : { type : Date, required : true},
-  checked : { type : Boolean, required : true, default : false},
   type : { type: Number, required : true, default : 0 },
-  detail : { type: Schema.Types.Mixed }
+  detail : { type: Schema.Types.ObjectId, ref: 'NotificationDetail', default : null }
 });
 
 NotificationSchema.index({user_id: 1, created_at: -1});
 
-NotificationSchema.statics.getNewest = function (user_id, offset, limit) {
+NotificationSchema.statics.getNewest = function (user_id, offset, limit, callback) {
   var query = mongoose.Model('Notification').where('user_id').in([null, user_id])
     .sort('-created_at')
     .skip(offset)
     .limit(limit)
-}
+    .lean()
+    .exec(callback);
+};
 
-NotificationSchema.statics.createNotification = function (user_id, message, type, detail) {
-  if (!user_id) user_id = null;
+/** 
+ * Types
+ * - Type.NORMAL      : Normal Messages. Detail would be null
+ * - Type.COURSEBOOK  : Course Book Changes. Detail contains lecture difference
+ * - Type.LECTURE     : Lecture Changes. Course book changes are for all users.
+ *                      Lecture changes contains per-user update log.
+ */
+NotificationSchema.statics.Type = {
+  NORMAL : 0,
+  COURSEBOOK : 1,
+  LECTURE : 2
+};
+
+// if user_id_array is null or not array, create it as global
+NotificationSchema.statics.createNotifications = function (user_id_array, message, type, detail, callback) {
+  if (!user_id_array || !user_id_array.length) {
+    user_id_array = [null];
+  }
   if (!type) type = 0;
-  if (!detail) detail = null;
-  var notification = new (mongoose.Model('Notification'))({
-    user_id : user_id,
-    message : message,
-    created_at : Date.now(),
-    type : type,
-    detail : detail
-  });
-  notification.markModified('detail');
-  notification.save();
+  var notification_array = new Array(user_id_array.length);
+  for (var i=0; i<user_id_array.length; i++) {
+    notification_array[i] = {
+      user_id : user_id_array[i],
+      message : message,
+      created_at : Date.now(),
+      type : type,
+      detail : detail
+    };
+  }
+  mongoose.model('Notification').create(notification_array, callback);
 };
 
 module.exports = mongoose.model('Notification', NotificationSchema);

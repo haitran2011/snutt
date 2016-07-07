@@ -7,18 +7,16 @@
 var mongoose = require('mongoose');
 function BaseSchema(add){
   var schema = mongoose.Schema({
-    classification: { type: String, required: true }, // 교과 구분
+    classification: String,                           // 교과 구분
     department: String,                               // 학부
     academic_year: String,                            // 학년
-    course_number: { type: String, required: true},  // 교과목 번호
-    lecture_number: { type: String, required: true},                           // 강좌 번호
     course_title: { type: String, required: true },   // 과목명
     credit: Number,                                   // 학점
     class_time: String,
     class_time_json: [
       { day : Number, start: Number, len: Number, place : String }
     ],
-    class_time_mask: { type: [ Number ], required: true },
+    class_time_mask: { type: [ Number ], required: true, default: [0,0,0,0,0,0] },
     instructor: String,                               // 강사
     quota: Number,                                    // 정원
     enrollment: Number,                               // 신청인원
@@ -59,10 +57,14 @@ function BaseSchema(add){
 
 var Lecture = mongoose.model('Lecture', BaseSchema({
   year: { type: Number, required: true },           // 연도
-  semester: { type: Number, required: true }       // 학기
+  semester: { type: Number, required: true },       // 학기
+  course_number: { type: String, required: true},   // 교과목 번호
+  lecture_number: { type: String, required: true},  // 강좌 번호
 }));
 
 var UserLecture = mongoose.model('UserLecture', BaseSchema({
+  course_number: String,
+  lecture_number: String,
   created_at: Date,
   updated_at: Date,
   color: {fg : String, bg : String}
