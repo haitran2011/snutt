@@ -48,9 +48,7 @@ function BaseSchema(add){
     return lecture1.is_equal(lecture2);
   };
 
-  schema.index({ year: 1, semester: 1, classification: 1 });
-  schema.index({ year: 1, semester: 1, department: 1 });
-  schema.index({ year: 1, semester: 1, course_title: 1 });
+  schema.index({ year: 1, semester: 1, course_number: 1, lecture_number: 1});
 
   if (add) {
     schema.add(add);

@@ -17,4 +17,6 @@ var TagListSchema = mongoose.Schema({
   }
 });
 
+TagListSchema.index({year:1, semester:1});
+
 module.exports = mongoose.model('TagList', TagListSchema);

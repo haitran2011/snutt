@@ -14,6 +14,8 @@ var TimetableSchema = mongoose.Schema({
   updated_at : {type: Date, default: Date.now()}
 });
 
+TimetableSchema.index({ year: 1, semester: 1, user_id: 1 });
+
 TimetableSchema.pre('save', function(next) {
   this.updated_at = Date.now();
   next();
