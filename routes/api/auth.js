@@ -1,7 +1,6 @@
 var express = require('express');
+var passport = require('passport');
 var router = express.Router();
-var jwt = require('jsonwebtoken');
-var secretKey = require('../../config/secretKey');
 
 var User = require('../../model/user');
 
@@ -10,6 +9,15 @@ var User = require('../../model/user');
  * id, password
  */
 router.post('/login_local', function(req, res, next) {
+  passport.authenticate('local', {session: false}, function(err, user, info) {
+    if (err) { return next(err); }
+    if (!user) { return res.send(info.message) }
+    req.logIn(user, function(err) {
+      if (err) { return next(err); }
+      return res.send('ok');
+    });
+  })(req, res, next);
+  /*
   User.get_local(req.body.id, function(err, user) {
     if(err) return res.status(500).send('unknown error');
     if(!user) {
@@ -25,7 +33,7 @@ router.post('/login_local', function(req, res, next) {
         }
       })
     }
-  });
+  });*/
 });
 
 /**

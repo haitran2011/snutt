@@ -21,7 +21,7 @@ module.exports = function(app, db, request) {
     it('user does not exist', function(done) {
       request.post('/api/auth/login_local')
         .send({id:"FakeSnutt", password:"abc1234"})
-        .expect(404, 'user not found')
+        .expect(404, 'wrong id')
         .end(function(err, res){
           done(err);
         });
