@@ -62,18 +62,9 @@ router.post('/:timetable_id/lecture/:lecture_id', function(req, res, next) {
       if(err) return res.status(500).send("find table failed");
       if(!timetable) return res.status(404).send("timetable not found");
       Lecture.findOne({'_id': req.params.lecture_id}).lean()
-        .exec(function(err, lecture){
-          var json = req.body;
-          if (json.class_time_json) json.class_time_mask = timeJsonToMask(json.class_time_json);
-          else if (json.class_time_mask) delete json.class_time_mask;
-          /*
-           * Sanitize json using object_del_id.
-           * If you don't do it,
-           * the existing lecture gets overwritten
-           * which is potential security breach.
-           */
-          util.object_del_id(json);
-          var lecture = new UserLecture(json);
+        .exec(function(err, ref_lecture){
+          util.object_del_id(ref_lecture);
+          var lecture = new UserLecture(ref_lecture);
           timetable.add_lecture(lecture, function(err, timetable){
             if(err) {
               return res.status(403).send("insert lecture failed");

@@ -26,6 +26,10 @@ NotificationSchema.statics.getNewest = function (user_id, offset, limit, callbac
     .exec(callback);
 };
 
+NotificationSchema.statics.countUnread = function (user_id) {
+  
+};
+
 /** 
  * Types
  * - Type.NORMAL      : Normal Messages. Detail would be null

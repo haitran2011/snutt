@@ -21,8 +21,8 @@ module.exports = mongoose.connect('mongodb://localhost/snutt', function(err) {
       return console.log("Could not get mongodb version");
     }
     console.log("MongoDB "+info.version+" connected");
-    if (parseFloat(info.version) < 3.2) {
-      console.log("MongoDB version is outdated. (< 3.2) Service might not work properly")
+    if (parseFloat(info.version) < 2.6) {
+      console.log("MongoDB version is outdated. (< 2.6) Service might not work properly")
     }
   });
   //console.log('mongodb connected');

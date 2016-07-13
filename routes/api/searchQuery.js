@@ -46,11 +46,11 @@ module.exports = router.post('/', function(req, res, next) {
   if (req.body.department && req.body.department.length) // in this case result should be sorted by departments
     query.department = { $in : req.body.department };
   if (req.body.time_mask && req.body.time_mask.length == 6) {
-    var conditions = Util.timeMasksToBinaryConditions(req.body.time_mask);
-    conditions.forEach(function(condition, idx) {
-      console.log(condition);
-      query['class_time_mask.' + idx] = condition;
-    })
+    query['$where'] = "";
+    req.body.time_mask.forEach(function(bit, idx) {
+      if (idx > 0) query['$where'] += " && ";
+      query['$where'] += "((this.class_time_mask["+idx+"] & "+(~bit<<1>>>1)+") == 0)";
+    });
   }
 
   Lecture.find(query).sort('course_number').lean().exec(function (err, lectures) {

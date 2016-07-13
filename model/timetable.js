@@ -11,7 +11,7 @@ var TimetableSchema = mongoose.Schema({
   semester : {type : Number, required : true, min:1, max:4 },
   title : {type : String, required : true },
 	lecture_list: [UserLecture.schema],
-  updated_at : {type: Date, required : true }
+  updated_at : Date
 });
 
 TimetableSchema.index({ year: 1, semester: 1, user_id: 1 });

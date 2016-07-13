@@ -41,13 +41,13 @@ describe('API Test', function() {
       });
   });
 
-  it('MongoDB >= 3.2', function(done) {
+  it('MongoDB >= 2.6', function(done) {
     var admin = db.connection.db.admin();
     admin.buildInfo(function (err, info) {
       if (err)
         return done(err);
       if (parseFloat(info.version) < 3.2)
-        return done(new Error("MongoDB version("+info.version+") is outdated(< 3.2). Service might not work properly"));
+        return done(new Error("MongoDB version("+info.version+") is outdated(< 2.6). Service might not work properly"));
       done();
     });
   });
