@@ -1,5 +1,7 @@
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
+var secretKey = require('./secretKey');
+var jwt = require('jsonwebtoken');
 
 var User = require(path.join(__dirname, 'model/user'));
 
@@ -34,6 +36,23 @@ passport.use(new LocalStrategy({
   },
   function(id, password, done) {
     User.get_local(id, function(err, user) {
+      if(err) return done(err);
+      if(!user) {
+        return done(null, false, { message: 'wrong id' });
+      } else if (user) {
+        user.verify_password(password, function(err, is_match) {
+          if(!is_match) return done(null, false, { message: 'wrong password' });
+          else {
+            var token = jwt.sign(user.credential, secretKey.jwtSecret, {
+              expiresIn : '180d' //FIXME : expire time
+            });
+            return done(null, user, {token: token})
+          }
+        })
+      }
+    });
+    /*
+    User.get_local(id, function(err, user) {
       if(err) return res.status(500).send('unknown error');
       if(!user) {
         return done(null, false, { message: 'wrong id' });
@@ -44,6 +63,7 @@ passport.use(new LocalStrategy({
         })
       }
     });
+    */
     /*
     User.findOne({ username: username }, function (err, user) {
       if (err) { return done(err); }

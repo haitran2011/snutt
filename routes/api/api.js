@@ -1,9 +1,7 @@
 var express = require('express');
 var router = express.Router();
-var jwt = require('jsonwebtoken');
 
 var CourseBook = require('../../model/courseBook');
-var secretKey = require('../../config/secretKey');
 
 var authRouter = require('./auth');
 var timetableRouter = require('./timetable');
@@ -25,43 +23,11 @@ router.get('/app_version', function(req, res, next) {
    res.send({version : 0.1});
 });
 
-router.use('/auth', authRouter);
-
-/*
- * Token Authenticator
- * Checks if the user is logged in
- * Which means all routers below this need authentication
- * If the user object is modified, you should re-login!!
+/**
+ * `authRouter` takes care of token authentication
+ * All routers below needs to be authenticated
  */
-router.use(function(req, res, next) {
-  if(req.user) return next();
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
-
-  if (token) {
-
-    // verifies secret and checks exp
-    jwt.verify(token, secretKey.jwtSecret, function(err, decoded) {
-      if (err) {
-        return res.status(403).json({ success: false, message: 'Failed to authenticate token.' });
-      } else {
-        // if everything is good, save to request for use in other routes
-        req.user = decoded;
-        //console.log(decoded);
-        next();
-      }
-    });
-
-  } else {
-
-    // if there is no token
-    // return an error
-    return res.status(401).send({
-        success: false,
-        message: 'No token provided.'
-    });
-
-  }
-});
+router.use('/auth', authRouter);
 
 router.use('/tables', timetableRouter);
 
