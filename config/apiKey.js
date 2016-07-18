@@ -3,11 +3,10 @@
  * Jang Ryeol, ryeolj5911@gmail.com
  *
  * credential field for making tokens
- * thus, magic_number means nothing
  *
  * --- To reissue token for specific platform
  *    (e.g. platform api-key stolen),
- * just change the magic number to invalidate all tokens from the platform.
+ * just change the key_version to invalidate all tokens from the platform.
  *
  * --- To issue api tokens,
  * $ node apiKey.js list
@@ -18,19 +17,19 @@ var secretKey = require('./secretKey');
 var api_list = {
     ios : {
       string : "ios",
-      magic_number : "0"
+      key_version : "0"
     },
     web : {
       string : "web",
-      magic_number : "0"
+      key_version : "0"
     },
     android : {
       string : "android",
-      magic_number : "0"
+      key_version : "0"
     },
     test : {
       string : "test",
-      magic_number : "0"
+      key_version : "0"
     }
 };
 
@@ -51,9 +50,9 @@ var validateKey = function(api_key) {
   return new Promise(function(resolve, reject){
     jwt.verify(api_key, secretKey.jwtSecret, function(err, decoded) {
       if (err) return reject("invalid api key");
-      if (!decoded.string || !decoded.magic_number) return reject("invalid api key");
+      if (!decoded.string || !decoded.key_version) return reject("invalid api key");
       if (api_list[decoded.string] &&
-        api_list[decoded.string].magic_number == decoded.magic_number)
+        api_list[decoded.string].key_version == decoded.key_version)
         return resolve();
     });
   })
