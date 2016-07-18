@@ -20,15 +20,18 @@ describe('API Test', function() {
       return done(new Error("DB not connected"));
     db.disconnect(function() {
       db.connect('mongodb://localhost/snutt_test', function(err){
-        if (err) return done(err);
-        // Clean Test DB
-        // mongoose.connection.db.dropDatabase()
-        // dose not actually drop the db, but actually clears it
-        db.connection.db.dropDatabase(function(err) {
-          done(err);
-        });
+        return done(err);
       });
     })
+  });
+  
+  // Clean Test DB
+  // mongoose.connection.db.dropDatabase()
+  // dose not actually drop the db, but actually clears it
+  before(function(done) {
+    db.connection.db.dropDatabase(function(err) {
+      done(err);
+    });
   });
   
   // Register test user

@@ -44,10 +44,14 @@ var issueKey = function(api_obj) {
  * @returns {Promise}
  */
 var validateKey = function(api_key) {
+  if (process.env.NODE_ENV == 'mocha')
+    return new Promise(function(resolve, reject) {
+      resolve();
+    });
   return new Promise(function(resolve, reject){
     jwt.verify(api_key, secretKey.jwtSecret, function(err, decoded) {
-      if (err) return reject("invalid key");
-      if (!decoded.string || !decoded.magic_number) return reject("invalid key");
+      if (err) return reject("invalid api key");
+      if (!decoded.string || !decoded.magic_number) return reject("invalid api key");
       if (api_list[decoded.string] &&
         api_list[decoded.string].magic_number == decoded.magic_number)
         return resolve();
@@ -55,16 +59,18 @@ var validateKey = function(api_key) {
   })
 };
 
-if (process.argv.length != 3 || process.argv[2] != "list") {
-  console.log("Invalid arguments");
-  console.log("usage: $ node apiKey.js list");
-  process.exit(1);
-}
+if (!module.parent) {
+  if (process.argv.length != 3 || process.argv[2] != "list") {
+    console.log("Invalid arguments");
+    console.log("usage: $ node apiKey.js list");
+    process.exit(1);
+  }
 
-for (var api in api_list) {
-  if (api_list.hasOwnProperty(api)) {
-    console.log(api_list[api].string);
-    console.log("\n"+issueKey(api_list[api])+"\n");
+  for (var api in api_list) {
+    if (api_list.hasOwnProperty(api)) {
+      console.log(api_list[api].string);
+      console.log("\n"+issueKey(api_list[api])+"\n");
+    }
   }
 }
 

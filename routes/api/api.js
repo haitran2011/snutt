@@ -13,8 +13,16 @@ var tagsRouter = require('./tags');
 var apiKey = require('../../config/apiKey');
 var User = require('../../model/user');
 
+/**
+ * Check API Key
+ */
 router.use(function(req, res, next) {
-  // Check API Keys
+  var token = req.headers['x-access-apikey'];
+  apiKey.validateKey(token).then(function(){
+    next();
+  }, function(err) {
+    res.status(403).send(err);
+  });
 });
 
 router.get('/course_books', function(req, res, next) {
