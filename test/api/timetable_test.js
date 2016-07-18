@@ -13,34 +13,27 @@ module.exports = function(app, db, request) {
   var table_id;
   var table_updated_at;
   var lecture_id;
+
   before(function(done) {
-    async.series([
-      function(callback) {
-        request.post('/api/auth/login_local')
-          .send({id:"snutt", password:"abc1234"})
-          .expect(200)
-          .end(function(err, res){
-            token = res.body;
-            if (err) done(err);
-            callback(err);
-          });
-      },
-      function(callback) {
-        request.post('/api/tables/')
-          .set('x-access-token', token)
-          .send({year:2016, semester:1, title:"MyTimeTable"})
-          .expect(200)
-          .end(function(err, res){
-            table_id = res.body[0]._id;
-            if (err) done(err);
-            callback(err);
-          });
-      },
-      function(callback) {
-        done();
-        callback();
-      }
-    ]);
+    request.post('/api/auth/login_local')
+      .send({id:"snutt", password:"abc1234"})
+      .expect(200)
+      .end(function(err, res){
+        token = res.text;
+        done(err);
+      });
+  });
+
+  before(function(done) {
+    request.post('/api/tables/')
+      .set('x-access-token', token)
+      .send({year:2016, semester:1, title:"MyTimeTable"})
+      .expect(200)
+      .end(function(err, res){
+        if (!res.body.length && !err) err = new Error("Timetable List Incorrect");
+        else if (!err) table_id = res.body[0]._id;
+        done(err);
+      });
   });
 
   it ('Get timetable list succeeds', function(done){

@@ -7,12 +7,12 @@ var UserSchema = new mongoose.Schema({
   credential : {
     local: {
       // id should not be unique, because non-active user can have same id
-      id: String,
-      password: String
+      id: {type: String, default: null},
+      password: {type: String, default: null}
     },
     facebook: {
-      id: String,
-      token: String
+      id: {type: String, default: null},
+      token: {type: String, default: null}
     }
   },
 	isAdmin: {type: Boolean, default: false},
@@ -57,9 +57,17 @@ UserSchema.methods.signCredential = function () {
   });
 };
 
-UserSchema.statics.getUserFromCredential = function (credential, callback) {
-  return mongoose.model('User').findOne({'credential' : credential})
-    .exec(callback);
+UserSchema.statics.getUserFromCredential = function (credential) {
+  if (!credential || !credential.local || !credential.facebook) {
+    return new Promise (function(resolve, reject) { reject('Wrong Credential') });
+  }
+  return mongoose.model('User').findOne(
+    {
+      'credential.local.id' : credential.local.id,
+      'credential.local.password' : credential.local.password,
+      'credential.facebook.id' : credential.facebook.id,
+      'credential.facebook.token' : credential.facebook.token
+    }).exec();
 };
 
 UserSchema.statics.get_local = function(id, callback) {

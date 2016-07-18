@@ -13,6 +13,7 @@ module.exports = function(app, db, request) {
       .send({id:"snutt", password:"abc1234"})
       .expect(200)
       .end(function(err, res){
+        if (err) console.log(res);
         done(err);
       });
   });

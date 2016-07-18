@@ -57,7 +57,7 @@ router.post('/', function(req, res, next) { //create
  * Lecture id from search query
  */
 router.post('/:timetable_id/lecture/:lecture_id', function(req, res, next) {
-  Timetable.findOne({'user_id': req.user_id, '_id' : req.params.timetable_id}).exec()
+  Timetable.findOne({'user_id': req.user._id, '_id' : req.params.timetable_id}).exec()
     .then(function(err, timetable){
       if(err) return res.status(500).send("find table failed");
       if(!timetable) return res.status(404).send("timetable not found");
@@ -82,7 +82,7 @@ router.post('/:timetable_id/lecture/:lecture_id', function(req, res, next) {
  * json object of lecture to add
  */
 router.post('/:id/lecture', function(req, res, next) {
-  Timetable.findOne({'user_id': req.user_id, '_id' : req.params.id})
+  Timetable.findOne({'user_id': req.user._id, '_id' : req.params.id})
     .exec(function(err, timetable){
       if(err) return res.status(500).send("find table failed");
       if(!timetable) return res.status(404).send("timetable not found");
@@ -148,7 +148,7 @@ router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
   if (!req.params["lecture_id"])
     return res.status(400).send("need lecture_id");
 
-  Timetable.findOne({'user_id': req.user_id, '_id' : req.params["table_id"]})
+  Timetable.findOne({'user_id': req.user._id, '_id' : req.params["table_id"]})
     .exec(function(err, timetable){
       if(err) return res.status(500).send("find table failed");
       if(!timetable) return res.status(404).send("timetable not found");
@@ -174,7 +174,7 @@ router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
  */
 router.delete('/:table_id/lecture/:lecture_id', function(req, res, next) {
   Timetable.findOneAndUpdate(
-    {'user_id': req.user_id, '_id' : req.params["table_id"]},
+    {'user_id': req.user._id, '_id' : req.params["table_id"]},
     { $pull: {lecture_list : {_id: req.params["lecture_id"]} } }, {new: true})
     .exec(function (err, doc) {
       if (err) {
@@ -207,7 +207,7 @@ router.delete('/:id', function(req, res, next) { // delete
  * copy a timetable
  */
 router.post('/:id/copy', function(req, res, next) {
-  Timetable.findOne({'user_id': req.user_id, '_id' : req.params.id})
+  Timetable.findOne({'user_id': req.user._id, '_id' : req.params.id})
     .exec(function(err, timetable){
       if(err) return res.status(500).send("find table failed");
       if(!timetable) return res.status(404).send("timetable not found");

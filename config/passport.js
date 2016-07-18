@@ -49,31 +49,6 @@ passport.use(new LocalStrategy({
         })
       }
     });
-    /*
-    User.get_local(id, function(err, user) {
-      if(err) return res.status(500).send('unknown error');
-      if(!user) {
-        return done(null, false, { message: 'wrong id' });
-      } else if (user) {
-        user.verify_password(password, function(err, is_match) {
-          if(!is_match) return done(null, false, { message: 'wrong password' });
-          return done(null, user);
-        })
-      }
-    });
-    */
-    /*
-    User.findOne({ username: username }, function (err, user) {
-      if (err) { return done(err); }
-      if (!user) {
-        return done(null, false, { message: 'Incorrect username.' });
-      }
-      if (!user.validPassword(password)) {
-        return done(null, false, { message: 'Incorrect password.' });
-      }
-      return done(null, user);
-    });
-    */
   }
 ));
 

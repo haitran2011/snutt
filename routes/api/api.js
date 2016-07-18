@@ -1,5 +1,8 @@
 var express = require('express');
 var router = express.Router();
+var jwt = require('jsonwebtoken');
+
+var secretKey = require('../../config/secretKey');
 
 var CourseBook = require('../../model/courseBook');
 
@@ -8,36 +11,10 @@ var timetableRouter = require('./timetable');
 var searchQueryRouter = require('./searchQuery');
 var tagsRouter = require('./tags');
 var apiKey = require('../../config/apiKey');
+var User = require('../../model/user');
 
 router.use(function(req, res, next) {
-  if(req.user) return next();
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
-
-  if (token) {
-
-    // verifies secret and checks exp
-    jwt.verify(token, secretKey.jwtSecret, function(err, decoded) {
-      if (err) {
-        return res.status(403).json({ success: false, message: 'Failed to authenticate token.' });
-      } else {
-        // if everything is good, save to request for use in other routes
-        User.getUserFromCredential(decoded).then(function(user){
-          req.user = user;
-          next;
-        });
-      }
-    });
-
-  } else {
-
-    // if there is no token
-    // return an error
-    return res.status(401).send({
-      success: false,
-      message: 'No token provided.'
-    });
-
-  }
+  // Check API Keys
 });
 
 router.get('/course_books', function(req, res, next) {
@@ -55,11 +32,47 @@ router.get('/app_version', function(req, res, next) {
    res.send({version : 0.1});
 });
 
-/**
- * `authRouter` takes care of token authentication
- * All routers below needs to be authenticated
- */
 router.use('/auth', authRouter);
+
+/**
+ * Token Authenticator
+ * Checks if the user is logged in
+ * Which means all routers below this need authentication
+ * If the user object is modified, you should re-login!!
+ */
+router.use(function(req, res, next) {
+  if(req.user) return next();
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+
+  if (token) {
+
+    // verifies secret and checks exp
+    jwt.verify(token, secretKey.jwtSecret, function(err, decoded) {
+      if (err) {
+        return res.status(403).json({ success: false, message: 'Failed to authenticate token.' });
+      } else {
+        // if everything is good, save to request for use in other routes
+        User.getUserFromCredential(decoded).then(function(user){
+          req.user = user;
+          next();
+        }, function (err) {
+          console.log(err);
+          return res.status(403).json({ success: false, message: 'Failed to authenticate token.' });
+        });
+      }
+    });
+
+  } else {
+
+    // if there is no token
+    // return an error
+    return res.status(401).send({
+      success: false,
+      message: 'No token provided.'
+    });
+
+  }
+});
 
 router.use('/tables', timetableRouter);
 
