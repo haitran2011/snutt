@@ -2,13 +2,28 @@ var express = require('express');
 var router = express.Router();
 var jwt = require('jsonwebtoken');
 
-var CourseBook = require('../../model/courseBook');
 var secretKey = require('../../config/secretKey');
+
+var CourseBook = require('../../model/courseBook');
 
 var authRouter = require('./auth');
 var timetableRouter = require('./timetable');
 var searchQueryRouter = require('./searchQuery');
 var tagsRouter = require('./tags');
+var apiKey = require('../../config/apiKey');
+var User = require('../../model/user');
+
+/**
+ * Check API Key
+ */
+router.use(function(req, res, next) {
+  var token = req.headers['x-access-apikey'];
+  apiKey.validateKey(token).then(function(){
+    next();
+  }, function(err) {
+    res.status(403).send(err);
+  });
+});
 
 router.get('/course_books', function(req, res, next) {
   CourseBook.find({},'year semester', {sort : {year : -1, semester : -1 }}, function (err, courseBooks) {
@@ -27,7 +42,7 @@ router.get('/app_version', function(req, res, next) {
 
 router.use('/auth', authRouter);
 
-/*
+/**
  * Token Authenticator
  * Checks if the user is logged in
  * Which means all routers below this need authentication
@@ -45,9 +60,13 @@ router.use(function(req, res, next) {
         return res.status(403).json({ success: false, message: 'Failed to authenticate token.' });
       } else {
         // if everything is good, save to request for use in other routes
-        req.user = decoded;
-        //console.log(decoded);
-        next();
+        User.getUserFromCredential(decoded).then(function(user){
+          req.user = user;
+          next();
+        }, function (err) {
+          console.log(err);
+          return res.status(403).json({ success: false, message: 'Failed to authenticate token.' });
+        });
       }
     });
 
@@ -56,8 +75,8 @@ router.use(function(req, res, next) {
     // if there is no token
     // return an error
     return res.status(401).send({
-        success: false,
-        message: 'No token provided.'
+      success: false,
+      message: 'No token provided.'
     });
 
   }

@@ -1,7 +1,6 @@
 var express = require('express');
+var passport = require('../../config/passport');
 var router = express.Router();
-var jwt = require('jsonwebtoken');
-var secretKey = require('../../config/secretKey');
 
 var User = require('../../model/user');
 
@@ -10,22 +9,11 @@ var User = require('../../model/user');
  * id, password
  */
 router.post('/login_local', function(req, res, next) {
-  User.get_local(req.body.id, function(err, user) {
-    if(err) return res.status(500).send('unknown error');
-    if(!user) {
-      res.status(404).send('user not found');
-    } else if (user) {
-      user.verify_password(req.body.password, function(err, is_match) {
-        if(!is_match) res.status(403).send('wrong password');
-        else {
-          var token = jwt.sign(user, secretKey.jwtSecret, {
-            expiresIn : '180d' //FIXME : expire time
-          });
-          res.json(token);
-        }
-      })
-    }
-  });
+  passport.authenticate('local', {session: false}, function(err, user, info) {
+    if (err) { return next(err); }
+    if (!user || !info.token) { return res.status(403).send(info.message) }
+    res.send(info.token);
+  })(req, res, next);
 });
 
 /**

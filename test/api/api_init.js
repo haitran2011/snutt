@@ -20,15 +20,18 @@ describe('API Test', function() {
       return done(new Error("DB not connected"));
     db.disconnect(function() {
       db.connect('mongodb://localhost/snutt_test', function(err){
-        if (err) return done(err);
-        // Clean Test DB
-        // mongoose.connection.db.dropDatabase()
-        // dose not actually drop the db, but actually clears it
-        db.connection.db.dropDatabase(function(err) {
-          done(err);
-        });
+        return done(err);
       });
     })
+  });
+  
+  // Clean Test DB
+  // mongoose.connection.db.dropDatabase()
+  // dose not actually drop the db, but actually clears it
+  before(function(done) {
+    db.connection.db.dropDatabase(function(err) {
+      done(err);
+    });
   });
   
   // Register test user
@@ -41,13 +44,13 @@ describe('API Test', function() {
       });
   });
 
-  it('MongoDB >= 2.6', function(done) {
+  it('MongoDB >= 2.4', function(done) {
     var admin = db.connection.db.admin();
     admin.buildInfo(function (err, info) {
       if (err)
         return done(err);
-      if (parseFloat(info.version) < 3.2)
-        return done(new Error("MongoDB version("+info.version+") is outdated(< 2.6). Service might not work properly"));
+      if (parseFloat(info.version) < 2.4)
+        return done(new Error("MongoDB version("+info.version+") is outdated(< 2.4). Service might not work properly"));
       done();
     });
   });

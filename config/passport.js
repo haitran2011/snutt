@@ -1,18 +1,55 @@
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
 
-var User = require(path.join(__dirname, 'model/user'));
+var User = require('../model/user');
 
-passport.use('local-signup', new LocalStrategy({
-  usernameField : 'username',
-  passwordField : 'password',
-  passReqToCallback : true
-},
-function(req, username, password, done) {
-  User.findOne({'name' : username}, function(err, user){
-    if (err) return done(err);
-      if (user) {
-        return done(null, false, )
+/**
+ * TODO
+ * Local strategy requires id and password for every request.
+ * OAuth2 is an overkill.
+ * Going to use passport-jwt.
+ * passport-jwt is for only login,
+ * you need to manually issue tokens.
+ * And maybe some CSRF Tokens?
+ *
+ * Or maybe use passport only for registering (INCLUDING local)
+ * Add credential object on the User model,
+ * and save local/facebook credentials on that
+ * Make jwt out of it
+ * Log-in is the same as before
+ *
+ * And API Keys...?
+ * Give clients jwt-hashed api keys (Like { platform : "iOS" })
+ * Add the key to the jwt token
+ * After unhashed, compare the token and api keys
+ * .. Is this useful? What if both api key and the token stolen at once? (And it would be the most cases)
+ * ----> You can change API key when bad things happen!!
+ *       클라이언트 하나가 털리면 통째로 다 날려버릴 수 있다
+ */
+
+passport.use(new LocalStrategy({
+    usernameField: 'id',
+    passwordField: 'password',
+    session: false,
+    passReqToCallback: true
+  },
+  function(req, id, password, done) {
+    var api_key = req.headers['x-access-apikey'];
+    User.get_local(id, function(err, user) {
+      if(err) return done(err);
+      if(!user) {
+        return done(null, false, { message: 'wrong id' });
+      } else if (user) {
+        user.verify_password(password, function(err, is_match) {
+          if(!is_match) return done(null, false, { message: 'wrong password' });
+          else {
+            var token = user.signCredential();
+            return done(null, user, {token: token})
+          }
+        })
       }
-  });
-}));
+    });
+  }
+));
+
+module.exports = passport;

@@ -13,6 +13,7 @@ module.exports = function(app, db, request) {
       .send({id:"snutt", password:"abc1234"})
       .expect(200)
       .end(function(err, res){
+        if (err) console.log(res);
         done(err);
       });
   });
@@ -21,7 +22,7 @@ module.exports = function(app, db, request) {
     it('user does not exist', function(done) {
       request.post('/api/auth/login_local')
         .send({id:"FakeSnutt", password:"abc1234"})
-        .expect(404, 'user not found')
+        .expect(403, 'wrong id')
         .end(function(err, res){
           done(err);
         });
