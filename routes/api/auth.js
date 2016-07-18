@@ -1,5 +1,5 @@
 var express = require('express');
-var passport = require('passport');
+var passport = require('../../config/passport');
 var router = express.Router();
 var jwt = require('jsonwebtoken');
 
@@ -51,7 +51,7 @@ router.use(function(req, res, next) {
         // if everything is good, save to request for use in other routes
         User.getUserFromCredential(decoded).then(function(user){
             req.user = user;
-            next;
+            next();
         });
       }
     });

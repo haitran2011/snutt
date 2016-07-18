@@ -7,6 +7,7 @@ if (!module.parent) {
 var db = require('../db');
 var async = require('async');
 var LectureModel = require('../model/lecture');
+var CourseBook = require('../model/courseBook');
 var Notification = require('../model/notification');
 var NotificationDetail = require('../model/notificationDetail');
 var Lecture = LectureModel.Lecture;
@@ -334,6 +335,19 @@ function insert_course(lines, year, semesterIndex, next)
           console.log("Inserted tags");
           callback(null, 'tags');
         }
+      });
+    },
+    function (callback) {
+      console.log("saving coursebooks...");
+      CourseBook.findAndModify({
+        query: { year: Number(year), semester: semesterIndex },
+        update: {
+          $setOnInsert: { updated_at: Date.now() }
+        },
+        new: true,   // return new doc if one is upserted
+        upsert: true // insert the document if it does not exist
+      }).exec(function(err, doc) {
+        callback(err);
       });
     }
   ], function (err, results){

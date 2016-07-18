@@ -1,9 +1,7 @@
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
-var secretKey = require('./secretKey');
-var jwt = require('jsonwebtoken');
 
-var User = require(path.join(__dirname, 'model/user'));
+var User = require('../model/user');
 
 /**
  * TODO
@@ -32,9 +30,11 @@ var User = require(path.join(__dirname, 'model/user'));
 passport.use(new LocalStrategy({
     usernameField: 'id',
     passwordField: 'password',
-    session: false
+    session: false,
+    passReqToCallback: true
   },
-  function(id, password, done) {
+  function(req, id, password, done) {
+    var api_key = req.headers['x-access-apikey'];
     User.get_local(id, function(err, user) {
       if(err) return done(err);
       if(!user) {
@@ -43,9 +43,7 @@ passport.use(new LocalStrategy({
         user.verify_password(password, function(err, is_match) {
           if(!is_match) return done(null, false, { message: 'wrong password' });
           else {
-            var token = jwt.sign(user.credential, secretKey.jwtSecret, {
-              expiresIn : '180d' //FIXME : expire time
-            });
+            var token = user.signCredential();
             return done(null, user, {token: token})
           }
         })
@@ -78,3 +76,5 @@ passport.use(new LocalStrategy({
     */
   }
 ));
+
+module.exports = passport;

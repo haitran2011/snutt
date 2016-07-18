@@ -1,4 +1,6 @@
 var mongoose = require('mongoose');
+var secretKey = require('../config/secretKey');
+var jwt = require('jsonwebtoken');
 var bcrypt = require('bcrypt');
 
 var UserSchema = new mongoose.Schema({
@@ -49,29 +51,44 @@ UserSchema.methods.verify_password = function(password, cb) {
 	});
 };
 
-UserSchema.statics.getUserFromCredential = function (credential) {
-  
-}
+UserSchema.methods.signCredential = function () {
+  return jwt.sign(this.credential, secretKey.jwtSecret, {
+    expiresIn : '180d' //FIXME : expire time
+  });
+};
+
+UserSchema.statics.getUserFromCredential = function (credential, callback) {
+  return mongoose.model('User').findOne({'credential' : credential})
+    .exec(callback);
+};
 
 UserSchema.statics.get_local = function(id, callback) {
-  mongoose.model('User').findOne({'credential.local.id' : id }, callback);
+  return mongoose.model('User').findOne({'credential.local.id' : id })
+    .exec(callback);
 };
 
 UserSchema.statics.create_local = function(id, password, callback) {
   var User = mongoose.model('User');
-  User.get_local(id, function(err, user) {
-    if (err) return callback(err);
-    if (user) return callback(new Error("same id already exists"));
-    user = new User({
-      credential : {
-        local: {
-          id: id,
-          password: password
-        }
+  return User.get_local(id)
+    .then(function(user){
+      if (user) {
+        return callback(new Error("same id already exists"));
       }
+      user = new User({
+        credential : {
+          local: {
+            id: id,
+            password: password
+          }
+        }
+      });
+      return user.save(callback);
+    }, function(err) {
+      callback(err);
+      return new Promise(function(resolve, reject) {
+        reject(err);
+      })
     });
-    user.save(callback);
-  });
 };
 
 module.exports = mongoose.model('User', UserSchema);
