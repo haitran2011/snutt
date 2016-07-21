@@ -5,20 +5,19 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var User = require('./user');
-var async = require('async');
 
 var NotificationSchema = mongoose.Schema({
-  user_id : { type: Schema.Types.ObjectId, ref: 'User', required : true },
+  user_id : { type: Schema.Types.ObjectId, ref: 'User', default : null},
   message : { type : String, required : true },
   created_at : { type : Date, required : true},
   type : { type: Number, required : true, default : 0 },
-  detail : { type: Schema.Types.ObjectId, ref: 'NotificationDetail', default : null }
+  detail : { type: Schema.Types.Mixed, default : null }
 });
 
 NotificationSchema.index({user_id: 1, created_at: -1});
 
 NotificationSchema.statics.getNewest = function (user_id, offset, limit, callback) {
-  var query = mongoose.Model('Notification').where('user_id').in([null, user_id])
+  return mongoose.Model('Notification').where('user_id').in([null, user_id])
     .sort('-created_at')
     .skip(offset)
     .limit(limit)
@@ -26,8 +25,11 @@ NotificationSchema.statics.getNewest = function (user_id, offset, limit, callbac
     .exec(callback);
 };
 
-NotificationSchema.statics.countUnread = function (user_id) {
-  
+NotificationSchema.statics.countUnread = function (user, callback) {
+  return mongoose.Model('Notification').where('user_id').in([null, user._id])
+    .sort('-created_at')
+    .count({created_at : {$gt : user.notificationCheckedAt}})
+    .exec(callback);
 };
 
 /** 
@@ -44,22 +46,17 @@ NotificationSchema.statics.Type = {
 };
 
 // if user_id_array is null or not array, create it as global
-NotificationSchema.statics.createNotifications = function (user_id_array, message, type, detail, callback) {
-  if (!user_id_array || !user_id_array.length) {
-    user_id_array = [null];
-  }
+NotificationSchema.statics.createNotification = function (user_id, message, type, detail, callback) {
   if (!type) type = 0;
-  var notification_array = new Array(user_id_array.length);
-  for (var i=0; i<user_id_array.length; i++) {
-    notification_array[i] = {
-      user_id : user_id_array[i],
-      message : message,
-      created_at : Date.now(),
-      type : type,
-      detail : detail
-    };
-  }
-  mongoose.model('Notification').create(notification_array, callback);
+  var Notification = mongoose.model('Notification');
+  var notification = new Notification({
+    user_id : user_id,
+    message : message,
+    created_at : Date.now(),
+    type : type,
+    detail : detail
+  });
+  return notification.save(callback);
 };
 
 module.exports = mongoose.model('Notification', NotificationSchema);

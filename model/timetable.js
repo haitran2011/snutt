@@ -1,6 +1,5 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
-var Timetable = require('./timetable');
 var LectureModel = require('./lecture');
 var UserLecture = LectureModel.UserLecture;
 var Util = require('../lib/util');
@@ -158,4 +157,12 @@ TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, next)
   mongoose.model('Timetable').update_lecture(this._id, lecture_id, lecture_raw, next);
 };
 
+
+
+TimetableSchema.methods.delete_lecture = function(lecture_id, callback) {
+  return mongoose.model("Timetable").findOneAndUpdate(
+    {'_id' : this._id},
+    { $pull: {lecture_list : {_id: lecture_id} } }, {new: true})
+    .exec(callback);
+};
 module.exports = mongoose.model('Timetable', TimetableSchema);

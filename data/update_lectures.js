@@ -63,8 +63,6 @@ function insert_course(lines, year, semesterIndex, next)
     updated : []
   };
 
-  var diff_detail;
-
   // Do each function step by step
   async.series([
     function (callback) {
@@ -200,80 +198,114 @@ function insert_course(lines, year, semesterIndex, next)
       }
       
       var msg = year+"년도 "+semesterString+"학기 수강 편람이 업데이트 되었습니다.";
-      NotificationDetail.createDetail(msg, diff, function(err, detail) {
-        diff_detail = detail;
-        Notification.createNotifications(null, msg, Notification.Type.COURSEBOOK, detail._id,
-          function(err) {
-            if (!err) console.log("Notification inserted");
-            callback(err);
-          });
-      });
+      Notification.createNotification(null, msg, Notification.Type.COURSEBOOK, diff,
+        function(err) {
+          if (!err) console.log("Notification inserted");
+          callback(err);
+        });
     },
     function (callback){
       async.series([
         function(callback){
-          async.each(diff.updated, function(lecture, callback) {
-            Timetable.aggregate([
-              { $match: {
+          async.each(diff.updated, function(updated_lecture, callback) {
+            Timetable.find(
+              {
+                year: year,
+                semester: semesterIndex,
                 lecture_list: {
                   $elemMatch : {
-                    year: year,
-                    semester: semesterIndex,
-                    course_number: lecture.course_number,
-                    lecture_number: lecture.lecture_number
+                    course_number: updated_lecture.course_number,
+                    lecture_number: updated_lecture.lecture_number
                   }
                 }
-              }},
-              { $project: {
-                _id: 1,
-                title: 1,
-                lecture: "$lecture_list.$"
-              }}
-            ], function(err, res) {
-              Timetable.update_lecture(res._id, res.lecture._id, lecture.after, function(err, timetable){
-                Notification.createNotifications(
-                  res.user_id,
-                  "'"+res.title+"' 시간표의 '"+res.lecture.course_title+"' 강의가 업데이트 되었습니다.",
-                  Notification.Type.LECTURE,
-                  diff_detail._id,
-                  function(err) {
-                    callback(err);
-                  });
-              });
-              
-            });
-            /*
-            Timetable.find({
-              lecture_list: {
-                $elemMatch : {
-                  year: year,
-                  semester: semesterIndex,
-                  course_number: lecture.course_number,
-                  lecture_number: lecture.lecture_number
+              },
+              {
+                lecture_list: {
+                  $elemMatch : {
+                    course_number: updated_lecture.course_number,
+                    lecture_number: updated_lecture.lecture_number
+                  }
                 }
-              }
-            }, 'title match_lecture')
-              .exec(function(err, timetables) {
-                async.each(timetables, function(timetable, callback){
-
-                  Notification.createNotifications(
-                    timetable.user_id,
-                    "'"+timetable.title+"' 시간표의 '"+lecture.course_title+"' 강의가 업데이트 되었습니다.",
-                    Notification.Type.LECTURE,
-                    diff_detail._id,
-                    function(err) {
-                      callback(err);
-                    });
+              }, function(err, timetables) {
+                async.each(timetables, function(timetable, callback) {
+                  if (timetable.lecture_list.length != 1) {
+                    return callback(new Error({
+                      message: "Lecture update error",
+                      timetable_id: timetable,
+                      lecture: updated_lecture
+                    }))
+                  }
+                  var noti_detail = {
+                    timetable_id : timetable._id,
+                    lecture : updated_lecture
+                  };
+                  timetable.update_lecture(timetable.lecture_list[0]._id, updated_lecture.after,
+                    function(err, timetable){
+                      Notification.createNotification(
+                        timetable.user_id,
+                        "'"+timetable.title+"' 시간표의 '"+updated_lecture.course_title+"' 강의가 업데이트 되었습니다.",
+                        Notification.Type.LECTURE,
+                        noti_detail,
+                        function(err) {
+                          callback(err);
+                        });
+                  });
+                }, function(err) {
+                  callback(err);
                 });
-              })
-              */
+            });
           }, function(err){
             callback(err);
           })
         },
         function(callback){
-          async.each(diff.removed, function(doc, callback) {
-
+          async.each(diff.removed, function(removed_lecture, callback) {
+            Timetable.find(
+              {
+                year: year,
+                semester: semesterIndex,
+                lecture_list: {
+                  $elemMatch : {
+                    course_number: removed_lecture.course_number,
+                    lecture_number: removed_lecture.lecture_number
+                  }
+                }
+              },
+              {
+                lecture_list: {
+                  $elemMatch : {
+                    course_number: removed_lecture.course_number,
+                    lecture_number: removed_lecture.lecture_number
+                  }
+                }
+              }, function(err, timetables) {
+                async.each(timetables, function(timetable, callback) {
+                  if (timetable.lecture_list.length != 1) {
+                    return callback(new Error({
+                      message: "Lecture update error",
+                      timetable_id: timetable,
+                      lecture: removed_lecture
+                    }))
+                  }
+                  var noti_detail = {
+                    timetable_id : timetable._id,
+                    lecture : removed_lecture
+                  };
+                  timetable.delete_lecture(timetable.lecture_list[0]._id, function(err, timetable) {
+                    if (err) return callback(err);
+                    Notification.createNotification(
+                      timetable.user_id,
+                      "'"+timetable.title+"' 시간표의 '"+removed_lecture.course_title+"' 강의가 폐강되었습니다.",
+                      Notification.Type.LECTURE,
+                      noti_detail,
+                      function(err) {
+                        callback(err);
+                      });
+                  });
+                }, function(err) {
+                  callback(err);
+                });
+              });
           }, function(err){
             callback(err);
           })
@@ -339,14 +371,13 @@ function insert_course(lines, year, semesterIndex, next)
     },
     function (callback) {
       console.log("saving coursebooks...");
-      CourseBook.findAndModify({
-        query: { year: Number(year), semester: semesterIndex },
-        update: {
-          $setOnInsert: { updated_at: Date.now() }
-        },
-        new: true,   // return new doc if one is upserted
-        upsert: true // insert the document if it does not exist
-      }).exec(function(err, doc) {
+      CourseBook.findOneAndUpdate({ year: Number(year), semester: semesterIndex },
+        { updated_at: Date.now() },
+        {
+          new: true,   // return new doc
+          upsert: true // insert the document if it does not exist
+        })
+        .exec(function(err, doc) {
         callback(err);
       });
     }

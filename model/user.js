@@ -17,6 +17,7 @@ var UserSchema = new mongoose.Schema({
   },
 	isAdmin: {type: Boolean, default: false},
 	regDate: {type: Date, default: Date.now()},
+  notificationCheckedAt: {type: Date, default: Date.now()},
 
   // if the user remove its account, active status becomes false
   // Should not remove user object, because we must preserve the user data and its related objects
@@ -55,6 +56,11 @@ UserSchema.methods.signCredential = function () {
   return jwt.sign(this.credential, secretKey.jwtSecret, {
     expiresIn : '180d' //FIXME : expire time
   });
+};
+
+UserSchema.methods.updateNotificationCheckDate = function (callback) {
+  this.notificationCheckedAt = Date.now();
+  return this.save(callback);
 };
 
 UserSchema.statics.getUserFromCredential = function (credential) {
