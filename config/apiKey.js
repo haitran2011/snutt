@@ -33,6 +33,16 @@ var api_list = {
     }
 };
 
+var app_version = {
+  ios : "1.0",
+  web : "1.0",
+  android : "1.0"
+};
+
+var getAppVersion = function(string) {
+  return app_version[string];
+};
+
 var issueKey = function(api_obj) {
   return jwt.sign(api_obj, secretKey.jwtSecret);
 };
@@ -53,7 +63,7 @@ var validateKey = function(api_key) {
       if (!decoded.string || !decoded.key_version) return reject("invalid api key");
       if (api_list[decoded.string] &&
         api_list[decoded.string].key_version == decoded.key_version)
-        return resolve();
+        return resolve(api_list[decoded.string]);
     });
   })
 };
@@ -73,4 +83,4 @@ if (!module.parent) {
   }
 }
 
-module.exports = {validateKey : validateKey};
+module.exports = {validateKey : validateKey, getAppVersion : getAppVersion};

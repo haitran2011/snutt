@@ -14,12 +14,15 @@ var notificationRouter = require('./notification');
 var apiKey = require('../../config/apiKey');
 var User = require('../../model/user');
 
+var api_info;
+
 /**
  * Check API Key
  */
 router.use(function(req, res, next) {
   var token = req.headers['x-access-apikey'];
-  apiKey.validateKey(token).then(function(){
+  apiKey.validateKey(token).then(function(value){
+    api_info = value;
     next();
   }, function(err) {
     res.status(403).send(err);
@@ -37,9 +40,9 @@ router.use('/search_query', searchQueryRouter);
 router.use('/tags', tagsRouter);
 
 router.get('/app_version', function(req, res, next) {
-   //FIXME : check for app_version and return the version
-   // Include version info in the api key??
-   res.send({version : 0.1});
+  var version = apiKey.getAppVersion(api_info.string);
+  if (version) res.send(version);
+  else res.status(404).send("unknown");
 });
 
 router.use('/auth', authRouter);
