@@ -9,6 +9,7 @@ var authRouter = require('./auth');
 var timetableRouter = require('./timetable');
 var searchQueryRouter = require('./searchQuery');
 var tagsRouter = require('./tags');
+var notificationRouter = require('./notification');
 
 router.get('/course_books', function(req, res, next) {
   CourseBook.find({},'year semester', {sort : {year : -1, semester : -1 }}, function (err, courseBooks) {
@@ -22,6 +23,7 @@ router.use('/tags', tagsRouter);
 
 router.get('/app_version', function(req, res, next) {
    //FIXME : check for app_version and return the version
+   // Include version info in the api key??
    res.send({version : 0.1});
 });
 
@@ -64,5 +66,7 @@ router.use(function(req, res, next) {
 });
 
 router.use('/tables', timetableRouter);
+
+router.use('/notification', notificationRouter);
 
 module.exports = router;
