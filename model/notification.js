@@ -16,8 +16,8 @@ var NotificationSchema = mongoose.Schema({
 
 NotificationSchema.index({user_id: 1, created_at: -1});
 
-NotificationSchema.statics.getNewest = function (user_id, offset, limit, callback) {
-  return mongoose.Model('Notification').where('user_id').in([null, user_id])
+NotificationSchema.statics.getNewest = function (user, offset, limit, callback) {
+  return mongoose.Model('Notification').where('user_id').in([null, user._id])
     .sort('-created_at')
     .skip(offset)
     .limit(limit)
