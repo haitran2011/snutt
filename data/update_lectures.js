@@ -9,7 +9,6 @@ var async = require('async');
 var LectureModel = require('../model/lecture');
 var CourseBook = require('../model/courseBook');
 var Notification = require('../model/notification');
-var NotificationDetail = require('../model/notificationDetail');
 var Lecture = LectureModel.Lecture;
 var Timetable = require('../model/timetable');
 var TagList = require('../model/tagList');

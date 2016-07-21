@@ -24,27 +24,6 @@ var UserSchema = new mongoose.Schema({
   active: {type: Boolean, default: true}
 });
 
-UserSchema.pre('save', function (callback) {
-	var user = this;
-
-  if (!user.credential.local.id ||
-    !user.credential.local.id.match(/^[a-z0-9]{4,32}$/i))
-		return callback(new Error("incorrect id"));
-
-  if (!user.credential.local.password ||
-    !user.credential.local.password.match(/^(?=.*\d)(?=.*[a-z])\S{6,20}$/i))
-    return callback(new Error("incorrect password"));
-
-	if (!user.isModified('credential.local.password')) return callback();
-
-	bcrypt.hash(user.credential.local.password, 4, function (err, hash) {
-		if (err) return callback(err);
-
-		user.credential.local.password = hash;
-		callback();
-	});
-});
-
 UserSchema.methods.verify_password = function(password, cb) {
 	bcrypt.compare(password, this.credential.local.password, function(err, isMatch) {
 		if (err) return cb(err);
@@ -96,7 +75,20 @@ UserSchema.statics.create_local = function(id, password, callback) {
           }
         }
       });
-      return user.save(callback);
+      if (!user.credential.local.id ||
+        !user.credential.local.id.match(/^[a-z0-9]{4,32}$/i))
+        return callback(new Error("incorrect id"));
+
+      if (!user.credential.local.password ||
+        !user.credential.local.password.match(/^(?=.*\d)(?=.*[a-z])\S{6,20}$/i))
+        return callback(new Error("incorrect password"));
+
+      bcrypt.hash(user.credential.local.password, 4, function (err, hash) {
+        if (err) return callback(err);
+
+        user.credential.local.password = hash;
+        return user.save(callback);
+      });
     }, function(err) {
       callback(err);
       return new Promise(function(resolve, reject) {
