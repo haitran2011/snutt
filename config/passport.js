@@ -1,6 +1,8 @@
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
+var FBStrategy = require('passport-facebook').Strategy;
 
+var secretKey = require('../config/secretKey');
 var User = require('../model/user');
 
 /**
@@ -37,19 +39,36 @@ passport.use(new LocalStrategy({
     var api_key = req.headers['x-access-apikey'];
     User.get_local(id, function(err, user) {
       if(err) return done(err);
-      if(!user) {
-        return done(null, false, { message: 'wrong id' });
-      } else if (user) {
-        user.verify_password(password, function(err, is_match) {
-          if(!is_match) return done(null, false, { message: 'wrong password' });
-          else {
-            var token = user.signCredential();
-            return done(null, user, {token: token})
-          }
-        })
-      }
+      if(!user) return done(null, false, { message: 'wrong id' });
+      user.verify_password(password, function(err, is_match) {
+        if(!is_match) return done(null, false, { message: 'wrong password' });
+        var token = user.signCredential();
+        return done(null, user, {token: token})
+      })
     });
   }
 ));
+
+/**
+ * Facebook Authentication.
+ * Since we use fb only for authentication,
+ * we does not save any token
+ */
+passport.use(new FBStrategy({
+    clientID: secretKey.FBID,
+    clientSecret: secretKey.FBSECRET,
+    session: false,
+    passReqToCallback: true
+  },
+  function(accessToken, refreshToken, profile, cb) {
+    User.get_fb(profile.id, function(err, user) {
+      if(err) return cb(err);
+      if(!user) return cb(null, false, { message: 'TODO: autoregister on login' });
+      var token = user.signCredential();
+      return cb(null, user, {token: token})
+    });
+  }
+));
+
 
 module.exports = passport;

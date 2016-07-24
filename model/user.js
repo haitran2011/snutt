@@ -5,15 +5,9 @@ var bcrypt = require('bcrypt');
 
 var UserSchema = new mongoose.Schema({
   credential : {
-    local: {
-      // id should not be unique, because non-active user can have same id
-      id: {type: String, default: null},
-      password: {type: String, default: null}
-    },
-    facebook: {
-      id: {type: String, default: null},
-      token: {type: String, default: null}
-    }
+    local_id: {type: String, default: null},
+    local_pw: {type: String, default: null},
+    fb_id: {type: String, default: null}
   },
 	isAdmin: {type: Boolean, default: false},
 	regDate: {type: Date, default: Date.now()},
@@ -25,7 +19,7 @@ var UserSchema = new mongoose.Schema({
 });
 
 UserSchema.methods.verify_password = function(password, cb) {
-	bcrypt.compare(password, this.credential.local.password, function(err, isMatch) {
+	bcrypt.compare(password, this.credential.local_pw, function(err, isMatch) {
 		if (err) return cb(err);
 		cb(null, isMatch);
 	});
@@ -43,20 +37,19 @@ UserSchema.methods.updateNotificationCheckDate = function (callback) {
 };
 
 UserSchema.statics.getUserFromCredential = function (credential) {
-  if (!credential || !credential.local || !credential.facebook) {
+  if (!credential) {
     return new Promise (function(resolve, reject) { reject('Wrong Credential') });
   }
   return mongoose.model('User').findOne(
     {
-      'credential.local.id' : credential.local.id,
-      'credential.local.password' : credential.local.password,
-      'credential.facebook.id' : credential.facebook.id,
-      'credential.facebook.token' : credential.facebook.token
+      'credential.local_id' : credential.local_id,
+      'credential.local_pw' : credential.local_pw,
+      'credential.fb_id' : credential.fb_id,
     }).exec();
 };
 
 UserSchema.statics.get_local = function(id, callback) {
-  return mongoose.model('User').findOne({'credential.local.id' : id })
+  return mongoose.model('User').findOne({'credential.local_id' : id })
     .exec(callback);
 };
 
@@ -69,24 +62,22 @@ UserSchema.statics.create_local = function(id, password, callback) {
       }
       user = new User({
         credential : {
-          local: {
-            id: id,
-            password: password
-          }
+          local_id : id,
+          local_pw : password
         }
       });
-      if (!user.credential.local.id ||
-        !user.credential.local.id.match(/^[a-z0-9]{4,32}$/i))
+      if (!user.credential.local_id ||
+        !user.credential.local_id.match(/^[a-z0-9]{4,32}$/i))
         return callback(new Error("incorrect id"));
 
-      if (!user.credential.local.password ||
-        !user.credential.local.password.match(/^(?=.*\d)(?=.*[a-z])\S{6,20}$/i))
+      if (!user.credential.local_pw ||
+        !user.credential.local_pw.match(/^(?=.*\d)(?=.*[a-z])\S{6,20}$/i))
         return callback(new Error("incorrect password"));
 
-      bcrypt.hash(user.credential.local.password, 4, function (err, hash) {
+      bcrypt.hash(user.credential.local_pw, 4, function (err, hash) {
         if (err) return callback(err);
 
-        user.credential.local.password = hash;
+        user.credential.local_pw = hash;
         return user.save(callback);
       });
     }, function(err) {
@@ -96,5 +87,11 @@ UserSchema.statics.create_local = function(id, password, callback) {
       })
     });
 };
+
+UserSchema.statics.get_fb = function(id, callback) {
+  return mongoose.model('User').findOne({'credential.fb_id' : id })
+    .exec(callback);
+};
+
 
 module.exports = mongoose.model('User', UserSchema);

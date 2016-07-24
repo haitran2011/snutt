@@ -9,7 +9,7 @@ var User = require('../../model/user');
  * id, password
  */
 router.post('/login_local', function(req, res, next) {
-  passport.authenticate('local', {session: false}, function(err, user, info) {
+  passport.authenticate('local', function(err, user, info) {
     if (err) { return next(err); }
     if (!user || !info.token) { return res.status(403).send(info.message) }
     res.send(info.token);
@@ -29,5 +29,13 @@ router.post('/register_local', function (req, res, next) {
     return res.send("ok");
   });
 });
+
+router.post('/login_fb', function(req, res, next) {
+  passport.authenticate('facebook', function(err, user, info) {
+    if (err) { return next(err); }
+    if (!user || !info.token) { return res.status(403).send(info.message) }
+    res.send(info.token);
+  })(req, res, next);
+})
 
 module.exports = router;
