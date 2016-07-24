@@ -36,7 +36,6 @@ passport.use(new LocalStrategy({
     passReqToCallback: true
   },
   function(req, id, password, done) {
-    var api_key = req.headers['x-access-apikey'];
     User.get_local(id, function(err, user) {
       if(err) return done(err);
       if(!user) return done(null, false, { message: 'wrong id' });
