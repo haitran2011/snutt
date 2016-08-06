@@ -11,7 +11,7 @@ var User = require('../../model/user');
  * id, password
  */
 router.post('/login_local', function(req, res, next) {
-  passport.authenticate('local', function(err, user, info) {
+  passport.authenticate('local-id', function(err, user, info) {
     if (err) { return res.status(403).json({message:err.message}); }
     if (!user || !info.token) { return res.status(403).json({message:info.message}) }
     res.json({token: info.token});
@@ -24,7 +24,7 @@ router.post('/login_local', function(req, res, next) {
  * it needs to be accessed without token
  */
 router.post('/register_local', function (req, res, next) {
-  User.create_local(req.body.id, req.body.password, function(err, user) {
+  User.create_local(req.query.id, req.query.password, function(err, user) {
     if (err) {
       return res.status(403).json({message:err.message});
     }
@@ -33,7 +33,8 @@ router.post('/register_local', function (req, res, next) {
 });
 
 router.post('/login_fb', function(req, res, next) {
-  passport.authenticate('facebook', function(err, user, info) {
+  req.query.password = "facebook";
+  passport.authenticate('local-fb', function(err, user, info) {
     if (err) { return next(err); }
     if (!user || !info.token) { return res.status(403).json({message: info.message}) }
     res.json({ token: info.token});

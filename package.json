@@ -20,7 +20,7 @@
     "jsonwebtoken": "~5.5.0",
     "kerberos": "0.0.21",
     "lodash": "^3.10.1",
-    "mongoose": "~4.3.7",
+    "mongoose": "^4.5.8",
     "morgan": "~1.6.1",
     "passport": "^0.3.2",
     "passport-facebook": "~2.1.1",

@@ -19,7 +19,7 @@ describe('API Test', function() {
   before(function(done) {
     if (!db.connection.readyState)
       return done(new Error("DB not connected"));
-    db.disconnect(function() {
+    db.connection.close(function() {
       db.connect('mongodb://localhost/snutt_test', function(err){
         return done(err);
       });
@@ -38,7 +38,7 @@ describe('API Test', function() {
   // Register test user
   before(function(done) {
     request.post('/api/auth/register_local')
-      .send({id:"snutt", password:"abc1234"})
+      .query({id:"snutt", password:"abc1234"})
       .expect(200)
       .end(function(err, res){
         assert.equal(res.body.message, 'ok');

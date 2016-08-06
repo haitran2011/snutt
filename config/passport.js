@@ -31,7 +31,7 @@ var User = require('../model/user');
  *       클라이언트 하나가 털리면 통째로 다 날려버릴 수 있다
  */
 
-passport.use(new LocalStrategy({
+passport.use('local-id', new LocalStrategy({
     usernameField: 'id',
     passwordField: 'password',
     session: false,
@@ -43,7 +43,7 @@ passport.use(new LocalStrategy({
       if(!user) return done(null, false, { message: 'wrong id' });
       user.verify_password(password, function(err, is_match) {
         if(!is_match) return done(null, false, { message: 'wrong password' });
-        var token = user.signCredential();
+        var token = user.getCredentialHash();
         return done(null, user, {token: token})
       })
     });
@@ -55,6 +55,29 @@ passport.use(new LocalStrategy({
  * Since we use fb only for authentication,
  * we does not save any token
  */
+passport.use('local-fb', new LocalStrategy({
+    usernameField: 'fb_id',
+    passwordField: 'password',
+    session: false,
+    passReqToCallback: true
+  },
+  function(req, id, password, done) {
+    User.get_fb(id, function(err, user) {
+      if(err) return done(err);
+      if(!user) return done(null, false, { message: 'no connected account' });
+      var token = user.getCredentialHash();
+      return done(null, user, {token: token})
+    });
+  }
+));
+
+
+/**
+ * This is passport-facebook implementation.
+ * But we don't need this on the server side.
+ * Maybe web client can use this.
+ */
+/*
 passport.use(new FBStrategy({
     clientID: secretKey.FBID,
     clientSecret: secretKey.FBSECRET,
@@ -65,11 +88,12 @@ passport.use(new FBStrategy({
     User.get_fb(profile.id, function(err, user) {
       if(err) return cb(err);
       if(!user) return cb(null, false, { fb_id: profile.id });
-      var token = user.signCredential();
+      var token = user.getCredentialHash();
       return cb(null, user, {token: token})
     });
   }
 ));
+*/
 
 
 module.exports = passport;

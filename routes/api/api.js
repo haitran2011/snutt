@@ -13,6 +13,7 @@ var timetableRouter = require('./timetable');
 var searchQueryRouter = require('./searchQuery');
 var tagsRouter = require('./tags');
 var notificationRouter = require('./notification');
+var userRouter = require('./user');
 var apiKey = require('../../config/apiKey');
 var User = require('../../model/user');
 
@@ -58,37 +59,26 @@ router.use('/auth', authRouter);
 router.use(function(req, res, next) {
   if(req.user) return next();
   var token = req.body.token || req.query.token || req.headers['x-access-token'];
-
   if (token) {
-
-    // verifies secret and checks exp
-    jwt.verify(token, secretKey.jwtSecret, function(err, decoded) {
-      if (err) {
-        return res.status(403).json({ message: 'Failed to authenticate token.' });
-      } else {
-        // if everything is good, save to request for use in other routes
-        User.getUserFromCredential(decoded).then(function(user){
-          req.user = user;
-          next();
-        }, function (err) {
-          console.log(err);
-          return res.status(403).json({ message: 'Failed to authenticate token.' });
-        });
-      }
+    User.getUserFromCredentialHash(token).then(function(user){
+      req.user = user;
+      next();
+    }, function (err) {
+      console.log(err);
+      return res.status(403).json({ message: 'Failed to authenticate token.' });
     });
-
   } else {
-
     // if there is no token
     // return an error
     return res.status(401).json({
       message: 'No token provided.'
     });
-
   }
 });
 
 router.use('/tables', timetableRouter);
+
+router.use('/user', userRouter);
 
 router.use('/notification', notificationRouter);
 

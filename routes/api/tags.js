@@ -11,7 +11,7 @@ router.get('/:year/:semester/update_time', function(req, res, next) {
   TagList.findOne({'year' : req.params.year, 'semester' : req.params.semester},'updated_at', function (err, doc) {
     if (err) return res.status(500).json({message: 'unknown error'});
     if (!doc) res.status(404).json({message: 'not found'});
-    else res.json({updated_at: doc.updated_at.getTime().toString()});
+    else res.json({updated_at: doc.updated_at.getTime()});
   });
 });
 

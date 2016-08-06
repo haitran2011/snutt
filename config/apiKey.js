@@ -11,6 +11,8 @@
  * --- To issue api tokens,
  * $ node apiKey.js list
  */
+"use strict";
+
 var jwt = require('jsonwebtoken');
 var secretKey = require('./secretKey');
 
@@ -53,10 +55,11 @@ var issueKey = function(api_obj) {
  * @returns {Promise}
  */
 var validateKey = function(api_key) {
-  if (process.env.NODE_ENV == 'mocha')
+  if (process.env.NODE_ENV == 'mocha') {
     return new Promise(function(resolve, reject) {
       resolve();
     });
+  }
   return new Promise(function(resolve, reject){
     jwt.verify(api_key, secretKey.jwtSecret, function(err, decoded) {
       if (err) return reject("invalid api key");

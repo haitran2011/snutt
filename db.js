@@ -1,4 +1,5 @@
 var mongoose = require('mongoose');
+mongoose.Promise = global.Promise;
 
 // connect mongoose
 module.exports = mongoose.connect('mongodb://localhost/snutt', function(err) {
