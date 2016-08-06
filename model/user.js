@@ -73,6 +73,10 @@ UserSchema.methods.attachFBId = function(fb_id, callback) {
 };
 
 UserSchema.methods.detachFBId = function(callback) {
+  if (!this.credential.local_id)
+    return new Promise(function(resolve, reject) {
+      reject("No Local ID");
+    });
   this.credential.fb_id = null;
   return this.signCredential(callback);
 };

@@ -44,6 +44,9 @@ router.post('/detach_fb', function (req, res, next) {
   if (!req.user.credential.fb_id) {
     return res.status(403).json({message: "not attached yet"});
   }
+  if (!req.user.credential.local_id) {
+    return res.status(403).json({message: "no local id"});
+  }
   req.user.detachFBId().then(function () {
     return res.json({token: req.user.getCredentialHash()});
   }, function() {
@@ -51,7 +54,7 @@ router.post('/detach_fb', function (req, res, next) {
   });
 });
 
-router.post('/status_fb', function (req, res, next) {
+router.get('/status_fb', function (req, res, next) {
   var attached;
   if (req.user.credential.fb_id) {
     attached = true;

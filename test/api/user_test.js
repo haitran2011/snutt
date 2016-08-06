@@ -244,7 +244,7 @@ module.exports = function(app, db, request) {
     });
 
     it('Facebook status holds true', function(done) {
-      request.post('/api/user/status_fb')
+      request.get('/api/user/status_fb')
         .set('x-access-token', token)
         .expect(200)
         .end(function(err, res){
@@ -276,7 +276,7 @@ module.exports = function(app, db, request) {
     });
 
     it('Facebook status holds false', function(done) {
-      request.post('/api/user/status_fb')
+      request.get('/api/user/status_fb')
         .set('x-access-token', token)
         .expect(200)
         .end(function(err, res){

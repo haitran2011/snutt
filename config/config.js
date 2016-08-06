@@ -9,6 +9,7 @@ var config = {
     ssl_cert: process.env.SNUTT_SSL_CERT
 };
 
-if (config.production) process.env.NODE_ENV = "production";
+if (config.production && process.env.NODE_ENV != "mocha")
+    process.env.NODE_ENV = "production";
 
 module.exports = config;

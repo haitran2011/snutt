@@ -46,7 +46,7 @@ var getAppVersion = function(string) {
 };
 
 var issueKey = function(api_obj) {
-  return jwt.sign(api_obj, config.jwtSecret);
+  return jwt.sign(api_obj, config.secretKey);
 };
 
 /**
