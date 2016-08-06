@@ -14,7 +14,7 @@
 "use strict";
 
 var jwt = require('jsonwebtoken');
-var secretKey = require('./secretKey');
+var config = require('./config');
 
 var api_list = {
     ios : {
@@ -46,7 +46,7 @@ var getAppVersion = function(string) {
 };
 
 var issueKey = function(api_obj) {
-  return jwt.sign(api_obj, secretKey.jwtSecret);
+  return jwt.sign(api_obj, config.jwtSecret);
 };
 
 /**
@@ -61,7 +61,7 @@ var validateKey = function(api_key) {
     });
   }
   return new Promise(function(resolve, reject){
-    jwt.verify(api_key, secretKey.jwtSecret, function(err, decoded) {
+    jwt.verify(api_key, config.secretKey, function(err, decoded) {
       if (err) return reject("invalid api key");
       if (!decoded.string || !decoded.key_version) return reject("invalid api key");
       if (api_list[decoded.string] &&

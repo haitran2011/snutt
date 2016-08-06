@@ -9,11 +9,21 @@ process.env.NODE_ENV = 'mocha';
 
 var assert = require('assert');
 var request = require('supertest');
+var config = require('../../config/config');
 var db = require('../../db');
 var app = require('../../app');
 
 request = request(app);
 describe('API Test', function() {
+
+
+
+  before(function(done) {
+    if (config.secretKey && config.host && config.port && config.email)
+      return done();
+    else
+      return done(new Error("config is not set"));
+  });
 
   // Change connection into test DB in order not to corrupt production DB
   before(function(done) {

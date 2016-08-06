@@ -1,8 +1,7 @@
 "use strict";
 
 var mongoose = require('mongoose');
-var secretKey = require('../config/secretKey');
-var jwt = require('jsonwebtoken');
+var config = require('../config/config');
 var bcrypt = require('bcrypt');
 var crypto = require('crypto');
 
@@ -31,7 +30,7 @@ UserSchema.methods.verify_password = function(password, cb) {
 };
 
 UserSchema.methods.signCredential = function (callback) {
-  var hmac = crypto.createHmac('sha256', secretKey.jwtSecret);
+  var hmac = crypto.createHmac('sha256', config.secretKey);
   hmac.update(JSON.stringify(this.credential));
   this.credentialHash = hmac.digest('hex');
   return this.save(callback);

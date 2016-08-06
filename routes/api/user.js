@@ -8,6 +8,15 @@ var express = require('express');
 var router = express.Router();
 var User = require('../../model/user');
 
+router.get('/info', function (req, res, next) {
+  return res.json({
+    isAdmin: req.user.isAdmin,
+    regDate: req.user.regDate,
+    notificationCheckedAt: req.user.notificationCheckedAt,
+    email: req.user.email
+  });
+});
+
 // Credential has been modified. Should re-send token
 router.post('/attach_fb', function (req, res, next) {
   if (req.user.credential.fb_id) {
