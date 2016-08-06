@@ -1,3 +1,5 @@
+"use strict";
+
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
 var FBStrategy = require('passport-facebook').Strategy;
@@ -62,7 +64,7 @@ passport.use(new FBStrategy({
   function(accessToken, refreshToken, profile, cb) {
     User.get_fb(profile.id, function(err, user) {
       if(err) return cb(err);
-      if(!user) return cb(null, false, { message: 'TODO: autoregister on login' });
+      if(!user) return cb(null, false, { fb_id: profile.id });
       var token = user.signCredential();
       return cb(null, user, {token: token})
     });

@@ -11,22 +11,22 @@ var UserLecture = LectureModel.UserLecture;
 
 router.get('/', function(req, res, next) { //timetable list
   Timetable.getTimetables(req.user._id, {lean:true}, function(err, timetables) {
-    if(err) return res.status(500).send('fetch timetable list failed');
+    if(err) return res.status(500).json({message:'fetch timetable list failed'});
     res.json(timetables);
   });
 });
 
 router.get('/:id', function(req, res, next) { //get
   Timetable.getTimetable(req.user._id, req.params.id, {lean:true}, function(err, timetable) {
-    if(err) return res.status(500).send("find table failed");
-    if(!timetable) return res.status(404).send('timetable not found');
+    if(err) return res.status(500).json({message:"find table failed"});
+    if(!timetable) return res.status(404).json({message:'timetable not found'});
     res.json(timetable);
   });
 });
 
 router.post('/', function(req, res, next) { //create
   if (!req.body.year || !req.body.semester || !req.body.title)
-    return res.status(400).send('not enough parameters');
+    return res.status(400).json({message:'not enough parameters'});
   var timetable = new Timetable({
     user_id : req.user._id, 
     year : req.body.year,
@@ -35,14 +35,14 @@ router.post('/', function(req, res, next) { //create
     lecture_list : []
   });
   timetable.checkDuplicate(function (err) {
-    if (err) return res.status(403).send('duplicate title');
+    if (err) return res.status(403).json({message:'duplicate title'});
     timetable.save(function(err, doc) {
       if(err) {
         console.log(err);
-        return res.status(500).send('insert timetable failed');
+        return res.status(500).json({message:'insert timetable failed'});
       }
       Timetable.getTimetables(req.user._id, {lean:true}, function(err, timetables){
-        if (err) return res.status(500).send('get timetable list failed');
+        if (err) return res.status(500).json({message:'get timetable list failed'});
         res.json(timetables);
       });
     });
@@ -59,15 +59,15 @@ router.post('/', function(req, res, next) { //create
 router.post('/:timetable_id/lecture/:lecture_id', function(req, res, next) {
   Timetable.findOne({'user_id': req.user._id, '_id' : req.params.timetable_id}).exec()
     .then(function(err, timetable){
-      if(err) return res.status(500).send("find table failed");
-      if(!timetable) return res.status(404).send("timetable not found");
+      if(err) return res.status(500).json({message:"find table failed"});
+      if(!timetable) return res.status(404).json({message:"timetable not found"});
       Lecture.findOne({'_id': req.params.lecture_id}).lean()
         .exec(function(err, ref_lecture){
           util.object_del_id(ref_lecture);
           var lecture = new UserLecture(ref_lecture);
           timetable.add_lecture(lecture, function(err, timetable){
             if(err) {
-              return res.status(403).send("insert lecture failed");
+              return res.status(403).json({message:"insert lecture failed"});
             }
             res.json(timetable);
           });
@@ -84,8 +84,8 @@ router.post('/:timetable_id/lecture/:lecture_id', function(req, res, next) {
 router.post('/:id/lecture', function(req, res, next) {
   Timetable.findOne({'user_id': req.user._id, '_id' : req.params.id})
     .exec(function(err, timetable){
-      if(err) return res.status(500).send("find table failed");
-      if(!timetable) return res.status(404).send("timetable not found");
+      if(err) return res.status(500).json({message:"find table failed"});
+      if(!timetable) return res.status(404).json({message:"timetable not found"});
       var json = req.body;
       if (json.class_time_json) json.class_time_mask = timeJsonToMask(json.class_time_json);
       else if (json.class_time_mask) delete json.class_time_mask;
@@ -99,7 +99,7 @@ router.post('/:id/lecture', function(req, res, next) {
       var lecture = new UserLecture(json);
       timetable.add_lecture(lecture, function(err, timetable){
         if(err) {
-          return res.status(403).send("insert lecture failed");
+          return res.status(403).json({message:"insert lecture failed"});
         }
         res.json(timetable);
       });
@@ -116,8 +116,8 @@ router.post('/:id/lecture', function(req, res, next) {
 router.post('/:id/lectures', function(req, res, next) {
   Timetable.findOne({'user_id': req.user_id, '_id' : req.params.id})
     .exec(function(err, timetable){
-      if(err) return res.status(500).send("find table failed");
-      if(!timetable) return res.status(404).send("timetable not found");
+      if(err) return res.status(500).json({message:"find table failed"});
+      if(!timetable) return res.status(404).json({message:"timetable not found"});
       var lectures = [];
       var lectures_raw = req.body['lectures'];
       for (var lecture_raw in lectures_raw) {
@@ -126,8 +126,8 @@ router.post('/:id/lectures', function(req, res, next) {
         lectures.push(lecture);
       }
       timetable.add_lectures(lectures, function(err){
-        if(err) return res.status(500).send("insert lecture failed");
-        res.send("ok");
+        if(err) return res.status(500).json({message:"insert lecture failed"});
+        res.json({message:"ok"});
       });
   })
 });
@@ -143,25 +143,24 @@ router.post('/:id/lectures', function(req, res, next) {
 // TODO : duplicate timetable query fix
 router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
   var lecture_raw = req.body;
-  if(!lecture_raw || Object.keys(lecture_raw).length < 1) return res.status(400).send("empty body");
+  if(!lecture_raw || Object.keys(lecture_raw).length < 1) return res.status(400).json({message:"empty body"});
 
   if (!req.params["lecture_id"])
-    return res.status(400).send("need lecture_id");
+    return res.status(400).json({message:"need lecture_id"});
 
   Timetable.findOne({'user_id': req.user._id, '_id' : req.params["table_id"]})
     .exec(function(err, timetable){
-      if(err) return res.status(500).send("find table failed");
-      if(!timetable) return res.status(404).send("timetable not found");
+      if(err) return res.status(500).json({message:"find table failed"});
+      if(!timetable) return res.status(404).json({message:"timetable not found"});
       if (lecture_raw.class_time_json)
         lecture_raw.class_time_mask = timeJsonToMask(lecture_raw.class_time_json);
       timetable.update_lecture(req.params["lecture_id"], lecture_raw, function(err, doc) {
         if(err) {
-          if (err.message == "modifying identities forbidden")
-            return res.status(403).send(err.message);
-          if (err.message == "lecture not found")
-            return res.status(404).send(err.message);
+          if (err.message == "modifying identities forbidden" ||
+            err.message == "lecture not found")
+            return res.status(403).json({message:err.message});
           console.log(err);
-          return res.status(500).send("update lecture failed");
+          return res.status(500).json({message:"update lecture failed"});
         }
         res.json(doc);
       });
@@ -179,9 +178,9 @@ router.delete('/:table_id/lecture/:lecture_id', function(req, res, next) {
     .exec(function (err, doc) {
       if (err) {
         console.log(err);
-        return res.status(500).send("delete lecture failed");
+        return res.status(500).json({message:"delete lecture failed"});
       }
-      if (!doc) return res.status(404).send("timetable not found");
+      if (!doc) return res.status(404).json({message:"timetable not found"});
       res.json(doc);
     });
 });
@@ -193,10 +192,10 @@ router.delete('/:table_id/lecture/:lecture_id', function(req, res, next) {
 router.delete('/:id', function(req, res, next) { // delete
   Timetable.findOneAndRemove({'user_id': req.user._id, '_id' : req.params.id}).lean()
   .exec(function(err, timetable) {
-    if(err) return res.status(500).send("delete timetable failed");
-    if (!timetable) return res.status(404).send("timetable not found");
+    if(err) return res.status(500).json({message:"delete timetable failed"});
+    if (!timetable) return res.status(404).json({message:"timetable not found"});
     Timetable.getTimetables(req.user._id, {lean:true}, function(err, timetables) {
-      if (err) return res.status(500).send("failed to get list");
+      if (err) return res.status(500).json({message:"failed to get list"});
       res.json(timetables);
     });
   });
@@ -209,12 +208,12 @@ router.delete('/:id', function(req, res, next) { // delete
 router.post('/:id/copy', function(req, res, next) {
   Timetable.findOne({'user_id': req.user._id, '_id' : req.params.id})
     .exec(function(err, timetable){
-      if(err) return res.status(500).send("find table failed");
-      if(!timetable) return res.status(404).send("timetable not found");
+      if(err) return res.status(500).json({message:"find table failed"});
+      if(!timetable) return res.status(404).json({message:"timetable not found"});
       timetable.copy(timetable.title, function(err, doc) {
-        if(err) return res.status(500).send("timetable copy failed");
+        if(err) return res.status(500).json({message:"timetable copy failed"});
         Timetable.getTimetables(req.user._id, {lean:true}, function(err, timetables) {
-          if (err) return res.status(500).send("failed to get list");
+          if (err) return res.status(500).json({message:"failed to get list"});
           res.json(timetables);
         });
       });
@@ -222,17 +221,17 @@ router.post('/:id/copy', function(req, res, next) {
 });
 
 router.put('/:id', function(req, res, next) {
-  if (!req.body.title) return res.status(400).send("should provide title");
+  if (!req.body.title) return res.status(400).json({message:"should provide title"});
   Timetable.findOne({'user_id': req.user._id, '_id' : req.params.id})
     .exec(function(err, timetable) {
-      if(err) return res.status(500).send("update timetable title failed");
+      if(err) return res.status(500).json({message:"update timetable title failed"});
       timetable.title = req.body.title;
       timetable.checkDuplicate(function(err) {
-        if (err) return res.status(403).send("duplicate title");
+        if (err) return res.status(403).json({message:"duplicate title"});
         timetable.save(function (err, doc) {
-          if (err) return res.status(500).send("update timetable title failed");
+          if (err) return res.status(500).json({message:"update timetable title failed"});
           Timetable.getTimetables(req.user._id, {lean:true}, function(err, timetables) {
-            if (err) return res.status(500).send("failed to get list");
+            if (err) return res.status(500).json({message:"failed to get list"});
             res.json(timetables);
           });
         });

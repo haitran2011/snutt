@@ -10,9 +10,9 @@ var User = require('../../model/user');
  */
 router.post('/login_local', function(req, res, next) {
   passport.authenticate('local', function(err, user, info) {
-    if (err) { return next(err); }
-    if (!user || !info.token) { return res.status(403).send(info.message) }
-    res.send(info.token);
+    if (err) { return res.status(403).json({message:err.message}); }
+    if (!user || !info.token) { return res.status(403).json({message:info.message}) }
+    res.json({token: info.token});
   })(req, res, next);
 });
 
@@ -24,17 +24,17 @@ router.post('/login_local', function(req, res, next) {
 router.post('/register_local', function (req, res, next) {
   User.create_local(req.body.id, req.body.password, function(err, user) {
     if (err) {
-      return res.status(403).send(err.message);
+      return res.status(403).json({message:err.message});
     }
-    return res.send("ok");
+    return res.json({message:"ok"});
   });
 });
 
 router.post('/login_fb', function(req, res, next) {
   passport.authenticate('facebook', function(err, user, info) {
     if (err) { return next(err); }
-    if (!user || !info.token) { return res.status(403).send(info.message) }
-    res.send(info.token);
+    if (!user || !info.token) { return res.status(403).json({message: info.message}) }
+    res.json({ token: info.token});
   })(req, res, next);
 })
 

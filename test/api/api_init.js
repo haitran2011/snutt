@@ -3,6 +3,7 @@
  * This script is parent script for api tests.
  * usage : $ npm test
  */
+"use strict";
 
 process.env.NODE_ENV = 'mocha';
 
@@ -24,7 +25,7 @@ describe('API Test', function() {
       });
     })
   });
-  
+
   // Clean Test DB
   // mongoose.connection.db.dropDatabase()
   // dose not actually drop the db, but actually clears it
@@ -33,13 +34,14 @@ describe('API Test', function() {
       done(err);
     });
   });
-  
+
   // Register test user
   before(function(done) {
     request.post('/api/auth/register_local')
       .send({id:"snutt", password:"abc1234"})
-      .expect(200, 'ok')
+      .expect(200)
       .end(function(err, res){
+        assert.equal(res.body.message, 'ok');
         done(err);
       });
   });
@@ -54,11 +56,11 @@ describe('API Test', function() {
       done();
     });
   });
-  
+
   describe('User', function () {
     require('./user_test')(app, db, request);
   });
-  
+
   describe('Timetable', function () {
     require('./timetable_test')(app, db, request);
   });

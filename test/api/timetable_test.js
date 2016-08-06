@@ -4,6 +4,7 @@
  * supertest: https://github.com/visionmedia/supertest
  * mocha: http://mochajs.org/#usage
  */
+"use strict";
 
 var assert = require('assert');
 var async = require('async');
@@ -19,7 +20,7 @@ module.exports = function(app, db, request) {
       .send({id:"snutt", password:"abc1234"})
       .expect(200)
       .end(function(err, res){
-        token = res.text;
+        token = res.body.token;
         done(err);
       });
   });
@@ -74,8 +75,9 @@ module.exports = function(app, db, request) {
     request.post('/api/tables/')
       .set('x-access-token', token)
       .send({year:2016, semester:1, title:"MyTimeTable"})
-      .expect(403, 'duplicate title')
+      .expect(403)
       .end(function(err, res) {
+        assert.equal(res.body.message, 'duplicate title');
         done(err);
       })
   });
@@ -96,7 +98,7 @@ module.exports = function(app, db, request) {
           });
       })
   });
-  
+
   it ('Table updated_at updated correctly', function(done) {
     request.get('/api/tables/'+table_id)
       .set('x-access-token', token)
@@ -113,8 +115,9 @@ module.exports = function(app, db, request) {
     request.put('/api/tables/'+table_id)
       .set('x-access-token', token)
       .send({title:"MyTimeTable2"})
-      .expect(403, 'duplicate title')
+      .expect(403)
       .end(function(err, res) {
+        assert.equal(res.body.message, 'duplicate title');
         done(err);
       })
   });

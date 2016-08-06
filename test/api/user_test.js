@@ -4,6 +4,7 @@
  * supertest: https://github.com/visionmedia/supertest
  * mocha: http://mochajs.org/#usage
  */
+"use strict";
 
 var assert = require('assert');
 
@@ -22,16 +23,18 @@ module.exports = function(app, db, request) {
     it('user does not exist', function(done) {
       request.post('/api/auth/login_local')
         .send({id:"FakeSnutt", password:"abc1234"})
-        .expect(403, 'wrong id')
+        .expect(403)
         .end(function(err, res){
+          assert.equal(res.body.message, 'wrong id');
           done(err);
         });
     });
     it('wrong password', function(done) {
       request.post('/api/auth/login_local')
         .send({id:"snutt", password:"abc12345"})
-        .expect(403, 'wrong password')
+        .expect(403)
         .end(function(err, res){
+          assert.equal(res.body.message, 'wrong password');
           done(err);
         });
     });
@@ -40,8 +43,9 @@ module.exports = function(app, db, request) {
   it('Register succeeds', function(done) {
     request.post('/api/auth/register_local')
       .send({id:"snutt2", password:"abc1234*"})
-      .expect(200, 'ok')
+      .expect(200)
       .end(function(err, res){
+        assert.equal(res.body.message, 'ok');
         done(err);
       });
   });
@@ -50,8 +54,9 @@ module.exports = function(app, db, request) {
     it('No ID', function(done) {
       request.post('/api/auth/register_local')
         .send({password:"IDontNeedID"})
-        .expect(403, 'incorrect id')
+        .expect(403)
         .end(function(err, res){
+          assert.equal(res.body.message, 'incorrect id');
           done(err);
         });
     });
@@ -59,8 +64,9 @@ module.exports = function(app, db, request) {
     it('Duplicate ID', function(done) {
       request.post('/api/auth/register_local')
         .send({id:"snutt", password:"abc1234"})
-        .expect(403, 'same id already exists')
+        .expect(403)
         .end(function(err, res){
+          assert.equal(res.body.message, 'same id already exists');
           done(err);
         });
     });
@@ -68,8 +74,9 @@ module.exports = function(app, db, request) {
     it('Weird ID', function(done) {
       request.post('/api/auth/register_local')
         .send({id:"snutt##*", password:"abc1234"})
-        .expect(403, 'incorrect id')
+        .expect(403)
         .end(function(err, res){
+          assert.equal(res.body.message, 'incorrect id');
           done(err);
         });
     });
@@ -77,8 +84,9 @@ module.exports = function(app, db, request) {
     it('Too short ID', function(done) {
       request.post('/api/auth/register_local')
         .send({id:"tt", password:"abc1234"})
-        .expect(403, 'incorrect id')
+        .expect(403)
         .end(function(err, res){
+          assert.equal(res.body.message, 'incorrect id');
           done(err);
         });
     });
@@ -86,8 +94,9 @@ module.exports = function(app, db, request) {
     it('Too long ID', function(done) {
       request.post('/api/auth/register_local')
         .send({id:"ThisIsVeryLongIdYouKnowThatThisIsFreakingLongManVeryLong", password:"abc1234"})
-        .expect(403, 'incorrect id')
+        .expect(403)
         .end(function(err, res){
+          assert.equal(res.body.message, 'incorrect id');
           done(err);
         });
     });
@@ -95,8 +104,9 @@ module.exports = function(app, db, request) {
     it('No password', function(done) {
       request.post('/api/auth/register_local')
         .send({id:"IDontNeedPw"})
-        .expect(403, 'incorrect password')
+        .expect(403)
         .end(function(err, res){
+          assert.equal(res.body.message, 'incorrect password');
           done(err);
         });
     });
@@ -104,8 +114,9 @@ module.exports = function(app, db, request) {
     it('Password too short', function(done) {
       request.post('/api/auth/register_local')
         .send({id:"idiot", password:"a1111"})
-        .expect(403, 'incorrect password')
+        .expect(403)
         .end(function(err, res){
+          assert.equal(res.body.message, 'incorrect password');
           done(err);
         });
     });
@@ -113,8 +124,9 @@ module.exports = function(app, db, request) {
     it('Password too long', function(done) {
       request.post('/api/auth/register_local')
         .send({id:"dumb", password:"abcdefghijklmnopqrst1"})
-        .expect(403, 'incorrect password')
+        .expect(403)
         .end(function(err, res){
+          assert.equal(res.body.message, 'incorrect password');
           done(err);
         });
     });
@@ -122,8 +134,9 @@ module.exports = function(app, db, request) {
     it('Password only digits', function(done) {
       request.post('/api/auth/register_local')
         .send({id:"numb", password:"111111"})
-        .expect(403, 'incorrect password')
+        .expect(403)
         .end(function(err, res){
+          assert.equal(res.body.message, 'incorrect password');
           done(err);
         });
     });
@@ -131,8 +144,9 @@ module.exports = function(app, db, request) {
     it('Password only letters', function(done) {
       request.post('/api/auth/register_local')
         .send({id:"numbnumb", password:"abcdef"})
-        .expect(403, 'incorrect password')
+        .expect(403)
         .end(function(err, res){
+          assert.equal(res.body.message, 'incorrect password');
           done(err);
         });
     });
@@ -140,8 +154,9 @@ module.exports = function(app, db, request) {
     it('Password with whitespace', function(done) {
       request.post('/api/auth/register_local')
         .send({id:"hacker", password:"sql injection"})
-        .expect(403, 'incorrect password')
+        .expect(403)
         .end(function(err, res){
+          assert.equal(res.body.message, 'incorrect password');
           done(err);
         });
     });

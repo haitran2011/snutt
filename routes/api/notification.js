@@ -13,7 +13,7 @@ router.get('/', function(req, res, next){
       req.user.updateNotificationCheckDate(function (err) {
         if (err) {
           console.log(err);
-          return res.status(500).send('error');
+          return res.status(500).json({message: 'error'});
         }
         res.json(value);
       });
@@ -22,7 +22,7 @@ router.get('/', function(req, res, next){
     }
   }, function(err) {
     console.log(err);
-    res.status(500).send('error');
+    res.status(500).json({message: 'error'});
   });
 });
 
@@ -30,10 +30,10 @@ router.get('/count', function(req, res, next){
   Notification.countUnread(req.user).then(function(value){
     // res.send() dose not accept number for response body
     // if number, it treats it as http status
-    res.send(value.toString());
+    res.json({count: value.toString()});
   }, function(err) {
     console.log(err);
-    res.status(500).send('error');
+    res.status(500).json({message: 'error'});
   });
 });
 
