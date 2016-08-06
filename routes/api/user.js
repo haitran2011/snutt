@@ -39,7 +39,7 @@ router.post('/detach_fb', function (req, res, next) {
     return res.json({token: req.user.getCredentialHash()});
   }, function() {
     return res.status(500).json({message: "server error"});
-  })
+  });
 });
 
 router.post('/status_fb', function (req, res, next) {

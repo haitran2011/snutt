@@ -23,7 +23,7 @@ describe('API Test', function() {
       db.connect('mongodb://localhost/snutt_test', function(err){
         return done(err);
       });
-    })
+    });
   });
 
   // Clean Test DB

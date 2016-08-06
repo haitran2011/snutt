@@ -13,7 +13,7 @@ function like(str, option) {
   var reg = str.replace(/(?!^)(.)/g, '.*$1');
   if (option.fromFirstChar)
     reg = '^' + reg;
-  return reg
+  return reg;
 }
 
 // deprecated
@@ -50,13 +50,14 @@ module.exports = router.post('/', function(req, res, next) {
   if (req.body.department && req.body.department.length) // in this case result should be sorted by departments
     query.department = { $in : req.body.department };
   if (req.body.time_mask && req.body.time_mask.length == 6) {
-    query['$where'] = "";
+    query.$where = "";
     req.body.time_mask.forEach(function(bit, idx) {
-      if (idx > 0) query['$where'] += " && ";
-      query['$where'] += "((this.class_time_mask["+idx+"] & "+(~bit<<1>>>1)+") == 0)";
+      if (idx > 0) query.$where += " && ";
+      query.$where += "((this.class_time_mask["+idx+"] & "+(~bit<<1>>>1)+") == 0)";
     });
   }
 
+  var offset, limit;
   if (!req.body.offset) offset = 0;
   else offset = Number(req.body.offset);
   if (!req.body.limit) limit = 20;

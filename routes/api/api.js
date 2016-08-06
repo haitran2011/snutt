@@ -34,7 +34,7 @@ router.use(function(req, res, next) {
 
 router.get('/course_books', function(req, res, next) {
   CourseBook.find({},'year semester', {sort : {year : -1, semester : -1 }}, function (err, courseBooks) {
-    res.json(courseBooks)
+    res.json(courseBooks);
   });
 });
 

@@ -44,8 +44,8 @@ passport.use('local-id', new LocalStrategy({
       user.verify_password(password, function(err, is_match) {
         if(!is_match) return done(null, false, { message: 'wrong password' });
         var token = user.getCredentialHash();
-        return done(null, user, {token: token})
-      })
+        return done(null, user, {token: token});
+      });
     });
   }
 ));
@@ -66,7 +66,7 @@ passport.use('local-fb', new LocalStrategy({
       if(err) return done(err);
       if(!user) return done(null, false, { message: 'no connected account' });
       var token = user.getCredentialHash();
-      return done(null, user, {token: token})
+      return done(null, user, {token: token});
     });
   }
 ));

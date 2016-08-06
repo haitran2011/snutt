@@ -7,11 +7,11 @@ var UserLecture = LectureModel.UserLecture;
 var Util = require('../lib/util');
 
 var TimetableSchema = mongoose.Schema({
-	user_id : { type: Schema.Types.ObjectId, ref: 'User' },
+  user_id : { type: Schema.Types.ObjectId, ref: 'User' },
   year : {type : Number, required : true },
   semester : {type : Number, required : true, min:1, max:4 },
   title : {type : String, required : true },
-	lecture_list: [UserLecture.schema],
+  lecture_list: [UserLecture.schema],
   updated_at : Date
 });
 
@@ -48,13 +48,13 @@ TimetableSchema.methods.checkDuplicate = function(next) {
  */
 TimetableSchema.statics.getTimetables = function(user_id, flags, callback) {
   var query = mongoose.model("Timetable").where('user_id', user_id).select('year semester title _id updated_at');
-  if (flags && flags.lean == true) query = query.lean();
+  if (flags && flags.lean === true) query = query.lean();
   query.exec(callback);
 };
 
 TimetableSchema.statics.getTimetable = function(user_id, timetable_id, flags, callback) {
   var query = mongoose.model("Timetable").findOne({'user_id': user_id, '_id' : timetable_id});
-  if (flags && flags.lean == true) query = query.lean();
+  if (flags && flags.lean === true) query = query.lean();
   query.exec(callback);
 };
 

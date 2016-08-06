@@ -45,7 +45,7 @@ module.exports = function(app, db, request) {
         if (err) done(err);
         assert.equal(res.body[0].title, "MyTimeTable");
         done();
-      })
+      });
   });
 
   it ('Get timetable succeeds', function(done){
@@ -58,7 +58,7 @@ module.exports = function(app, db, request) {
           err = new Error("timetable title differs");
         table_updated_at = res.body.updated_at;
         done(err);
-      })
+      });
   });
 
   it ('Create timetable succeeds', function(done){
@@ -68,7 +68,7 @@ module.exports = function(app, db, request) {
       .expect(200)
       .end(function(err, res) {
         done(err);
-      })
+      });
   });
 
   it ('Create timetable with the same title should fail', function(done){
@@ -79,7 +79,7 @@ module.exports = function(app, db, request) {
       .end(function(err, res) {
         assert.equal(res.body.message, 'duplicate title');
         done(err);
-      })
+      });
   });
 
   it ('Update timetable title succeeds', function(done){
@@ -96,7 +96,7 @@ module.exports = function(app, db, request) {
             assert.equal(res.body.title, "MyTimeTable3");
             done(err);
           });
-      })
+      });
   });
 
   it ('Table updated_at updated correctly', function(done) {
@@ -108,7 +108,7 @@ module.exports = function(app, db, request) {
         if (res.body.updated_at == table_updated_at)
           return done(new Error("update time does not differ"));
         done();
-      })
+      });
   });
 
   it ('Updating timetable with the same title should fail', function(done){
@@ -119,7 +119,7 @@ module.exports = function(app, db, request) {
       .end(function(err, res) {
         assert.equal(res.body.message, 'duplicate title');
         done(err);
-      })
+      });
   });
 
   /* Search query does not work on test db
@@ -197,7 +197,7 @@ module.exports = function(app, db, request) {
         assert.equal(lecture.course_number, "400.320");
         assert.equal(lecture.class_time_json[0].place, "302-308");
         done();
-      })
+      });
   });
 
   it ('Copy timetable', function(done) {
@@ -308,7 +308,7 @@ module.exports = function(app, db, request) {
       .expect(403)
       .end(function(err, res) {
         done(err);
-      })
+      });
   });
 
   it ('Delete a lecture', function(done) {
@@ -320,11 +320,11 @@ module.exports = function(app, db, request) {
           done(err);
           return;
         }
-        if (res.body.lecture_list.length != 0 &&
+        if (res.body.lecture_list.length !== 0 &&
           res.body.lecture_list[0]._id == lecture_id) {
           err = new Error("lecture not deleted");
         }
         done(err);
-      })
+      });
   });
 };

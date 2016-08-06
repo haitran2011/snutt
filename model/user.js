@@ -12,10 +12,11 @@ var UserSchema = new mongoose.Schema({
     local_pw: {type: String, default: null},
     fb_id: {type: String, default: null}
   },
-  credentialHash : String,
+  credentialHash : {type: String, default: null},
   isAdmin: {type: Boolean, default: false},
   regDate: {type: Date, default: Date.now()},
   notificationCheckedAt: {type: Date, default: Date.now()},
+  email: String,
 
   // if the user remove its account, active status becomes false
   // Should not remove user object, because we must preserve the user data and its related objects
@@ -42,7 +43,7 @@ UserSchema.methods.getCredentialHash = function () {
 
 UserSchema.methods.compareCredentialHash = function(hash) {
   return this.credentialHash == hash;
-}
+};
 
 UserSchema.methods.updateNotificationCheckDate = function (callback) {
   this.notificationCheckedAt = Date.now();
@@ -60,22 +61,22 @@ UserSchema.methods.changeLocalPassword = function(password, callback) {
     this.credential.local_pw = hash;
     return this.signCredential(callback);
   });
-}
+};
 
 UserSchema.methods.attachFBId = function(fb_id, callback) {
   if (!fb_id) {
     return new Promise(function (resolve, reject) {
       reject("null fb_id");
-    })
+    });
   }
   this.credential.fb_id = fb_id;
   return this.signCredential(callback);
-}
+};
 
 UserSchema.methods.detachFBId = function(callback) {
   this.credential.fb_id = null;
   return this.signCredential(callback);
-}
+};
 
 /* Deprecated
 UserSchema.statics.getUserFromCredential = function (credential) {
@@ -93,7 +94,7 @@ UserSchema.statics.getUserFromCredential = function (credential) {
 
 UserSchema.statics.getUserFromCredentialHash = function (hash) {
   if (!hash) {
-    return new Promise (function(resolve, reject) { reject('Wrong Hash') });
+    return new Promise (function(resolve, reject) { reject('Wrong Hash'); });
   } else {
     return mongoose.model('User').findOne({
       'credentialHash' : hash
@@ -102,7 +103,7 @@ UserSchema.statics.getUserFromCredentialHash = function (hash) {
 };
 
 UserSchema.statics.get_local = function(id, callback) {
-  return mongoose.model('User').findOne({'credential.local_id' : id })
+  return mongoose.model('User').findOne({'credential.local_id' : id, 'active' : true })
     .exec(callback);
 };
 
@@ -111,8 +112,9 @@ UserSchema.statics.create_local = function(id, password, callback) {
   return User.get_local(id)
     .then(function(user){
       return new Promise(function (resolve, reject) {
+        var err;
         if (user) {
-          var err = new Error("same id already exists")
+          err = new Error("same id already exists");
           return reject(err);
         }
         user = new User({
@@ -123,12 +125,12 @@ UserSchema.statics.create_local = function(id, password, callback) {
         });
         if (!user.credential.local_id ||
           !user.credential.local_id.match(/^[a-z0-9]{4,32}$/i)) {
-            var err = new Error("incorrect id")
+            err = new Error("incorrect id");
             return reject(err);
           }
         if (!user.credential.local_pw ||
           !user.credential.local_pw.match(/^(?=.*\d)(?=.*[a-z])\S{6,20}$/i)) {
-            var err = new Error("incorrect password")
+            err = new Error("incorrect password");
             return reject(err);
           }
 
@@ -139,18 +141,18 @@ UserSchema.statics.create_local = function(id, password, callback) {
             resolve(user);
           });
         });
-      })
+      });
     })
     .catch(function(err){
       callback(err);
       return new Promise(function(resolve, reject) {
         reject(err);
-      })
+      });
     });
 };
 
 UserSchema.statics.get_fb = function(id, callback) {
-  return mongoose.model('User').findOne({'credential.fb_id' : id })
+  return mongoose.model('User').findOne({'credential.fb_id' : id, 'active' : true })
     .exec(callback);
 };
 

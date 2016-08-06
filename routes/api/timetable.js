@@ -74,7 +74,7 @@ router.post('/:timetable_id/lecture/:lecture_id', function(req, res, next) {
             res.json(timetable);
           });
         });
-    })
+    });
 });
 
 /**
@@ -105,7 +105,7 @@ router.post('/:id/lecture', function(req, res, next) {
         }
         res.json(timetable);
       });
-    })
+    });
 });
 
 /**
@@ -147,16 +147,16 @@ router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
   var lecture_raw = req.body;
   if(!lecture_raw || Object.keys(lecture_raw).length < 1) return res.status(400).json({message:"empty body"});
 
-  if (!req.params["lecture_id"])
+  if (!req.params.lecture_id)
     return res.status(400).json({message:"need lecture_id"});
 
-  Timetable.findOne({'user_id': req.user._id, '_id' : req.params["table_id"]})
+  Timetable.findOne({'user_id': req.user._id, '_id' : req.params.table_id})
     .exec(function(err, timetable){
       if(err) return res.status(500).json({message:"find table failed"});
       if(!timetable) return res.status(404).json({message:"timetable not found"});
       if (lecture_raw.class_time_json)
         lecture_raw.class_time_mask = timeJsonToMask(lecture_raw.class_time_json);
-      timetable.update_lecture(req.params["lecture_id"], lecture_raw, function(err, doc) {
+      timetable.update_lecture(req.params.lecture_id, lecture_raw, function(err, doc) {
         if(err) {
           if (err.message == "modifying identities forbidden" ||
             err.message == "lecture not found")
@@ -166,7 +166,7 @@ router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
         }
         res.json(doc);
       });
-    })
+    });
 });
 
 /**
@@ -175,8 +175,8 @@ router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
  */
 router.delete('/:table_id/lecture/:lecture_id', function(req, res, next) {
   Timetable.findOneAndUpdate(
-    {'user_id': req.user._id, '_id' : req.params["table_id"]},
-    { $pull: {lecture_list : {_id: req.params["lecture_id"]} } }, {new: true})
+    {'user_id': req.user._id, '_id' : req.params.table_id},
+    { $pull: {lecture_list : {_id: req.params.lecture_id} } }, {new: true})
     .exec(function (err, doc) {
       if (err) {
         console.log(err);
@@ -219,7 +219,7 @@ router.post('/:id/copy', function(req, res, next) {
           res.json(timetables);
         });
       });
-    })
+    });
 });
 
 router.put('/:id', function(req, res, next) {

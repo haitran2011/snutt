@@ -2,4 +2,5 @@
 SNU Timetable
 
 ## Requirements
-mongodb >= 2.6
+* mongodb >= 2.6
+* node >= 4.2

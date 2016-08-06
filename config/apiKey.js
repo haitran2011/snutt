@@ -68,7 +68,7 @@ var validateKey = function(api_key) {
         api_list[decoded.string].key_version == decoded.key_version)
         return resolve(api_list[decoded.string]);
     });
-  })
+  });
 };
 
 if (!module.parent) {

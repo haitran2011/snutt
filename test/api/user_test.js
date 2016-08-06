@@ -284,7 +284,7 @@ module.exports = function(app, db, request) {
           assert.equal(res.body.attached, false);
           done(err);
         });
-    })
+    });
 
     it('Detach fails when already detached', function(done) {
       request.post('/api/user/detach_fb')
@@ -296,5 +296,5 @@ module.exports = function(app, db, request) {
           done(err);
         });
     });
-  })
+  });
 };

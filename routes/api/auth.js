@@ -13,7 +13,7 @@ var User = require('../../model/user');
 router.post('/login_local', function(req, res, next) {
   passport.authenticate('local-id', function(err, user, info) {
     if (err) { return res.status(403).json({message:err.message}); }
-    if (!user || !info.token) { return res.status(403).json({message:info.message}) }
+    if (!user || !info.token) { return res.status(403).json({message:info.message}); }
     res.json({token: info.token});
   })(req, res, next);
 });
@@ -36,9 +36,9 @@ router.post('/login_fb', function(req, res, next) {
   req.query.password = "facebook";
   passport.authenticate('local-fb', function(err, user, info) {
     if (err) { return next(err); }
-    if (!user || !info.token) { return res.status(403).json({message: info.message}) }
+    if (!user || !info.token) { return res.status(403).json({message: info.message}); }
     res.json({ token: info.token});
   })(req, res, next);
-})
+});
 
 module.exports = router;
