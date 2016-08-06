@@ -1,3 +1,5 @@
+"use strict";
+
 var router = require('express').Router();
 var Notification = require('../../model/notification');
 var User = require('../../model/user');

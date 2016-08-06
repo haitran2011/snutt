@@ -1,3 +1,5 @@
+"use strict";
+
 var express = require('express');
 var passport = require('../../config/passport');
 var router = express.Router();

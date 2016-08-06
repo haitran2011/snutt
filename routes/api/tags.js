@@ -1,6 +1,8 @@
 /**
  * Created by north on 16. 2. 24.
  */
+"use strict";
+
 var express = require('express');
 var router = express.Router();
 var TagList = require('../../model/tagList');

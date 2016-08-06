@@ -1,3 +1,5 @@
+"use strict";
+
 var router = require('express').Router();
 var LectureModel = require('../../model/lecture');
 var Lecture = LectureModel.Lecture;
@@ -39,6 +41,8 @@ module.exports = router.post('/', function(req, res, next) {
     query.instructor = { $in : req.body.instructor };
   if (req.body.academic_year && req.body.academic_year.length)
     query.academic_year = { $in : req.body.academic_year };
+  if (req.body.course_number && req.body.course_number.length)
+    query.course_number = { $in : req.body.course_number };
   if (req.body.classification && req.body.classification.length)
     query.classification = { $in : req.body.classification };
   if (req.body.category && req.body.category.length)
@@ -53,11 +57,19 @@ module.exports = router.post('/', function(req, res, next) {
     });
   }
 
-  Lecture.find(query).sort('course_number').lean().exec(function (err, lectures) {
-    if (err) {
-      console.log(err);
-      return res.status(500).json({message: "search error"});
-    }
-    return res.json(lectures);
-  })
+  if (!req.body.offset) offset = 0;
+  else offset = Number(req.body.offset);
+  if (!req.body.limit) limit = 20;
+  else limit = Number(req.body.limit);
+
+  Lecture.find(query).sort('course_number').lean()
+    .skip(offset)
+    .limit(limit)
+    .exec(function (err, lectures) {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({message: "search error"});
+      }
+      return res.json(lectures);
+  });
 });
