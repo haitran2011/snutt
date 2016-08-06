@@ -48,7 +48,7 @@ describe('API Test', function() {
   // Register test user
   before(function(done) {
     request.post('/api/auth/register_local')
-      .query({id:"snutt", password:"abc1234"})
+      .send({id:"snutt", password:"abc1234"})
       .expect(200)
       .end(function(err, res){
         assert.equal(res.body.message, 'ok');

@@ -55,7 +55,7 @@ router.use('/auth', authRouter);
  */
 router.use(function(req, res, next) {
   if(req.user) return next();
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  var token = req.query.token || req.body.token || req.headers['x-access-token'];
   if (token) {
     User.getUserFromCredentialHash(token).then(function(user){
       req.user = user;

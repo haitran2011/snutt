@@ -11,7 +11,7 @@ var assert = require('assert');
 module.exports = function(app, db, request) {
   it('Log-in succeeds', function(done) {
     request.post('/api/auth/login_local')
-      .query({id:"snutt", password:"abc1234"})
+      .send({id:"snutt", password:"abc1234"})
       .expect(200)
       .end(function(err, res){
         if (err) console.log(res);
@@ -22,7 +22,7 @@ module.exports = function(app, db, request) {
   describe('Log-in fails when', function() {
     it('user does not exist', function(done) {
       request.post('/api/auth/login_local')
-        .query({id:"FakeSnutt", password:"abc1234"})
+        .send({id:"FakeSnutt", password:"abc1234"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'wrong id');
@@ -31,7 +31,7 @@ module.exports = function(app, db, request) {
     });
     it('wrong password', function(done) {
       request.post('/api/auth/login_local')
-        .query({id:"snutt", password:"abc12345"})
+        .send({id:"snutt", password:"abc12345"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'wrong password');
@@ -42,7 +42,7 @@ module.exports = function(app, db, request) {
 
   it('Register succeeds', function(done) {
     request.post('/api/auth/register_local')
-      .query({id:"snutt2", password:"abc1234*"})
+      .send({id:"snutt2", password:"abc1234*"})
       .expect(200)
       .end(function(err, res){
         assert.equal(res.body.message, 'ok');
@@ -53,7 +53,7 @@ module.exports = function(app, db, request) {
   describe('Register fails when', function() {
     it('No ID', function(done) {
       request.post('/api/auth/register_local')
-        .query({password:"IDontNeedID"})
+        .send({password:"IDontNeedID"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'incorrect id');
@@ -63,7 +63,7 @@ module.exports = function(app, db, request) {
 
     it('Duplicate ID', function(done) {
       request.post('/api/auth/register_local')
-        .query({id:"snutt", password:"abc1234"})
+        .send({id:"snutt", password:"abc1234"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'same id already exists');
@@ -73,7 +73,7 @@ module.exports = function(app, db, request) {
 
     it('Weird ID', function(done) {
       request.post('/api/auth/register_local')
-        .query({id:"snutt##*", password:"abc1234"})
+        .send({id:"snutt##*", password:"abc1234"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'incorrect id');
@@ -83,7 +83,7 @@ module.exports = function(app, db, request) {
 
     it('Too short ID', function(done) {
       request.post('/api/auth/register_local')
-        .query({id:"tt", password:"abc1234"})
+        .send({id:"tt", password:"abc1234"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'incorrect id');
@@ -93,7 +93,7 @@ module.exports = function(app, db, request) {
 
     it('Too long ID', function(done) {
       request.post('/api/auth/register_local')
-        .query({id:"ThisIsVeryLongIdYouKnowThatThisIsFreakingLongManVeryLong", password:"abc1234"})
+        .send({id:"ThisIsVeryLongIdYouKnowThatThisIsFreakingLongManVeryLong", password:"abc1234"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'incorrect id');
@@ -103,7 +103,7 @@ module.exports = function(app, db, request) {
 
     it('No password', function(done) {
       request.post('/api/auth/register_local')
-        .query({id:"IDontNeedPw"})
+        .send({id:"IDontNeedPw"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'incorrect password');
@@ -113,7 +113,7 @@ module.exports = function(app, db, request) {
 
     it('Password too short', function(done) {
       request.post('/api/auth/register_local')
-        .query({id:"idiot", password:"a1111"})
+        .send({id:"idiot", password:"a1111"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'incorrect password');
@@ -123,7 +123,7 @@ module.exports = function(app, db, request) {
 
     it('Password too long', function(done) {
       request.post('/api/auth/register_local')
-        .query({id:"dumb", password:"abcdefghijklmnopqrst1"})
+        .send({id:"dumb", password:"abcdefghijklmnopqrst1"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'incorrect password');
@@ -133,7 +133,7 @@ module.exports = function(app, db, request) {
 
     it('Password only digits', function(done) {
       request.post('/api/auth/register_local')
-        .query({id:"numb", password:"111111"})
+        .send({id:"numb", password:"111111"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'incorrect password');
@@ -143,7 +143,7 @@ module.exports = function(app, db, request) {
 
     it('Password only letters', function(done) {
       request.post('/api/auth/register_local')
-        .query({id:"numbnumb", password:"abcdef"})
+        .send({id:"numbnumb", password:"abcdef"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'incorrect password');
@@ -153,7 +153,7 @@ module.exports = function(app, db, request) {
 
     it('Password with whitespace', function(done) {
       request.post('/api/auth/register_local')
-        .query({id:"hacker", password:"sql injection"})
+        .send({id:"hacker", password:"sql injection"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'incorrect password');
@@ -168,7 +168,7 @@ module.exports = function(app, db, request) {
     var fb_id = "abcd";
     before(function(done) {
       request.post('/api/auth/login_local')
-      .query({id:"snutt", password:"abc1234"})
+      .send({id:"snutt", password:"abc1234"})
       .expect(200)
       .end(function(err, res){
         if (err) console.log(err);
@@ -179,7 +179,7 @@ module.exports = function(app, db, request) {
 
     before(function(done) {
       request.post('/api/auth/login_local')
-      .query({id:"snutt2", password:"abc1234*"})
+      .send({id:"snutt2", password:"abc1234*"})
       .expect(200)
       .end(function(err, res){
         if (err) console.log(err);
@@ -210,7 +210,7 @@ module.exports = function(app, db, request) {
     it('Attach Facebook ID', function(done) {
       request.post('/api/user/attach_fb')
         .set('x-access-token', token)
-        .query({fb_id: fb_id})
+        .send({fb_id: fb_id})
         .expect(200)
         .end(function(err, res){
           if (err) console.log(err);
@@ -222,7 +222,7 @@ module.exports = function(app, db, request) {
     it('Attach fails when already attached', function(done) {
       request.post('/api/user/attach_fb')
         .set('x-access-token', token)
-        .query({fb_id: "abcd2"})
+        .send({fb_id: "abcd2"})
         .expect(403)
         .end(function(err, res){
           if (err) console.log(err);
@@ -234,7 +234,7 @@ module.exports = function(app, db, request) {
     it('Attach fails when already attached fb_id', function(done) {
       request.post('/api/user/attach_fb')
         .set('x-access-token', token2)
-        .query({fb_id: "abcd"})
+        .send({fb_id: "abcd"})
         .expect(403)
         .end(function(err, res){
           if (err) console.log(err);
@@ -256,7 +256,7 @@ module.exports = function(app, db, request) {
 
     it('Log-in with facebook succeeds', function(done) {
       request.post('/api/auth/login_fb')
-        .query({fb_id: fb_id})
+        .send({fb_id: fb_id})
         .expect(200)
         .end(function(err, res){
           if (err) console.log(err);
