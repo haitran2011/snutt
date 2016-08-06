@@ -1,3 +1,5 @@
+"use strict";
+
 if (!module.parent) {
   console.log("Not to be executed directly. Instead call import_txt.js");
   console.log("usage: $ node import_txt.js 2016 1");
@@ -66,7 +68,7 @@ function insert_course(lines, year, semesterIndex, next)
   async.series([
     function (callback) {
       console.log ("Loading new lectures...");
-      for (var i=0; i<lines.length; i++) {
+      for (let i=0; i<lines.length; i++) {
         var line = lines[i];
         var components = line.split(";");
         if (components.length == 1) continue;
@@ -85,16 +87,16 @@ function insert_course(lines, year, semesterIndex, next)
           category : components[13]
         };
 
-        for (var key in tags) {
+        for (let key in tags) {
           if (tags.hasOwnProperty(key)){
-            var existing_tag = undefined;
-            for (var j=0; j<tags[key].length; j++) {
+            var existing_tag = null;
+            for (let j=0; j<tags[key].length; j++) {
               if (tags[key][j] == new_tag[key]){
                 existing_tag = new_tag[key];
                 break;
               }
             }
-            if (existing_tag == undefined) {
+            if (existing_tag === null) {
               if (new_tag[key].length < 2) continue;
               tags[key].push(new_tag[key]);
             }
@@ -103,7 +105,7 @@ function insert_course(lines, year, semesterIndex, next)
 
         var timeJson = Util.timeAndPlaceToJson(components[7], components[8]);
         // TimeMask limit is 15*2
-        for (var j=0; j<timeJson.length; j++) {
+        for (let j=0; j<timeJson.length; j++) {
           var t_end = parseFloat(timeJson[j].start)+parseFloat(timeJson[j].len);
           if (t_end > 15) {
             console.log("Warning: ("+components[3]+", "+components[4]+", "+components[5]+
@@ -145,14 +147,14 @@ function insert_course(lines, year, semesterIndex, next)
     },
     function (callback){
       console.log("Comparing existing lectures and new lectures...");
-      for (var i=0; i<new_lectures.length; i++) {
+      for (let i=0; i<new_lectures.length; i++) {
         var exists = false;
-        for (var j=0; j<old_lectures.length; j++) {
+        for (let j=0; j<old_lectures.length; j++) {
           if (old_lectures[j].checked) continue;
           if (old_lectures[j].course_number != new_lectures[i].course_number) continue;
           if (old_lectures[j].lecture_number != new_lectures[i].lecture_number) continue;
           var diff_update = Util.compareLecture(old_lectures[j], new_lectures[i]);
-          if (diff_update != null) {
+          if (diff_update) {
             diff_update.course_number = old_lectures[j].course_number;
             diff_update.lecture_number = old_lectures[j].lecture_number;
             diff_update.course_title = old_lectures[j].course_title;
@@ -163,7 +165,7 @@ function insert_course(lines, year, semesterIndex, next)
           exists = true;
           break;
         }
-        if (exists == false) {
+        if (exists === false) {
           diff.created.push({
             course_number: new_lectures[i].course_number,
             lecture_number: new_lectures[i].lecture_number,
@@ -172,7 +174,7 @@ function insert_course(lines, year, semesterIndex, next)
           console.log(new_lectures[i].course_title+" created");
         }
       }
-      for (var i=0; i<old_lectures.length; i++) {
+      for (let i=0; i<old_lectures.length; i++) {
         if (!old_lectures[i].checked) {
           diff.removed.push({
             course_number: old_lectures[i].course_number,
@@ -182,9 +184,9 @@ function insert_course(lines, year, semesterIndex, next)
           console.log(old_lectures[i].course_title+" removed");
         }
       }
-      if (diff.updated.length == 0 &&
-          diff.created.length == 0 &&
-          diff.removed.length == 0) {
+      if (diff.updated.length === 0 &&
+          diff.created.length === 0 &&
+          diff.removed.length === 0) {
         console.log("Nothing updated.");
         return callback(new Error("Update cancelled: nothing to update"));
       }
@@ -232,7 +234,7 @@ function insert_course(lines, year, semesterIndex, next)
                       message: "Lecture update error",
                       timetable_id: timetable,
                       lecture: updated_lecture
-                    }))
+                    }));
                   }
                   var noti_detail = {
                     timetable_id : timetable._id,
@@ -255,7 +257,7 @@ function insert_course(lines, year, semesterIndex, next)
             });
           }, function(err){
             callback(err);
-          })
+          });
         },
         function(callback){
           async.each(diff.removed, function(removed_lecture, callback) {
@@ -284,7 +286,7 @@ function insert_course(lines, year, semesterIndex, next)
                       message: "Lecture update error",
                       timetable_id: timetable,
                       lecture: removed_lecture
-                    }))
+                    }));
                   }
                   var noti_detail = {
                     timetable_id : timetable._id,
@@ -307,7 +309,7 @@ function insert_course(lines, year, semesterIndex, next)
               });
           }, function(err){
             callback(err);
-          })
+          });
         }
       ], function(err, results){
         callback(err);
@@ -330,13 +332,13 @@ function insert_course(lines, year, semesterIndex, next)
         lecture.save(function (err, lecture) {
           if (err) {
             console.log(err);
-            err_cnt++
+            err_cnt++;
           }
           process.stdout.write("Inserting " + (++saved_cnt) + "th course\r");
           callback();
         });
       }, function(err) {
-        console.log("\nInsert complete with " + eval(saved_cnt-err_cnt) + " success and "+ err_cnt + " errors");
+        console.log("\nInsert complete with " + (saved_cnt-err_cnt) + " success and "+ err_cnt + " errors");
         for (var key in tags) {
           if (tags.hasOwnProperty(key)){
             tags[key].sort();

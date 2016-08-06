@@ -4,6 +4,7 @@
  * supertest: https://github.com/visionmedia/supertest
  * mocha: http://mochajs.org/#usage
  */
+"use strict";
 
 var assert = require('assert');
 var async = require('async');
@@ -16,10 +17,10 @@ module.exports = function(app, db, request) {
 
   before(function(done) {
     request.post('/api/auth/login_local')
-      .send({id:"snutt", password:"abc1234"})
+      .query({id:"snutt", password:"abc1234"})
       .expect(200)
       .end(function(err, res){
-        token = res.text;
+        token = res.body.token;
         done(err);
       });
   });
@@ -44,7 +45,7 @@ module.exports = function(app, db, request) {
         if (err) done(err);
         assert.equal(res.body[0].title, "MyTimeTable");
         done();
-      })
+      });
   });
 
   it ('Get timetable succeeds', function(done){
@@ -57,7 +58,7 @@ module.exports = function(app, db, request) {
           err = new Error("timetable title differs");
         table_updated_at = res.body.updated_at;
         done(err);
-      })
+      });
   });
 
   it ('Create timetable succeeds', function(done){
@@ -67,17 +68,18 @@ module.exports = function(app, db, request) {
       .expect(200)
       .end(function(err, res) {
         done(err);
-      })
+      });
   });
 
   it ('Create timetable with the same title should fail', function(done){
     request.post('/api/tables/')
       .set('x-access-token', token)
       .send({year:2016, semester:1, title:"MyTimeTable"})
-      .expect(403, 'duplicate title')
+      .expect(403)
       .end(function(err, res) {
+        assert.equal(res.body.message, 'duplicate title');
         done(err);
-      })
+      });
   });
 
   it ('Update timetable title succeeds', function(done){
@@ -94,9 +96,9 @@ module.exports = function(app, db, request) {
             assert.equal(res.body.title, "MyTimeTable3");
             done(err);
           });
-      })
+      });
   });
-  
+
   it ('Table updated_at updated correctly', function(done) {
     request.get('/api/tables/'+table_id)
       .set('x-access-token', token)
@@ -106,17 +108,18 @@ module.exports = function(app, db, request) {
         if (res.body.updated_at == table_updated_at)
           return done(new Error("update time does not differ"));
         done();
-      })
+      });
   });
 
   it ('Updating timetable with the same title should fail', function(done){
     request.put('/api/tables/'+table_id)
       .set('x-access-token', token)
       .send({title:"MyTimeTable2"})
-      .expect(403, 'duplicate title')
+      .expect(403)
       .end(function(err, res) {
+        assert.equal(res.body.message, 'duplicate title');
         done(err);
-      })
+      });
   });
 
   /* Search query does not work on test db
@@ -194,7 +197,7 @@ module.exports = function(app, db, request) {
         assert.equal(lecture.course_number, "400.320");
         assert.equal(lecture.class_time_json[0].place, "302-308");
         done();
-      })
+      });
   });
 
   it ('Copy timetable', function(done) {
@@ -305,7 +308,7 @@ module.exports = function(app, db, request) {
       .expect(403)
       .end(function(err, res) {
         done(err);
-      })
+      });
   });
 
   it ('Delete a lecture', function(done) {
@@ -317,11 +320,11 @@ module.exports = function(app, db, request) {
           done(err);
           return;
         }
-        if (res.body.lecture_list.length != 0 &&
+        if (res.body.lecture_list.length !== 0 &&
           res.body.lecture_list[0]._id == lecture_id) {
           err = new Error("lecture not deleted");
         }
         done(err);
-      })
+      });
   });
 };

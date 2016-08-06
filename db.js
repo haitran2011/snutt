@@ -1,4 +1,5 @@
 var mongoose = require('mongoose');
+mongoose.Promise = global.Promise;
 
 // connect mongoose
 module.exports = mongoose.connect('mongodb://localhost/snutt', function(err) {
@@ -16,7 +17,7 @@ module.exports = mongoose.connect('mongodb://localhost/snutt', function(err) {
     }
     console.log("MongoDB "+info.version+" connected");
     if (parseFloat(info.version) < 2.4) {
-      console.log("MongoDB version is outdated. (< 2.4) Service might not work properly")
+      console.log("MongoDB version is outdated. (< 2.4) Service might not work properly");
     }
   });
   //console.log('mongodb connected');

@@ -2,6 +2,8 @@
  * Notification Model
  * Jang Ryeol, ryeolj5911@gmail.com
  */
+"use strict";
+
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var User = require('./user');
@@ -31,7 +33,7 @@ NotificationSchema.statics.countUnread = function (user, callback) {
     .exec(callback);
 };
 
-/** 
+/**
  * Types
  * - Type.NORMAL      : Normal Messages. Detail would be null
  * - Type.COURSEBOOK  : Course Book Changes. Detail contains lecture difference

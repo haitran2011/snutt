@@ -3,6 +3,7 @@
  * Lecture는 수강편람 상의 강의
  * UserLecture는 유저 시간표 상의 강의
  */
+"use strict";
 
 var mongoose = require('mongoose');
 function BaseSchema(add){

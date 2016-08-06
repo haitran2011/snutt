@@ -3,28 +3,39 @@
  * This script is parent script for api tests.
  * usage : $ npm test
  */
+"use strict";
 
 process.env.NODE_ENV = 'mocha';
 
 var assert = require('assert');
 var request = require('supertest');
+var config = require('../../config/config');
 var db = require('../../db');
 var app = require('../../app');
 
 request = request(app);
 describe('API Test', function() {
 
+
+
+  before(function(done) {
+    if (config.secretKey && config.host && config.port && config.email)
+      return done();
+    else
+      return done(new Error("config is not set"));
+  });
+
   // Change connection into test DB in order not to corrupt production DB
   before(function(done) {
     if (!db.connection.readyState)
       return done(new Error("DB not connected"));
-    db.disconnect(function() {
+    db.connection.close(function() {
       db.connect('mongodb://localhost/snutt_test', function(err){
         return done(err);
       });
-    })
+    });
   });
-  
+
   // Clean Test DB
   // mongoose.connection.db.dropDatabase()
   // dose not actually drop the db, but actually clears it
@@ -33,13 +44,14 @@ describe('API Test', function() {
       done(err);
     });
   });
-  
+
   // Register test user
   before(function(done) {
     request.post('/api/auth/register_local')
-      .send({id:"snutt", password:"abc1234"})
-      .expect(200, 'ok')
+      .query({id:"snutt", password:"abc1234"})
+      .expect(200)
       .end(function(err, res){
+        assert.equal(res.body.message, 'ok');
         done(err);
       });
   });
@@ -54,11 +66,11 @@ describe('API Test', function() {
       done();
     });
   });
-  
+
   describe('User', function () {
     require('./user_test')(app, db, request);
   });
-  
+
   describe('Timetable', function () {
     require('./timetable_test')(app, db, request);
   });

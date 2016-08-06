@@ -1,5 +1,6 @@
 # snutt
 SNU Timetable
 
-## Dependency
-mongodb >= 2.6
+## Requirements
+* mongodb >= 2.6
+* node >= 4.2
