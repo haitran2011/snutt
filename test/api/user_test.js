@@ -9,10 +9,41 @@
 var assert = require('assert');
 
 module.exports = function(app, db, request) {
+  var token;
   it('Log-in succeeds', function(done) {
     request.post('/api/auth/login_local')
       .send({id:"snutt", password:"abc1234"})
       .expect(200)
+      .end(function(err, res){
+        if (err) console.log(res);
+        token = res.body.token;
+        done(err);
+      });
+  });
+
+  it('Token transaction works', function(done) {
+    request.get('/api/user/info')
+      .set('x-access-token', token)
+      .expect(200)
+      .end(function(err, res){
+        if (err) console.log(res);
+        done(err);
+      });
+  });
+
+  it('Token transaction fails when no token', function(done) {
+    request.get('/api/user/info')
+      .expect(401)
+      .end(function(err, res){
+        if (err) console.log(res);
+        done(err);
+      });
+  });
+
+  it('Token transaction fails when incorrect token', function(done) {
+    request.get('/api/user/info')
+      .set('x-access-token', "abcd")
+      .expect(403)
       .end(function(err, res){
         if (err) console.log(res);
         done(err);
