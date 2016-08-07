@@ -1,5 +1,6 @@
 "use strict";
 
+var request = require('request');
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
 //var FBStrategy = require('passport-facebook').Strategy;
@@ -55,17 +56,28 @@ passport.use('local-id', new LocalStrategy({
  * we does not save any token
  */
 passport.use('local-fb', new LocalStrategy({
-    usernameField: 'fb_id',
-    passwordField: 'password',
+    usernameField: 'fb_name',
+    passwordField: 'fb_token',
     session: false,
     passReqToCallback: true
   },
-  function(req, id, password, done) {
-    User.get_fb(id, function(err, user) {
-      if(err) return done(err);
-      if(!user) return done(null, false, { message: 'no connected account' });
-      var token = user.getCredentialHash();
-      return done(null, user, {token: token});
+  function(req, fb_name, fb_token, done) {
+    if (process.env.NODE_ENV == 'mocha') {
+      if (fb_token == 'correct') return done(null, null, {fb_name: "John", fb_id: 1234});
+      if (fb_token == 'correct2') return done(null, null, {fb_name: "Smith", fb_id: 1235});
+      return done(null, null, { message: 'incorrect token'});
+    }
+    request({
+        url: "https://graph.facebook.com/me",
+        method: "GET",
+        json: true,
+        qs: {access_token: fb_token}
+    }, function (err, res, body){
+      if (err || res.statusCode != 200 || !body || !body.id) {
+        return done(err, null, { message: 'incorrect token'});
+      } else {
+        return done(null, null, {fb_name: body.name, fb_id: body.id});
+      }
     });
   }
 ));
@@ -73,23 +85,21 @@ passport.use('local-fb', new LocalStrategy({
 
 /**
  * This is passport-facebook implementation.
- * But we don't need this on the server side.
+ * Only for test purpose
  * Maybe web client can use this.
  */
+
 /*
 passport.use(new FBStrategy({
-    clientID: secretKey.FBID,
-    clientSecret: secretKey.FBSECRET,
+    clientID: "",
+    clientSecret: "",
+    callbackURL: "http://localhost:3000/api/facebook_test",
     session: false,
     passReqToCallback: true
   },
-  function(accessToken, refreshToken, profile, cb) {
-    User.get_fb(profile.id, function(err, user) {
-      if(err) return cb(err);
-      if(!user) return cb(null, false, { fb_id: profile.id });
-      var token = user.getCredentialHash();
-      return cb(null, user, {token: token})
-    });
+  function(req, accessToken, refreshToken, profile, cb) {
+    console.log(cb);
+    return cb(null, false, { accessToken: accessToken});
   }
 ));
 */

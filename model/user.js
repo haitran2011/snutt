@@ -9,6 +9,7 @@ var UserSchema = new mongoose.Schema({
   credential : {
     local_id: {type: String, default: null},
     local_pw: {type: String, default: null},
+    fb_name: {type: String, default: null},
     fb_id: {type: String, default: null}
   },
   credentialHash : {type: String, default: null},
@@ -62,12 +63,13 @@ UserSchema.methods.changeLocalPassword = function(password, callback) {
   });
 };
 
-UserSchema.methods.attachFBId = function(fb_id, callback) {
+UserSchema.methods.attachFBId = function(fb_name, fb_id, callback) {
   if (!fb_id) {
     return new Promise(function (resolve, reject) {
       reject("null fb_id");
     });
   }
+  this.credential.fb_name = fb_name;
   this.credential.fb_id = fb_id;
   return this.signCredential(callback);
 };
@@ -77,6 +79,7 @@ UserSchema.methods.detachFBId = function(callback) {
     return new Promise(function(resolve, reject) {
       reject("No Local ID");
     });
+  this.credential.fb_name = null;
   this.credential.fb_id = null;
   return this.signCredential(callback);
 };
@@ -154,9 +157,36 @@ UserSchema.statics.create_local = function(id, password, callback) {
     });
 };
 
-UserSchema.statics.get_fb = function(id, callback) {
+UserSchema.statics.get_fb = function(name, id, callback) {
   return mongoose.model('User').findOne({'credential.fb_id' : id, 'active' : true })
     .exec(callback);
+};
+
+UserSchema.statics.get_fb_or_create = function(name, id, callback) {
+  var User = mongoose.model('User');
+  return User.get_fb(name, id)
+    .then(function(user){
+      if (!user) {
+        user = new User({
+          credential : {
+            fb_name: name,
+            fb_id: id
+          }
+        });
+        return user.signCredential(callback);
+      } else {
+        callback(null, user);
+        return new Promise(function(resolve, reject) {
+          resolve(user);
+        });
+      }
+    })
+    .catch(function(err){
+      callback(err);
+      return new Promise(function(resolve, reject) {
+        reject(err);
+      });
+    });
 };
 
 

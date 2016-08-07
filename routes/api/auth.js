@@ -33,11 +33,20 @@ router.post('/register_local', function (req, res, next) {
 });
 
 router.post('/login_fb', function(req, res, next) {
-  req.body.password = "facebook";
+  if (!req.body.fb_token || !req.body.fb_name)
+    return res.status(400).json({message: "both fb_name and fb_token required"});
+    
   passport.authenticate('local-fb', function(err, user, info) {
-    if (err) { return next(err); }
-    if (!user || !info.token) { return res.status(403).json({message: info.message}); }
-    res.json({ token: info.token});
+    if (err) return res.status(403).json({message:err.message});
+    if (!info.fb_id) return res.status(403).json({message:info.message});
+    User.get_fb_or_create(info.fb_name, info.fb_id, function(err, user) {
+      if (err || !user) {
+        console.log(err);
+        return res.status(500).json({ message: 'failed to create' });
+      }
+      var token = user.getCredentialHash();
+      res.json({ token: token});
+    });
   })(req, res, next);
 });
 
