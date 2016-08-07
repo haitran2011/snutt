@@ -58,6 +58,8 @@ router.use(function(req, res, next) {
   var token = req.query.token || req.body.token || req.headers['x-access-token'];
   if (token) {
     User.getUserFromCredentialHash(token).then(function(user){
+      if (!user)
+        return res.status(403).json({ message: 'Failed to authenticate token.' });
       req.user = user;
       next();
     }, function (err) {
