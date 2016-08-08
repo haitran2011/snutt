@@ -6,12 +6,12 @@ var User = require('../../model/user');
 
 router.get('/', function(req, res, next){
   var offset, limit;
-  if (!req.body.offset) offset = 0;
-  else offset = Number(req.body.offset);
-  if (!req.body.limit) limit = 20;
-  else limit = Number(req.body.limit);
+  if (!req.query.offset) offset = 0;
+  else offset = Number(req.query.offset);
+  if (!req.query.limit) limit = 20;
+  else limit = Number(req.query.limit);
   Notification.getNewest(req.user, offset, limit).then(function(value){
-    if (req.body.explicit) {
+    if (req.query.explicit) {
       req.user.updateNotificationCheckDate(function (err) {
         if (err) {
           console.log(err);
