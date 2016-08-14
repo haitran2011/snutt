@@ -36,9 +36,9 @@ var api_list = {
 };
 
 var app_version = {
-  ios : "1.0",
-  web : "1.0",
-  android : "1.0"
+  ios : "1.0.0",
+  web : "1.0.0",
+  android : "1.0.0"
 };
 
 var getAppVersion = function(string) {
