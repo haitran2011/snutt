@@ -13,8 +13,16 @@ var UserLecture = LectureModel.UserLecture;
 
 router.get('/', function(req, res, next) { //timetable list
   Timetable.getTimetables(req.user._id, {lean:true}, function(err, timetables) {
-    if(err) return res.status(500).json({message:'fetch timetable list failed'});
+    if (err) return res.status(500).json({message:'fetch timetable list failed'});
     res.json(timetables);
+  });
+});
+
+router.get('/recent', function(req, res, next) {
+  Timetable.getRecentTimetable(req.user._id, {lean:true}, function(err, timetable) {
+    if (err) return res.status(500).json({message:'find table failed'});
+    if (!timetable) return res.status(404).json({message:'no timetable'});
+    res.json(timetable);
   });
 });
 

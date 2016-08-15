@@ -12,6 +12,7 @@ var async = require('async');
 module.exports = function(app, db, request) {
   var token;
   var table_id;
+  var table2_id;
   var table_updated_at;
   var lecture_id;
 
@@ -67,6 +68,20 @@ module.exports = function(app, db, request) {
       .send({year:2016, semester:1, title:"MyTimeTable2"})
       .expect(200)
       .end(function(err, res) {
+        if (err) return done(err);
+        assert.equal(res.body[1].title, "MyTimeTable2");
+        table2_id = res.body[1]._id;
+        done(err);
+      });
+  });
+
+  it ('New timetable is the most recent table', function(done) {
+    request.get('/api/tables/recent')
+      .set('x-access-token', token)
+      .expect(200)
+      .end(function(err, res) {
+        if (err) return done(err);
+        assert.equal(res.body.title, "MyTimeTable2");
         done(err);
       });
   });
@@ -96,6 +111,17 @@ module.exports = function(app, db, request) {
             assert.equal(res.body.title, "MyTimeTable3");
             done(err);
           });
+      });
+  });
+
+  it ('Updated timetable is the most recent table', function(done) {
+    request.get('/api/tables/recent')
+      .set('x-access-token', token)
+      .expect(200)
+      .end(function(err, res) {
+        if (err) return done(err);
+        assert.equal(res.body.title, "MyTimeTable3");
+        done(err);
       });
   });
 
