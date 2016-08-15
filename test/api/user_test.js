@@ -38,6 +38,7 @@ module.exports = function(app, db, request) {
       .expect(401)
       .end(function(err, res){
         if (err) console.log(res);
+        assert.equal(res.body.errcode, 0x0002);
         done(err);
       });
   });
@@ -48,6 +49,7 @@ module.exports = function(app, db, request) {
       .expect(403)
       .end(function(err, res){
         if (err) console.log(res);
+        assert.equal(res.body.errcode, 0x0001);
         done(err);
       });
   });

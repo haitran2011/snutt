@@ -25,7 +25,7 @@ router.use(function(req, res, next) {
     api_info = value;
     next();
   }, function(err) {
-    res.status(403).json({message: err});
+    res.status(403).json({errcode: 0x0000, message: err});
   });
 });
 
@@ -61,25 +61,23 @@ router.use('/auth', authRouter);
  * If the user object is modified, you should re-login!!
  */
 router.use(function(req, res, next) {
-  if(req.user) return next();
+  if (req.user) return next();
   var token = req.query.token || req.body.token || req.headers['x-access-token'];
-  if (token) {
-    User.getUserFromCredentialHash(token).then(function(user){
-      if (!user)
-        return res.status(403).json({ message: 'Failed to authenticate token.' });
-      req.user = user;
-      next();
-    }, function (err) {
-      console.log(err);
-      return res.status(403).json({ message: 'Failed to authenticate token.' });
-    });
-  } else {
-    // if there is no token
-    // return an error
+  if (!token) {
     return res.status(401).json({
+      errcode: 0x0002,
       message: 'No token provided.'
     });
   }
+  User.getUserFromCredentialHash(token).then(function(user){
+    if (!user)
+      return res.status(403).json({ errcode: 0x0001, message: 'Failed to authenticate token.' });
+    req.user = user;
+    next();
+  }, function (err) {
+    console.log(err);
+    return res.status(403).json({ errcode: 0x0001, message: 'Failed to authenticate token.' });
+  });
 });
 
 router.use('/tables', timetableRouter);
