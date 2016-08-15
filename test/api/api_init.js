@@ -13,6 +13,8 @@ var config = require('../../config/config');
 var db = require('../../db');
 var app = require('../../app');
 
+var CourseBook = require('../../model/courseBook');
+
 request = request(app);
 describe('API Test', function() {
 
@@ -45,6 +47,33 @@ describe('API Test', function() {
     });
   });
 
+  // Add 2 coursebooks, 2016-2 and 2015-W
+  before(function(done) {
+    CourseBook.findOneAndUpdate({ year: 2016, semester: 3 },
+      { updated_at: Date.now() },
+      {
+        new: true,   // return new doc
+        upsert: true // insert the document if it does not exist
+      })
+      .exec(function(err, doc) {
+        if (err) return done(err);
+        assert.equal(doc.year, 2016);
+        assert.equal(doc.semester, 3);
+        CourseBook.findOneAndUpdate({ year: 2015, semester: 4 },
+          { updated_at: Date.now() },
+          {
+            new: true,   // return new doc
+            upsert: true // insert the document if it does not exist
+          })
+          .exec(function(err, doc) {
+            if (err) return done(err);
+            assert.equal(doc.year, 2015);
+            assert.equal(doc.semester, 4);
+            done(err);
+        });
+    });
+  });
+
   // Register test user
   before(function(done) {
     request.post('/api/auth/register_local')
@@ -65,6 +94,15 @@ describe('API Test', function() {
         return done(new Error("MongoDB version("+info.version+") is outdated(< 2.4). Service might not work properly"));
       done();
     });
+  });
+
+  it('Recent Coursebook', function(done) {
+    request.get('/api/course_books/recent')
+      .expect(200)
+      .end(function(err, res){
+        assert.equal(res.body.semester, 3);
+        done(err);
+      });
   });
 
   describe('User', function () {

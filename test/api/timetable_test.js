@@ -33,7 +33,8 @@ module.exports = function(app, db, request) {
       .expect(200)
       .end(function(err, res){
         if (!res.body.length && !err) err = new Error("Timetable List Incorrect");
-        else if (!err) table_id = res.body[0]._id;
+        else if (!err) table_id = res.body[1]._id;
+        assert.equal(res.body[1].title, "MyTimeTable");
         done(err);
       });
   });
@@ -44,7 +45,7 @@ module.exports = function(app, db, request) {
       .expect(200)
       .end(function(err, res) {
         if (err) done(err);
-        assert.equal(res.body[0].title, "MyTimeTable");
+        assert.equal(res.body[1].title, "MyTimeTable");
         done();
       });
   });
@@ -69,8 +70,8 @@ module.exports = function(app, db, request) {
       .expect(200)
       .end(function(err, res) {
         if (err) return done(err);
-        assert.equal(res.body[1].title, "MyTimeTable2");
-        table2_id = res.body[1]._id;
+        assert.equal(res.body[2].title, "MyTimeTable2");
+        table2_id = res.body[2]._id;
         done(err);
       });
   });

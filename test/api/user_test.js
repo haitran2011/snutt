@@ -10,6 +10,8 @@ var assert = require('assert');
 
 module.exports = function(app, db, request) {
   var token;
+  var token2;
+
   it('Log-in succeeds', function(done) {
     request.post('/api/auth/login_local')
       .send({id:"snutt", password:"abc1234"})
@@ -78,6 +80,30 @@ module.exports = function(app, db, request) {
       .end(function(err, res){
         assert.equal(res.body.message, 'ok');
         done(err);
+      });
+  });
+
+  it('Log-in registered account', function(done) {
+    request.post('/api/auth/login_local')
+      .send({id:"snutt2", password:"abc1234*"})
+      .expect(200)
+      .end(function(err, res){
+        if (err) console.log(res);
+        token2 = res.body.token;
+        done(err);
+      });
+  });
+
+  it('Auto-generated default timetable', function(done) {
+    request.get('/api/tables/')
+      .set('x-access-token', token2)
+      .expect(200)
+      .end(function(err, res) {
+        if (err) done(err);
+        assert.equal(res.body[0].title, "나의 시간표");
+        assert.equal(res.body[0].year, 2016);
+        assert.equal(res.body[0].semester, 3);
+        done();
       });
   });
 
@@ -339,6 +365,19 @@ module.exports = function(app, db, request) {
           if (err) console.log(err);
           token = res.body.token;
           done(err);
+        });
+    });
+
+    it('Auto-generated default timetable', function(done) {
+      request.get('/api/tables/')
+        .set('x-access-token', token)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) done(err);
+          assert.equal(res.body[0].title, "나의 시간표");
+          assert.equal(res.body[0].year, 2016);
+          assert.equal(res.body[0].semester, 3);
+          done();
         });
     });
 

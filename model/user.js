@@ -5,6 +5,9 @@ var config = require('../config/config');
 var bcrypt = require('bcrypt');
 var crypto = require('crypto');
 
+var Timetable = require('./timetable');
+var CourseBook = require('./courseBook');
+
 var UserSchema = new mongoose.Schema({
   credential : {
     local_id: {type: String, default: null},
@@ -172,6 +175,13 @@ UserSchema.statics.get_fb_or_create = function(name, id, callback) {
             fb_name: name,
             fb_id: id
           }
+        });
+        CourseBook.getRecent({lean:true}).then(function(coursebook){
+            return Timetable.createTimetable({
+              user_id : user._id,
+              year : coursebook.year,
+              semester : coursebook.semester,
+              title : "나의 시간표"});
         });
         return user.signCredential(callback);
       } else {

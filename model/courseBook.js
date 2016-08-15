@@ -15,4 +15,10 @@ CourseBookSchema.pre('save', function(next) {
   next();
 });
 
+CourseBookSchema.statics.getRecent = function(flags, callback) {
+  var query = mongoose.model("CourseBook").findOne().sort([["year", -1], ["semester", -1]]);
+  if (flags && flags.lean === true) query = query.lean();
+  return query.exec(callback);
+};
+
 module.exports = mongoose.model('CourseBook', CourseBookSchema);

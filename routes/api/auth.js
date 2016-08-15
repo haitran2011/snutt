@@ -5,6 +5,8 @@ var passport = require('../../config/passport');
 var router = express.Router();
 
 var User = require('../../model/user');
+var CourseBook = require('../../model/courseBook');
+var Timetable = require('../../model/timetable');
 
 /**
  * POST
@@ -28,7 +30,20 @@ router.post('/register_local', function (req, res, next) {
     if (err) {
       return res.status(403).json({message:err.message});
     }
-    return res.json({message:"ok"});
+    CourseBook.getRecent({lean:true}).then(function(coursebook){
+      return Timetable.createTimetable({
+        user_id : user._id,
+        year : coursebook.year,
+        semester : coursebook.semester,
+        title : "나의 시간표"});
+    }).then(function(timetable){
+      var token = user.getCredentialHash();
+      return res.json({message:"ok", token: token});
+    }).catch(function(err){
+      console.log(err);
+      var token = user.getCredentialHash();
+      return res.json({message:"ok, but no default table", token: token});
+    });
   });
 });
 

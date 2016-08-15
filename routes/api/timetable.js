@@ -19,7 +19,7 @@ router.get('/', function(req, res, next) { //timetable list
 });
 
 router.get('/recent', function(req, res, next) {
-  Timetable.getRecentTimetable(req.user._id, {lean:true}, function(err, timetable) {
+  Timetable.getRecent(req.user._id, {lean:true}, function(err, timetable) {
     if (err) return res.status(500).json({message:'find table failed'});
     if (!timetable) return res.status(404).json({message:'no timetable'});
     res.json(timetable);
@@ -37,27 +37,24 @@ router.get('/:id', function(req, res, next) { //get
 router.post('/', function(req, res, next) { //create
   if (!req.body.year || !req.body.semester || !req.body.title)
     return res.status(400).json({message:'not enough parameters'});
-  var timetable = new Timetable({
-    user_id : req.user._id, 
+
+  Timetable.createTimetable({
+    user_id : req.user._id,
     year : req.body.year,
     semester : req.body.semester,
-    title : req.body.title,
-    lecture_list : []
-  });
-  timetable.checkDuplicate(function (err) {
-    if (err) return res.status(403).json({message:'duplicate title'});
-    timetable.save(function(err, doc) {
-      if(err) {
-        console.log(err);
-        return res.status(500).json({message:'insert timetable failed'});
-      }
+    title : req.body.title})
+    .then(function(doc) {
       Timetable.getTimetables(req.user._id, {lean:true}, function(err, timetables){
         if (err) return res.status(500).json({message:'get timetable list failed'});
         res.json(timetables);
       });
+    })
+    .catch(function(err) {
+      if (err == 'duplicate title')
+        return res.status(403).json({message: err});
+      else
+        return res.status(500).json({message: err});
     });
-  });
-
 });
 
 /**

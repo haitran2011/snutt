@@ -58,10 +58,45 @@ TimetableSchema.statics.getTimetable = function(user_id, timetable_id, flags, ca
   return query.exec(callback);
 };
 
-TimetableSchema.statics.getRecentTimetable = function(user_id, flags, callback) {
+TimetableSchema.statics.getRecent = function(user_id, flags, callback) {
   var query = mongoose.model("Timetable").findOne({'user_id': user_id}).sort({updated_at : -1});
   if (flags && flags.lean === true) query = query.lean();
   return query.exec(callback);
+};
+
+TimetableSchema.statics.createTimetable = function(params, callback) {
+  var Timetable = mongoose.model("Timetable");
+  if (!callback) callback = function(){};
+  return new Promise(function(resolve, reject) {
+    if (!params || !params.user_id || !params.year || !params.semester || !params.title) {
+      let err = "not enough parameter";
+      callback(err);
+      return reject(err);
+    }
+    var timetable = new Timetable({
+      user_id : params.user_id, 
+      year : params.year,
+      semester : params.semester,
+      title : params.title,
+      lecture_list : []
+    });
+    timetable.checkDuplicate(function (err) {
+      if (err) {
+        let err = "duplicate title";
+        callback(err);
+        return reject(err);
+      }
+      timetable.save(function(err, doc) {
+        if(err || !doc) {
+          let err = "insert timetable failed";
+          callback(err);
+          return reject(err);
+        }
+        callback(null, doc);
+        resolve(doc);
+      });
+    });
+  });
 };
 
 /**
