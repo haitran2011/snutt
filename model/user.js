@@ -20,6 +20,7 @@ var UserSchema = new mongoose.Schema({
   regDate: {type: Date, default: Date.now()},
   notificationCheckedAt: {type: Date, default: Date.now()},
   email: String,
+  fcm_key: String,
 
   // if the user remove its account, active status becomes false
   // Should not remove user object, because we must preserve the user data and its related objects
@@ -68,9 +69,8 @@ UserSchema.methods.changeLocalPassword = function(password, callback) {
 
 UserSchema.methods.attachFBId = function(fb_name, fb_id, callback) {
   if (!fb_id) {
-    return new Promise(function (resolve, reject) {
-      reject("null fb_id");
-    });
+    callback("null fb_id")
+    return Promise.reject("null fb_id");
   }
   this.credential.fb_name = fb_name;
   this.credential.fb_id = fb_id;
@@ -78,10 +78,10 @@ UserSchema.methods.attachFBId = function(fb_name, fb_id, callback) {
 };
 
 UserSchema.methods.detachFBId = function(callback) {
-  if (!this.credential.local_id)
-    return new Promise(function(resolve, reject) {
-      reject("No Local ID");
-    });
+  if (!this.credential.local_id) {
+    callback("no local ID")
+    return Promise.reject("no local ID");
+  }
   this.credential.fb_name = null;
   this.credential.fb_id = null;
   return this.signCredential(callback);
@@ -103,7 +103,7 @@ UserSchema.statics.getUserFromCredential = function (credential) {
 
 UserSchema.statics.getUserFromCredentialHash = function (hash) {
   if (!hash) {
-    return new Promise (function(resolve, reject) { reject('Wrong Hash'); });
+    return Promise.reject('Wrong Hash');
   } else {
     return mongoose.model('User').findOne({
       'credentialHash' : hash
@@ -154,9 +154,7 @@ UserSchema.statics.create_local = function(id, password, callback) {
     })
     .catch(function(err){
       callback(err);
-      return new Promise(function(resolve, reject) {
-        reject(err);
-      });
+      return Promise.reject(err);
     });
 };
 
@@ -186,16 +184,12 @@ UserSchema.statics.get_fb_or_create = function(name, id, callback) {
         return user.signCredential(callback);
       } else {
         callback(null, user);
-        return new Promise(function(resolve, reject) {
-          resolve(user);
-        });
+        return Promise.resolve(user);
       }
     })
     .catch(function(err){
       callback(err);
-      return new Promise(function(resolve, reject) {
-        reject(err);
-      });
+      return Promise.reject(err);
     });
 };
 
