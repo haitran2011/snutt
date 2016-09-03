@@ -27,11 +27,15 @@ router.put('/info', function (req, res, next) {
   });
 });
 
+router.put('/password', function (req, res, next) {
+
+});
+
 // Credential has been modified. Should re-send token
-router.post('/attach_fb', function (req, res, next) {
+router.post('/facebook', function (req, res, next) {
   if (req.user.credential.fb_id) return res.status(403).json({message: "already attached"});
-  if (!req.body.fb_token || !req.body.fb_name)
-    return res.status(400).json({message: "both fb_name and fb_token required"});
+  if (!req.body.fb_token || !req.body.fb_id)
+    return res.status(400).json({message: "both fb_id and fb_token required"});
 
   passport.authenticate('local-fb', function(err, user, info) {
     if (err || !info.fb_id) return res.status(403).json({message:err.message});
@@ -51,7 +55,7 @@ router.post('/attach_fb', function (req, res, next) {
   })(req, res, next);
 });
 
-router.post('/detach_fb', function (req, res, next) {
+router.delete('/facebook', function (req, res, next) {
   if (!req.user.credential.fb_id) return res.status(403).json({message: "not attached yet"});
   if (!req.user.credential.local_id) return res.status(403).json({message: "no local id"});
   req.user.detachFBId().then(function () {
@@ -61,7 +65,7 @@ router.post('/detach_fb', function (req, res, next) {
   });
 });
 
-router.get('/status_fb', function (req, res, next) {
+router.get('/facebook', function (req, res, next) {
   var attached;
   if (req.user.credential.fb_id) {
     attached = true;
@@ -71,7 +75,7 @@ router.get('/status_fb', function (req, res, next) {
   return res.json({attached: attached, name: req.user.credential.fb_name});
 });
 
-router.post('/add_device', function (req, res, next) {
+router.post('/device', function (req, res, next) {
   var promise;
   if (!req.body.registration_id) return res.status(400).json({message: "no registration_id"});
 
@@ -155,7 +159,7 @@ router.post('/add_device', function (req, res, next) {
   });
 });
 
-router.post('/remove_account', function(req, res, next){
+router.delete('/account', function(req, res, next){
   req.user.active = false;
   req.user.save(function(err, user){
     if (err) return res.status(500).json({messsage:"server fault"});

@@ -258,7 +258,7 @@ module.exports = function(app, db, request) {
     });
 
     it('Attach fails when no fb_id', function(done) {
-      request.post('/api/user/attach_fb')
+      request.post('/api/user/facebook')
         .set('x-access-token', token)
         .expect(400)
         .end(function(err, res){
@@ -268,9 +268,9 @@ module.exports = function(app, db, request) {
     });
 
     it('Attach Facebook ID', function(done) {
-      request.post('/api/user/attach_fb')
+      request.post('/api/user/facebook')
         .set('x-access-token', token)
-        .send({fb_name:"John", fb_token: fb_token})
+        .send({fb_id:"1234", fb_token: fb_token})
         .expect(200)
         .end(function(err, res){
           if (err) console.log(err);
@@ -280,9 +280,9 @@ module.exports = function(app, db, request) {
     });
 
     it('Attach fails when already attached', function(done) {
-      request.post('/api/user/attach_fb')
+      request.post('/api/user/facebook')
         .set('x-access-token', token)
-        .send({fb_name:"John", fb_token: fb_token})
+        .send({fb_id:"1234", fb_token: fb_token})
         .expect(403)
         .end(function(err, res){
           if (err) console.log(err);
@@ -292,9 +292,9 @@ module.exports = function(app, db, request) {
     });
 
     it('Attach fails when already attached fb_id', function(done) {
-      request.post('/api/user/attach_fb')
+      request.post('/api/user/facebook')
         .set('x-access-token', token2)
-        .send({fb_name:"John", fb_token: fb_token})
+        .send({fb_id:"1234", fb_token: fb_token})
         .expect(403)
         .end(function(err, res){
           if (err) console.log(err);
@@ -304,7 +304,7 @@ module.exports = function(app, db, request) {
     });
 
     it('Facebook status holds true', function(done) {
-      request.get('/api/user/status_fb')
+      request.get('/api/user/facebook')
         .set('x-access-token', token)
         .expect(200)
         .end(function(err, res){
@@ -317,7 +317,7 @@ module.exports = function(app, db, request) {
 
     it('Log-in with facebook succeeds', function(done) {
       request.post('/api/auth/login_fb')
-        .send({fb_name:"John", fb_token: fb_token})
+        .send({fb_id:"1234", fb_token: fb_token})
         .expect(200)
         .end(function(err, res){
           if (err) console.log(err);
@@ -327,7 +327,7 @@ module.exports = function(app, db, request) {
     });
 
     it('Detach Facebook ID', function(done) {
-      request.post('/api/user/detach_fb')
+      request.delete('/api/user/facebook')
         .set('x-access-token', token)
         .expect(200)
         .end(function(err, res){
@@ -338,7 +338,7 @@ module.exports = function(app, db, request) {
     });
 
     it('Facebook status holds false', function(done) {
-      request.get('/api/user/status_fb')
+      request.get('/api/user/facebook')
         .set('x-access-token', token)
         .expect(200)
         .end(function(err, res){
@@ -349,7 +349,7 @@ module.exports = function(app, db, request) {
     });
 
     it('Detach fails when already detached', function(done) {
-      request.post('/api/user/detach_fb')
+      request.delete('/api/user/facebook')
         .set('x-access-token', token)
         .expect(403)
         .end(function(err, res){
@@ -361,7 +361,7 @@ module.exports = function(app, db, request) {
 
     it('Auto-register when log-in with not attached fb_id', function(done){
       request.post('/api/auth/login_fb')
-        .send({fb_name:"Smith", fb_token: fb_token2})
+        .send({fb_id:"12345", fb_token: fb_token2})
         .expect(200)
         .end(function(err, res){
           if (err) console.log(err);
@@ -384,7 +384,7 @@ module.exports = function(app, db, request) {
     });
 
     it('Accounts with only facebook credential cannot detach FB ID', function(done){
-      request.post('/api/user/detach_fb')
+      request.delete('/api/user/facebook')
         .set('x-access-token', token)
         .expect(403)
         .end(function(err, res){
@@ -396,7 +396,17 @@ module.exports = function(app, db, request) {
 
     it('Log-in fails with incorrect access token', function(done){
       request.post('/api/auth/login_fb')
-        .send({fb_name:"Smith", fb_token: "incorrect"})
+        .send({fb_id:"12345", fb_token: "incorrect"})
+        .expect(403)
+        .end(function(err, res){
+          if (err) console.log(err);
+          done(err);
+        });
+    });
+
+    it('Log-in fails with incorrect fb_id', function(done){
+      request.post('/api/auth/login_fb')
+        .send({fb_id:"123456", fb_token: fb_token2})
         .expect(403)
         .end(function(err, res){
           if (err) console.log(err);
@@ -429,7 +439,7 @@ module.exports = function(app, db, request) {
     });
 
     it('account remove succeed', function(done) {
-      request.post('/api/user/remove_account')
+      request.delete('/api/user/account')
         .set('x-access-token', token)
         .expect(200)
         .end(function(err, res){

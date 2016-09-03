@@ -48,8 +48,8 @@ router.post('/register_local', function (req, res, next) {
 });
 
 router.post('/login_fb', function(req, res, next) {
-  if (!req.body.fb_token || !req.body.fb_name)
-    return res.status(400).json({message: "both fb_name and fb_token required"});
+  if (!req.body.fb_token || !req.body.fb_id)
+    return res.status(400).json({message: "both fb_id and fb_token required"});
     
   passport.authenticate('local-fb', function(err, user, info) {
     if (err) return res.status(403).json({message:err.message});
