@@ -199,7 +199,12 @@ function insert_course(lines, year, semesterIndex, next)
       }
       
       var msg = year+"년도 "+semesterString+"학기 수강 편람이 업데이트 되었습니다.";
-      Notification.createNotification(null, msg, Notification.Type.COURSEBOOK, diff,
+      Notification.createNotification(null, msg, Notification.Type.COURSEBOOK,
+      {
+        updated: diff.updated.length,
+        created: diff.created.length,
+        removed: diff.removed.length
+      },
         function(err) {
           if (!err) console.log("Notification inserted");
           callback(err);
