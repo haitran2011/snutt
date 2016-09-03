@@ -26,7 +26,7 @@ router.post('/login_local', function(req, res, next) {
  * it needs to be accessed without token
  */
 router.post('/register_local', function (req, res, next) {
-  User.create_local(req.body.id, req.body.password, function(err, user) {
+  User.create_local(null, req.body.id, req.body.password, function(err, user) {
     if (err) {
       return res.status(403).json({message:err.message});
     }

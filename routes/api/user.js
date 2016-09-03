@@ -27,8 +27,20 @@ router.put('/info', function (req, res, next) {
   });
 });
 
-router.put('/password', function (req, res, next) {
+router.post('/password', function (req, res, next) {
+  if (req.user.credential.local_id) return res.status(403).json({message: "already have local id"});
+  User.create_local(req.user, req.body.id, req.body.password, function(err, user){
+    if (err) return res.status(403).json({message:err.message});
+    res.json({token: req.user.getCredentialHash()});
+  });
+});
 
+router.put('/password', function (req, res, next) {
+  if (!req.user.credential.local_id) return res.status(403).json({message: "no local id"});
+  req.user.changeLocalPassword(req.body.password, function(err, user){
+    if (err) return res.status(403).json({message:err.message});
+    res.json({token: req.user.getCredentialHash()});
+  });
 });
 
 // Credential has been modified. Should re-send token
@@ -139,10 +151,12 @@ router.post('/device', function (req, res, next) {
       },
       json: true
     }).then(function(body){
-      if (body.notification_key)
+      if (body.notification_key) {
         return Promise.resolve('done');
-      else
-        return Promise.reject('cannot add device');
+      } else if (body.error) {
+        return Promise.reject(body.error);
+      }
+      return Promise.reject('cannot add device');
     });
   }).catch(function(err){
     // pass along errors

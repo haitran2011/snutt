@@ -59,17 +59,19 @@ UserSchema.methods.changeLocalPassword = function(password, callback) {
         !password.match(/^(?=.*\d)(?=.*[a-z])\S{6,20}$/i))
     return callback(new Error("incorrect password"));
 
-  bcrypt.hash(this.credential.local_pw, 4, function (err, hash) {
-    if (err) return callback(err);
+  var user = this;
+  user.credential.local_pw = password;
 
-    this.credential.local_pw = hash;
-    return this.signCredential(callback);
+  bcrypt.hash(user.credential.local_pw, 4, function (err, hash) {
+    if (err) return callback(err);
+    user.credential.local_pw = hash;
+    return user.signCredential(callback);
   });
 };
 
 UserSchema.methods.attachFBId = function(fb_name, fb_id, callback) {
   if (!fb_id) {
-    callback("null fb_id")
+    callback("null fb_id");
     return Promise.reject("null fb_id");
   }
   this.credential.fb_name = fb_name;
@@ -79,7 +81,7 @@ UserSchema.methods.attachFBId = function(fb_name, fb_id, callback) {
 
 UserSchema.methods.detachFBId = function(callback) {
   if (!this.credential.local_id) {
-    callback("no local ID")
+    callback("no local ID");
     return Promise.reject("no local ID");
   }
   this.credential.fb_name = null;
@@ -117,8 +119,19 @@ UserSchema.statics.get_local = function(id, callback) {
     .exec(callback);
 };
 
-UserSchema.statics.create_local = function(id, password, callback) {
+UserSchema.statics.create_local = function(old_user, id, password, callback) {
   var User = mongoose.model('User');
+  if (!old_user) {
+    old_user = new User({
+      credential : {
+        local_id : id,
+        local_pw : password
+      }
+    });
+  } else {
+    old_user.credential.local_id = id;
+    old_user.credential.local_pw = password;
+  }
   return User.get_local(id)
     .then(function(user){
       return new Promise(function (resolve, reject) {
@@ -127,12 +140,7 @@ UserSchema.statics.create_local = function(id, password, callback) {
           err = new Error("same id already exists");
           return reject(err);
         }
-        user = new User({
-          credential : {
-            local_id : id,
-            local_pw : password
-          }
-        });
+        user = old_user;
         if (!user.credential.local_id ||
           !user.credential.local_id.match(/^[a-z0-9]{4,32}$/i)) {
             err = new Error("incorrect id");

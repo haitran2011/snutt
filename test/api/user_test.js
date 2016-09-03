@@ -77,7 +77,7 @@ module.exports = function(app, db, request) {
 
   it('Register succeeds', function(done) {
     request.post('/api/auth/register_local')
-      .send({id:"snutt2", password:"abc1234*"})
+      .send({id:"snutt2", password:"abc1234f"})
       .expect(200)
       .end(function(err, res){
         assert.equal(res.body.message, 'ok');
@@ -87,13 +87,92 @@ module.exports = function(app, db, request) {
 
   it('Log-in registered account', function(done) {
     request.post('/api/auth/login_local')
-      .send({id:"snutt2", password:"abc1234*"})
+      .send({id:"snutt2", password:"abc1234f"})
       .expect(200)
       .end(function(err, res){
         if (err) console.log(res);
         token2 = res.body.token;
         done(err);
       });
+  });
+
+  describe('password change', function(){
+    it('succeeds', function(done) {
+      request.put('/api/user/password')
+        .set('x-access-token', token2)
+        .send({password:"abc1234*"})
+        .expect(200)
+        .end(function(err, res){
+          if (err) console.log(res);
+          token2 = res.body.token;
+          done(err);
+        });
+    });
+
+    it('fails when no password', function(done) {
+      request.put('/api/user/password')
+        .set('x-access-token', token2)
+        .expect(403)
+        .end(function(err, res){
+          assert.equal(res.body.message, 'incorrect password');
+          done(err);
+        });
+    });
+
+    it('fails when password too short', function(done) {
+      request.put('/api/user/password')
+        .set('x-access-token', token2)
+        .send({password:"a1111"})
+        .expect(403)
+        .end(function(err, res){
+          assert.equal(res.body.message, 'incorrect password');
+          done(err);
+        });
+    });
+
+    it('fails when password too long', function(done) {
+      request.put('/api/user/password')
+        .set('x-access-token', token2)
+        .send({password:"abcdefghijklmnopqrst1"})
+        .expect(403)
+        .end(function(err, res){
+          assert.equal(res.body.message, 'incorrect password');
+          done(err);
+        });
+    });
+
+    it('fails when no password only digits', function(done) {
+      request.put('/api/user/password')
+        .set('x-access-token', token2)
+        .send({password:"111111"})
+        .expect(403)
+        .end(function(err, res){
+          assert.equal(res.body.message, 'incorrect password');
+          done(err);
+        });
+    });
+
+    it('fails when no password only letters', function(done) {
+     request.put('/api/user/password')
+        .set('x-access-token', token2)
+        .send({password:"abcdef"})
+        .expect(403)
+        .end(function(err, res){
+          assert.equal(res.body.message, 'incorrect password');
+          done(err);
+        });
+    });
+
+    it('fails when no password with whitespace', function(done) {
+      request.put('/api/user/password')
+        .set('x-access-token', token2)
+        .send({password:"sql injection"})
+        .expect(403)
+        .end(function(err, res){
+          assert.equal(res.body.message, 'incorrect password');
+          done(err);
+        });
+    });
   });
 
   it('Auto-generated default timetable', function(done) {
@@ -410,6 +489,52 @@ module.exports = function(app, db, request) {
         .expect(403)
         .end(function(err, res){
           if (err) console.log(err);
+          done(err);
+        });
+    });
+
+    it('attach local id', function(done){
+      request.post('/api/user/password')
+        .set('x-access-token', token)
+        .send({id:"snuttfb", password:"abc1234"})
+        .expect(200)
+        .end(function(err, res){
+          if (err) console.log(err);
+          token = res.body.token;
+          done(err);
+        });
+    });
+
+    it('log-in with password succeeds', function(done) {
+      request.post('/api/auth/login_local')
+        .send({id:"snuttfb", password:"abc1234"})
+        .expect(200)
+        .end(function(err, res){
+          if (err) console.log(res.body);
+          assert.equal(token, res.body.token);
+          done(err);
+        });
+    });
+
+    it('log-in with facebook still succeeds', function(done){
+      request.post('/api/auth/login_fb')
+        .send({fb_id:"12345", fb_token: fb_token2})
+        .expect(200)
+        .end(function(err, res){
+          if (err) console.log(err);
+          assert.equal(token, res.body.token);
+          done(err);
+        });
+    });
+
+    it('attach local id again fails', function(done){
+      request.post('/api/user/password')
+        .set('x-access-token', token)
+        .send({id:"snuttfb", password:"abc1234"})
+        .expect(403)
+        .end(function(err, res){
+          if (err) console.log(err);
+          assert.equal(res.body.message, "already have local id");
           done(err);
         });
     });
