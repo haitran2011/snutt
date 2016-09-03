@@ -106,7 +106,8 @@ UserSchema.statics.getUserFromCredentialHash = function (hash) {
     return Promise.reject('Wrong Hash');
   } else {
     return mongoose.model('User').findOne({
-      'credentialHash' : hash
+      'credentialHash' : hash,
+      'active' : true
     }).exec();
   }
 };

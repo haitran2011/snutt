@@ -404,4 +404,69 @@ module.exports = function(app, db, request) {
         });
     });
   });
+
+  describe('Account Removal', function() {
+    var token;
+    before(function(done) {
+      request.post('/api/auth/register_local')
+        .send({id:"snuttar", password:"abc1234*"})
+        .expect(200)
+        .end(function(err, res){
+          assert.equal(res.body.message, 'ok');
+          done(err);
+        });
+    });
+
+    before(function(done) {
+      request.post('/api/auth/login_local')
+        .send({id:"snuttar", password:"abc1234*"})
+        .expect(200)
+        .end(function(err, res){
+          if (err) console.log(res);
+          token = res.body.token;
+          done(err);
+        });
+    });
+
+    it('account remove succeed', function(done) {
+      request.post('/api/user/remove_account')
+        .set('x-access-token', token)
+        .expect(200)
+        .end(function(err, res){
+          assert.equal(res.body.message, 'ok');
+          done(err);
+        });
+    });
+
+    it('token transaction fails with removed account', function(done) {
+      request.get('/api/user/info')
+        .set('x-access-token', token)
+        .expect(403)
+        .end(function(err, res){
+          if (err) console.log(res);
+          assert.equal(res.body.errcode, 0x0001);
+          done(err);
+        });
+    });
+
+    it('log-in with removed account fails', function(done) {
+      request.post('/api/auth/login_local')
+        .send({id:"snuttar", password:"abc1234*"})
+        .expect(403)
+        .end(function(err, res){
+          assert.equal(res.body.message, 'wrong id');
+          done(err);
+        });
+    });
+
+    it('re-register with same id succeeds', function(done) {
+      request.post('/api/auth/register_local')
+        .send({id:"snuttar", password:"abc1234*"})
+        .expect(200)
+        .end(function(err, res){
+          assert.equal(res.body.message, 'ok');
+          done(err);
+        });
+    });
+  });
 };

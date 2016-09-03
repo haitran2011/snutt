@@ -19,6 +19,14 @@ router.get('/info', function (req, res, next) {
   });
 });
 
+router.put('/info', function (req, res, next) {
+  if (req.body.email) req.user.email = req.body.email;
+  req.user.save(function(err, user){
+    if (err) return res.status(500).json({messsage:"server fault"});
+    res.json({message:"ok"});
+  });
+});
+
 // Credential has been modified. Should re-send token
 router.post('/attach_fb', function (req, res, next) {
   if (req.user.credential.fb_id) return res.status(403).json({message: "already attached"});
@@ -144,6 +152,14 @@ router.post('/add_device', function (req, res, next) {
       return res.status(500).json({message:"server fault"});
   }).catch(function(err){
     res.status(500).json({message:err});
+  });
+});
+
+router.post('/remove_account', function(req, res, next){
+  req.user.active = false;
+  req.user.save(function(err, user){
+    if (err) return res.status(500).json({messsage:"server fault"});
+    res.json({message:"ok"});
   });
 });
 
