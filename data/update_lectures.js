@@ -72,9 +72,14 @@ function insert_course(lines, year, semesterIndex, next)
         var line = lines[i];
         var components = line.split(";");
         if (components.length == 1) continue;
+        if (components.length > 16) {
+          console.log("Parsing error detected : ");
+          console.log(line);
+        }
 
         // 교양영역 번역
         components[13] = str_category[components[13]];
+        if (components[13] === undefined) components[13] = "";
         // null(과학교육계) 고침
         components[1] = components[1].replace("null", "");
 
@@ -97,6 +102,11 @@ function insert_course(lines, year, semesterIndex, next)
               }
             }
             if (existing_tag === null) {
+              if (new_tag[key] === undefined) {
+                console.log(key);
+                console.log(components);
+                console.log(line);
+              }
               if (new_tag[key].length < 2) continue;
               tags[key].push(new_tag[key]);
             }
@@ -104,6 +114,7 @@ function insert_course(lines, year, semesterIndex, next)
         }
 
         var timeJson = Util.timeAndPlaceToJson(components[7], components[8]);
+        if (timeJson === -1) console.log(line);
         // TimeMask limit is 15*2
         for (let j=0; j<timeJson.length; j++) {
           var t_end = parseFloat(timeJson[j].start)+parseFloat(timeJson[j].len);
@@ -159,7 +170,7 @@ function insert_course(lines, year, semesterIndex, next)
             diff_update.lecture_number = old_lectures[j].lecture_number;
             diff_update.course_title = old_lectures[j].course_title;
             diff.updated.push(diff_update);
-            console.log(old_lectures[j].course_title+" updated");
+            //console.log(old_lectures[j].course_title+" updated");
           }
           old_lectures[j].checked = true;
           exists = true;
@@ -171,7 +182,7 @@ function insert_course(lines, year, semesterIndex, next)
             lecture_number: new_lectures[i].lecture_number,
             course_title: new_lectures[i].course_title
           });
-          console.log(new_lectures[i].course_title+" created");
+          //console.log(new_lectures[i].course_title+" created");
         }
       }
       for (let i=0; i<old_lectures.length; i++) {
@@ -181,7 +192,7 @@ function insert_course(lines, year, semesterIndex, next)
             lecture_number: old_lectures[i].lecture_number,
             course_title: old_lectures[i].course_title
           });
-          console.log(old_lectures[i].course_title+" removed");
+          //console.log(old_lectures[i].course_title+" removed");
         }
       }
       if (diff.updated.length === 0 &&
