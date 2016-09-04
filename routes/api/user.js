@@ -8,6 +8,7 @@ var express = require('express');
 var passport = require('../../config/passport');
 var request = require('request-promise-native');
 var router = express.Router();
+var config = require('../../config/config');
 var User = require('../../model/user');
 
 router.get('/info', function (req, res, next) {
@@ -96,6 +97,11 @@ router.post('/device', function (req, res, next) {
     promise = request({
       method: 'POST',
       uri: 'https://android.googleapis.com/gcm/notification',
+      headers: {
+        "Content-Type":"application/json",
+        "Authorization":"key="+config.fcm_api_key,
+        "project_id":config.fcm_project_id
+      },
       body: {
             "operation": "create",
             "notification_key_name": "user-"+req.user_id,
@@ -104,11 +110,16 @@ router.post('/device', function (req, res, next) {
       json: true
     }).then(function (body) {
       if (body.notification_key)
-          return Promise.resolve('done');
+          return Promise.resolve('device ready');
       if (body.error == "notification_key already exists") {
         request({
           method: 'GET',
           uri: 'https://android.googleapis.com/gcm/notification',
+          headers: {
+            "Content-Type":"application/json",
+            "Authorization":"key="+config.fcm_api_key,
+            "project_id":config.fcm_project_id
+          },
           qs: {
             "notification_key_name": "user-"+req.user_id
           },
@@ -133,7 +144,7 @@ router.post('/device', function (req, res, next) {
   // Now user has key
   promise = promise.then(function(status){
     // Device is already added during key creation
-    if (status === 'done')
+    if (status === 'device ready')
       return Promise.resolve(status);
 
     // User should have had key
@@ -143,6 +154,11 @@ router.post('/device', function (req, res, next) {
     return request({
       method: 'POST',
       uri: 'https://android.googleapis.com/gcm/notification',
+      headers: {
+        "Content-Type":"application/json",
+        "Authorization":"key="+config.fcm_api_key,
+        "project_id":config.fcm_project_id
+      },
       body: {
             "operation": "add",
             "notification_key_name": "user-"+req.user_id,
@@ -152,7 +168,7 @@ router.post('/device', function (req, res, next) {
       json: true
     }).then(function(body){
       if (body.notification_key) {
-        return Promise.resolve('done');
+        return Promise.resolve('device ready');
       } else if (body.error) {
         return Promise.reject(body.error);
       }
@@ -163,11 +179,38 @@ router.post('/device', function (req, res, next) {
     return Promise.reject(err);
   });
 
+  // Add topic
+  promise = promise.then(function(status){
+    // User should have had key
+    if (!req.user.fcm_key) return Promise.reject("server fault");
+
+    // Add topic
+    return request({
+      method: 'POST',
+      uri: 'https://iid.googleapis.com/iid/v1/'+req.user.fcm_key+'/rel/topics/global',
+      headers: {
+        "Content-Type":"application/json",
+        "Authorization":"key="+config.fcm_api_key
+        // no need for project_id
+      },
+      resolveWithFullResponse: true
+    }).then(function(res){
+      if (res.statusCode == 200) {
+        return Promise.resolve('done');
+      }
+      return Promise.reject('cannot add topic');
+    });
+  }).catch(function(err){
+    // pass along errors
+    return Promise.reject(err);
+  });
+
   promise.then(function(status){
-    if (status === 'done')
+    if (status === 'done') {
       return res.json({message:"ok"});
-    else
+    } else {
       return res.status(500).json({message:"server fault"});
+    }
   }).catch(function(err){
     res.status(500).json({message:err});
   });

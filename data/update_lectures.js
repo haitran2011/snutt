@@ -204,22 +204,7 @@ function insert_course(lines, year, semesterIndex, next)
       console.log(diff.updated.length + " updated, "+
           diff.created.length + " created, "+
           diff.removed.length + " removed.");
-      if (diff.updated.length + diff.created.length + diff.removed.length > 100) {
-        console.log("*** Too many updates. No notification inserted. ***");
-        return callback();
-      }
-      
-      var msg = year+"년도 "+semesterString+"학기 수강 편람이 업데이트 되었습니다.";
-      Notification.createNotification(null, msg, Notification.Type.COURSEBOOK,
-      {
-        updated: diff.updated.length,
-        created: diff.created.length,
-        removed: diff.removed.length
-      },
-        function(err) {
-          if (!err) console.log("Notification inserted");
-          callback(err);
-        });
+      callback();
     },
     function (callback){
       async.series([
@@ -391,11 +376,20 @@ function insert_course(lines, year, semesterIndex, next)
       CourseBook.findOneAndUpdate({ year: Number(year), semester: semesterIndex },
         { updated_at: Date.now() },
         {
-          new: true,   // return new doc
+          new: false,   // return new doc
           upsert: true // insert the document if it does not exist
         })
         .exec(function(err, doc) {
-        callback(err);
+          if (!doc) {
+            var msg = year+"년도 "+semesterString+"학기 수강 편람이 업데이트 되었습니다.";
+            Notification.createNotification(null, msg, Notification.Type.COURSEBOOK, null,
+              function(err) {
+                if (!err) console.log("Notification inserted");
+                callback(err);
+              });
+          } else {
+            callback(err);
+          }
       });
     }
   ], function (err, results){

@@ -6,7 +6,9 @@ var config = {
     protocol: process.env.SNUTT_PROTOCOL,
     email: process.env.SNUTT_EMAIL,
     ssl_key: process.env.SNUTT_SSL_KEY,
-    ssl_cert: process.env.SNUTT_SSL_CERT
+    ssl_cert: process.env.SNUTT_SSL_CERT,
+    fcm_api_key: process.env.SNUTT_FCM_API_KEY,
+    fcm_project_id: process.env.SNUTT_FCM_PROJECT_ID
 };
 
 if (config.production && process.env.NODE_ENV != "mocha")

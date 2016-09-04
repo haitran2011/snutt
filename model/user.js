@@ -114,6 +114,21 @@ UserSchema.statics.getUserFromCredentialHash = function (hash) {
   }
 };
 
+UserSchema.statics.getFCMKey = function(id, callback) {
+  return mongoose.model('User').findOne({'_id' : id, 'active' : true }, "fcm_key").lean()
+    .exec().then(function(user){
+      if (!user) {
+        callback("no user");
+        return Promise.reject("no user");
+      }
+      callback(null, user.fcm_key);
+      return Promise.resolve(user.fcm_key);
+    }, function(err){
+      callback(err);
+      return Promise.reject(err);
+    });
+};
+
 UserSchema.statics.get_local = function(id, callback) {
   return mongoose.model('User').findOne({'credential.local_id' : id, 'active' : true })
     .exec(callback);

@@ -17,7 +17,7 @@ CourseBookSchema.pre('save', function(next) {
 
 CourseBookSchema.statics.getAll = function(flags, callback) {
   var query = mongoose.model("CourseBook").find({}, '-_id year semester updated_at')
-  .sort([["year", 1], ["semester", 1]]);
+  .sort([["year", -1], ["semester", -1]]);
   if (flags && flags.lean === true) query = query.lean();
   return query.exec(callback);
 };

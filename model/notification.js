@@ -7,13 +7,16 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var User = require('./user');
+var request = require('request-promise-native');
+var config = require('../config/config');
 
 var NotificationSchema = mongoose.Schema({
   user_id : { type: Schema.Types.ObjectId, ref: 'User', default : null},
   message : { type : String, required : true },
   created_at : { type : Date, required : true},
   type : { type: Number, required : true, default : 0 },
-  detail : { type: Schema.Types.Mixed, default : null }
+  detail : { type: Schema.Types.Mixed, default : null },
+  fcm_status : { type : String, default : null }
 });
 
 NotificationSchema.index({user_id: 1, created_at: -1});
@@ -57,7 +60,72 @@ NotificationSchema.statics.createNotification = function (user_id, message, type
     type : type,
     detail : detail
   });
-  return notification.save(callback);
+
+  var promise;
+
+  if (user_id) {
+    var fcm_key;
+    promise = User.getFCMKey(user_id);
+    promise = promise.then(function(fcm_key){
+      return request({
+        method: 'POST',
+        uri: 'https://fcm.googleapis.com/fcm/send',
+        headers: {
+          "Content-Type":"application/json",
+          "Authorization":"key="+config.fcm_api_key
+        },
+        body: {
+              "to": fcm_key,
+              "notification" : {
+                "body" : message,
+                "title" : "SNUTT"
+              },
+              "priority" : "high",
+              "content_available" : true
+        },
+        json:true,
+        resolveWithFullResponse: true
+      });
+    });
+    promise = promise.then(function(res){
+      if (res.statusCode === 200) return Promise.resolve("ok");
+      else return Promise.reject("failed");
+    });
+  } else {
+    promise = request({
+      method: 'POST',
+      uri: 'https://fcm.googleapis.com/fcm/send',
+      headers: {
+        "Content-Type":"application/json",
+        "Authorization":"key="+config.fcm_api_key
+      },
+      body: {
+            "to": "/topics/global",
+            "notification" : {
+              "body" : message,
+              "title" : "SNUTT"
+            },
+            "priority" : "high",
+            "content_available" : true
+      },
+      json:true,
+      resolveWithFullResponse: true
+    });
+    promise = promise.then(function(res){
+      if (res.statusCode === 200) return Promise.resolve("ok");
+      else return Promise.reject("failed");
+    });
+  }
+
+  promise = promise.then(function(result){
+    notification.fcm_status = result;
+    return notification.save(callback);
+  }).catch(function(err){
+    notification.fcm_status = "err";
+    return notification.save(callback);
+  });
+
+  return promise;
 };
 
 module.exports = mongoose.model('Notification', NotificationSchema);
