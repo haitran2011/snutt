@@ -216,6 +216,79 @@ router.post('/device', function (req, res, next) {
   });
 });
 
+router.delete('/device', function (req, res, next) {
+  var promise = new Promise(function(resolve, reject){
+    // User should have had key
+    if (!req.user.fcm_key) return reject("no key");
+
+    // Add the device
+    return request({
+      method: 'POST',
+      uri: 'https://android.googleapis.com/gcm/notification',
+      headers: {
+        "Content-Type":"application/json",
+        "Authorization":"key="+config.fcm_api_key,
+        "project_id":config.fcm_project_id
+      },
+      body: {
+            "operation": "remove",
+            "notification_key_name": "user-"+req.user_id,
+            "notification_key": req.user.fcm_key,
+            "registration_ids": [req.body.registration_id]
+      },
+      json: true
+    }).then(function(body){
+      if (body.notification_key) {
+        return resolve('device ready');
+      } else if (body.error) {
+        return reject(body.error);
+      }
+      return reject('cannot remove device');
+    });
+  });
+
+  // remove topic
+  promise = promise.then(function(status){
+    // User should have had key
+    if (!req.user.fcm_key) return Promise.reject("server fault");
+
+    // Add topic
+    return request({
+      method: 'POST',
+      uri: 'https://iid.googleapis.com/iid/v1:batchRemove',
+      headers: {
+        "Content-Type":"application/json",
+        "Authorization":"key="+config.fcm_api_key
+        // no need for project_id
+      },
+      body: {
+        "to": "/topics/global",
+        "registration_tokens": [req.user.fcm_key]
+      },
+      json: true,
+      resolveWithFullResponse: true
+    }).then(function(res){
+      if (res.statusCode == 200 && !res.body.results[0].error) {
+        return Promise.resolve('done');
+      }
+      return Promise.reject('cannot remove topic');
+    });
+  }).catch(function(err){
+    // pass along errors
+    return Promise.reject(err);
+  });
+
+  promise.then(function(status){
+    if (status === 'done') {
+      return res.json({message:"ok"});
+    } else {
+      return res.status(500).json({message:"server fault"});
+    }
+  }).catch(function(err){
+    res.status(500).json({message:err});
+  });
+});
+
 router.delete('/account', function(req, res, next){
   req.user.active = false;
   req.user.save(function(err, user){
