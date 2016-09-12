@@ -52,6 +52,12 @@ TimetableSchema.statics.getTimetables = function(user_id, flags, callback) {
   return query.exec(callback);
 };
 
+TimetableSchema.statics.getTimetablesBySemester = function(user_id, year, semester, flags, callback) {
+  var query = mongoose.model("Timetable").find({'user_id': user_id, 'year': year, 'semester': semester})
+  if (flags && flags.lean === true) query = query.lean();
+  return query.exec(callback);
+};
+
 TimetableSchema.statics.getTimetable = function(user_id, timetable_id, flags, callback) {
   var query = mongoose.model("Timetable").findOne({'user_id': user_id, '_id' : timetable_id});
   if (flags && flags.lean === true) query = query.lean();
@@ -74,7 +80,7 @@ TimetableSchema.statics.createTimetable = function(params, callback) {
       return reject(err);
     }
     var timetable = new Timetable({
-      user_id : params.user_id, 
+      user_id : params.user_id,
       year : params.year,
       semester : params.semester,
       title : params.title,
