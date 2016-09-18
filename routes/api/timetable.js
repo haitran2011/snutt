@@ -40,8 +40,8 @@ router.get('/:year/:semester', function(req, res, next) {
       if(err) return res.status(500).json({message:"find table failed"});
       if(!timetable) return res.status(404).json({message:"No timetable for given semester"});
       res.json(timetable);
-  })
-})
+  });
+});
 
 router.post('/', function(req, res, next) { //create
   if (!req.body.year || !req.body.semester || !req.body.title)

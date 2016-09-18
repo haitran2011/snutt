@@ -53,7 +53,7 @@ TimetableSchema.statics.getTimetables = function(user_id, flags, callback) {
 };
 
 TimetableSchema.statics.getTimetablesBySemester = function(user_id, year, semester, flags, callback) {
-  var query = mongoose.model("Timetable").find({'user_id': user_id, 'year': year, 'semester': semester})
+  var query = mongoose.model("Timetable").find({'user_id': user_id, 'year': year, 'semester': semester});
   if (flags && flags.lean === true) query = query.lean();
   return query.exec(callback);
 };
