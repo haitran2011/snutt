@@ -16,7 +16,9 @@ router.get('/info', function (req, res, next) {
     isAdmin: req.user.isAdmin,
     regDate: req.user.regDate,
     notificationCheckedAt: req.user.notificationCheckedAt,
-    email: req.user.email
+    email: req.user.email,
+    local_id: req.user.credential.local_id,
+    fb_name: req.user.credential.fb_name
   });
 });
 
