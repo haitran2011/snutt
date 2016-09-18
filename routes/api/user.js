@@ -40,10 +40,13 @@ router.post('/password', function (req, res, next) {
 
 router.put('/password', function (req, res, next) {
   if (!req.user.credential.local_id) return res.status(403).json({message: "no local id"});
-  req.user.changeLocalPassword(req.body.password, function(err, user){
-    if (err) return res.status(403).json({message:err.message});
-    res.json({token: req.user.getCredentialHash()});
-  });
+  req.user.verify_password(req.body.old_password, function(err, isMatch){
+    if (err || !isMatch) return res.status(403).json({message:"wrong old password"});
+    req.user.changeLocalPassword(req.body.new_password, function(err, user){
+      if (err) return res.status(403).json({message:err.message});
+        res.json({token: req.user.getCredentialHash()});
+      });
+    });
 });
 
 // Credential has been modified. Should re-send token

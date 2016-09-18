@@ -100,7 +100,7 @@ module.exports = function(app, db, request) {
     it('succeeds', function(done) {
       request.put('/api/user/password')
         .set('x-access-token', token2)
-        .send({password:"abc1234*"})
+        .send({new_password:"abc1234*", old_password:"abc1234f"})
         .expect(200)
         .end(function(err, res){
           if (err) console.log(res);
@@ -109,9 +109,32 @@ module.exports = function(app, db, request) {
         });
     });
 
+    it('fails when no old password', function(done) {
+      request.put('/api/user/password')
+        .set('x-access-token', token2)
+        .send({new_password:"abc1234*"})
+        .expect(403)
+        .end(function(err, res){
+          assert.equal(res.body.message, 'wrong old password');
+          done(err);
+        });
+    });
+
+    it('fails when wrong old password', function(done) {
+      request.put('/api/user/password')
+        .set('x-access-token', token2)
+        .send({new_password:"abc1234!"})
+        .expect(403)
+        .end(function(err, res){
+          assert.equal(res.body.message, 'wrong old password');
+          done(err);
+        });
+    });
+
     it('fails when no password', function(done) {
       request.put('/api/user/password')
         .set('x-access-token', token2)
+        .send({old_password:"abc1234*"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'incorrect password');
@@ -122,7 +145,7 @@ module.exports = function(app, db, request) {
     it('fails when password too short', function(done) {
       request.put('/api/user/password')
         .set('x-access-token', token2)
-        .send({password:"a1111"})
+        .send({new_password:"a1111", old_password:"abc1234*"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'incorrect password');
@@ -133,7 +156,7 @@ module.exports = function(app, db, request) {
     it('fails when password too long', function(done) {
       request.put('/api/user/password')
         .set('x-access-token', token2)
-        .send({password:"abcdefghijklmnopqrst1"})
+        .send({new_password:"abcdefghijklmnopqrst1", old_password:"abc1234*"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'incorrect password');
@@ -144,7 +167,7 @@ module.exports = function(app, db, request) {
     it('fails when no password only digits', function(done) {
       request.put('/api/user/password')
         .set('x-access-token', token2)
-        .send({password:"111111"})
+        .send({new_password:"111111", old_password:"abc1234*"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'incorrect password');
@@ -155,7 +178,7 @@ module.exports = function(app, db, request) {
     it('fails when no password only letters', function(done) {
      request.put('/api/user/password')
         .set('x-access-token', token2)
-        .send({password:"abcdef"})
+        .send({new_password:"abcdef", old_password:"abc1234*"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'incorrect password');
@@ -166,7 +189,7 @@ module.exports = function(app, db, request) {
     it('fails when no password with whitespace', function(done) {
       request.put('/api/user/password')
         .set('x-access-token', token2)
-        .send({password:"sql injection"})
+        .send({new_password:"sql injection", old_password:"abc1234*"})
         .expect(403)
         .end(function(err, res){
           assert.equal(res.body.message, 'incorrect password');
