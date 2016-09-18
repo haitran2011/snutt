@@ -30,9 +30,7 @@ router.get('/', function(req, res, next){
 
 router.get('/count', function(req, res, next){
   Notification.countUnread(req.user).then(function(value){
-    // res.send() dose not accept number for response body
-    // if number, it treats it as http status
-    res.json({count: value.toString()});
+    res.json({count: value});
   }, function(err) {
     console.log(err);
     res.status(500).json({message: 'error'});
