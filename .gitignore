@@ -5,3 +5,5 @@ config/secretKey.js
 .idea
 *.log
 data/xls/*
+*.db
+dashboard/src/samples/

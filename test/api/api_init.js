@@ -24,7 +24,8 @@ describe('API Test', function() {
     if (config.secretKey && config.host && config.port && config.email)
       return done();
     else
-      return done(new Error("config is not set"));
+      return done(new Error("Config is not set. If you're not serious, Just type\n" +
+       "> SNUTT_HOST=localhost SNUTT_PORT=3000 SNUTT_EMAIL=snutt@wafflestudio.com SNUTT_SECRET=1 npm test"));
   });
 
   // Change connection into test DB in order not to corrupt production DB

@@ -76,6 +76,17 @@ module.exports = function(app, db, request) {
       });
   });
 
+  it ('Get timetable by semester succeeds', function(done){
+    request.get('/api/tables/2016/1')
+      .set('x-access-token', token)
+      .expect(200)
+      .end(function(err, res) {
+        if (err) return done(err);
+        assert.deepEqual(res.body.map(function(val) {return val.title}), ["MyTimeTable", "MyTimeTable2"])
+        done(err);
+      });
+  });
+
   it ('New timetable is the most recent table', function(done) {
     request.get('/api/tables/recent')
       .set('x-access-token', token)
