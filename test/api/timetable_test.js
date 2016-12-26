@@ -82,7 +82,7 @@ module.exports = function(app, db, request) {
       .expect(200)
       .end(function(err, res) {
         if (err) return done(err);
-        assert.deepEqual(res.body.map(function(val) {return val.title}), ["MyTimeTable", "MyTimeTable2"])
+        assert.deepEqual(res.body.map(function(val) {return val.title;}), ["MyTimeTable", "MyTimeTable2"]);
         done(err);
       });
   });

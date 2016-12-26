@@ -7,8 +7,7 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var User = require('./user');
-var request = require('request-promise-native');
-var config = require('../config/config');
+var fcm = require('../lib/fcm');
 
 var NotificationSchema = mongoose.Schema({
   user_id : { type: Schema.Types.ObjectId, ref: 'User', default : null},
@@ -61,61 +60,7 @@ NotificationSchema.statics.createNotification = function (user_id, message, type
     detail : detail
   });
 
-  var promise;
-
-  if (user_id) {
-    var fcm_key;
-    promise = User.getFCMKey(user_id);
-    promise = promise.then(function(fcm_key){
-      return request({
-        method: 'POST',
-        uri: 'https://fcm.googleapis.com/fcm/send',
-        headers: {
-          "Content-Type":"application/json",
-          "Authorization":"key="+config.fcm_api_key
-        },
-        body: {
-              "to": fcm_key,
-              "notification" : {
-                "body" : message,
-                "title" : "SNUTT"
-              },
-              "priority" : "high",
-              "content_available" : true
-        },
-        json:true,
-        resolveWithFullResponse: true
-      });
-    });
-    promise = promise.then(function(res){
-      if (res.statusCode === 200) return Promise.resolve("ok");
-      else return Promise.reject("failed");
-    });
-  } else {
-    promise = request({
-      method: 'POST',
-      uri: 'https://fcm.googleapis.com/fcm/send',
-      headers: {
-        "Content-Type":"application/json",
-        "Authorization":"key="+config.fcm_api_key
-      },
-      body: {
-            "to": "/topics/global",
-            "notification" : {
-              "body" : message,
-              "title" : "SNUTT"
-            },
-            "priority" : "high",
-            "content_available" : true
-      },
-      json:true,
-      resolveWithFullResponse: true
-    });
-    promise = promise.then(function(res){
-      if (res.statusCode === 200) return Promise.resolve("ok");
-      else return Promise.reject("failed");
-    });
-  }
+  var promise = fcm.send_msg(user_id, message);
 
   promise = promise.then(function(result){
     notification.fcm_status = result;
