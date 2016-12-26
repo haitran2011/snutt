@@ -5,7 +5,6 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var cors = require('cors');
-var passport = require('./config/passport');
 
 //var routes = require('./routes/home');
 //var users = require('./routes/users');
@@ -25,7 +24,6 @@ if (app.get('env') !== 'mocha')
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(passport.initialize());
 app.use(express.static(path.join(__dirname, 'public')));
 // only for development server
 app.use(cors());

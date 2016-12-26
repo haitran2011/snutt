@@ -5,10 +5,10 @@
 "use strict";
 
 var express = require('express');
-var passport = require('../../config/passport');
 var request = require('request-promise-native');
 var router = express.Router();
 var config = require('../../config/config');
+var auth = require('../../lib/auth');
 var User = require('../../model/user');
 
 router.get('/info', function (req, res, next) {
@@ -55,7 +55,7 @@ router.post('/facebook', function (req, res, next) {
   if (!req.body.fb_token || !req.body.fb_id)
     return res.status(400).json({message: "both fb_id and fb_token required"});
 
-  passport.authenticate('local-fb', function(err, user, info) {
+  auth.fb_auth(req.body.fb_id, req.body.fb_token, function(err, user, info) {
     if (err || !info.fb_id) return res.status(403).json({message:err.message});
     User.get_fb(info.fb_name, info.fb_id, function(err, user) {
       if (err) {
@@ -70,7 +70,7 @@ router.post('/facebook', function (req, res, next) {
         return res.status(500).json({message: "server error"});
       });
     });
-  })(req, res, next);
+  });
 });
 
 router.delete('/facebook', function (req, res, next) {

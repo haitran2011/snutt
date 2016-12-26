@@ -1,23 +1,23 @@
 "use strict";
 
 var express = require('express');
-var passport = require('../../config/passport');
 var router = express.Router();
 
 var User = require('../../model/user');
 var CourseBook = require('../../model/courseBook');
 var Timetable = require('../../model/timetable');
+var auth = require('../../lib/auth');
 
 /**
  * POST
  * id, password
  */
 router.post('/login_local', function(req, res, next) {
-  passport.authenticate('local-id', function(err, user, info) {
+  auth.local_auth(req.body.id, req.body.password, function(err, user, info) {
     if (err) { return res.status(403).json({message:err.message}); }
     if (!user || !info.token) { return res.status(403).json({message:info.message}); }
     res.json({token: info.token});
-  })(req, res, next);
+  });
 });
 
 /**
@@ -50,8 +50,8 @@ router.post('/register_local', function (req, res, next) {
 router.post('/login_fb', function(req, res, next) {
   if (!req.body.fb_token || !req.body.fb_id)
     return res.status(400).json({message: "both fb_id and fb_token required"});
-    
-  passport.authenticate('local-fb', function(err, user, info) {
+
+  auth.fb_auth(req.body.fb_id, req.body.fb_token, function(err, user, info) {
     if (err) return res.status(403).json({message:err.message});
     if (!info.fb_id) return res.status(403).json({message:info.message});
     User.get_fb_or_create(info.fb_name, info.fb_id, function(err, user) {
@@ -62,7 +62,7 @@ router.post('/login_fb', function(req, res, next) {
       var token = user.getCredentialHash();
       res.json({ token: token});
     });
-  })(req, res, next);
+  });
 });
 
 module.exports = router;
