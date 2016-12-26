@@ -32,6 +32,8 @@ function BaseSchema(add){
    * lecture : target for comparison
    */
   schema.methods.is_equal = function(lecture) {
+    /* User-created lectures are always different */
+    if (!this.course_number && !this.lecture_number) return false;
     var ret = true;
     if (this.year && lecture.year)
       ret &= this.year == lecture.year;
