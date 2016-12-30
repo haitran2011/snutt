@@ -11,6 +11,7 @@ var searchQueryRouter = require('./searchQuery');
 var tagsRouter = require('./tags');
 var notificationRouter = require('./notification');
 var userRouter = require('./user');
+var adminRouter = require('./admin');
 var apiKey = require('../../config/apiKey');
 var User = require('../../model/user');
 
@@ -86,5 +87,7 @@ router.use('/tables', timetableRouter);
 router.use('/user', userRouter);
 
 router.use('/notification', notificationRouter);
+
+router.use('/admin', adminRouter);
 
 module.exports = router;
