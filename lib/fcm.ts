@@ -1,8 +1,8 @@
 "use strict";
 
-var User = require("../model/user");
-var request = require('request-promise-native');
-var config = require('../config/config');
+import {UserModel, UserDocument} from '../model/user';
+import request = require('request-promise-native');
+import {config} from '../config/config';
 
 /*
  * create_device
