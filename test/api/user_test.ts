@@ -4,11 +4,9 @@
  * supertest: https://github.com/visionmedia/supertest
  * mocha: http://mochajs.org/#usage
  */
-"use strict";
+import assert = require('assert');
 
-var assert = require('assert');
-
-module.exports = function(app, db, request) {
+export = function(app, db, request) {
   var token;
   var token2;
 

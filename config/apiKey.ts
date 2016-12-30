@@ -11,10 +11,8 @@
  * --- To issue api tokens,
  * $ node apiKey.js list
  */
-"use strict";
-
-var jwt = require('jsonwebtoken');
-var config = require('./config');
+import jwt = require('jsonwebtoken');
+import config = require('./config');
 
 var api_list = {
     ios : {
@@ -41,11 +39,11 @@ var app_version = {
   android : "1.0.0"
 };
 
-var getAppVersion = function(string) {
+export function getAppVersion(string:string) {
   return app_version[string];
 };
 
-var issueKey = function(api_obj) {
+function issueKey(api_obj) {
   return jwt.sign(api_obj, config.secretKey);
 };
 
@@ -54,7 +52,7 @@ var issueKey = function(api_obj) {
  * @param api_key
  * @returns {Promise}
  */
-var validateKey = function(api_key) {
+export function validateKey(api_key:string):Promise<string> {
   if (process.env.NODE_ENV == 'mocha') {
     return new Promise(function(resolve, reject) {
       resolve();
@@ -85,5 +83,3 @@ if (!module.parent) {
     }
   }
 }
-
-module.exports = {validateKey : validateKey, getAppVersion : getAppVersion};

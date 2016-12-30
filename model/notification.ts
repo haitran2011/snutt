@@ -57,7 +57,7 @@ NotificationSchema.statics.countUnread = function (user, callback) {
  * - Type.LECTURE     : Lecture Changes. Course book changes are for all users.
  *                      Lecture changes contains per-user update log.
  */
-NotificationSchema.statics.Type = {
+export let Type = {
   NORMAL : 0,
   COURSEBOOK : 1,
   LECTURE : 2

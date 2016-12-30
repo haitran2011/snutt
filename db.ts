@@ -2,7 +2,7 @@ import mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
 // connect mongoose
-module.exports = mongoose.connect('mongodb://localhost/snutt', function(err) {
+export = mongoose.connect('mongodb://localhost/snutt', function(err) {
   if(err) {
     console.log(err);
     throw err;

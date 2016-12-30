@@ -1,20 +1,17 @@
-"use strict";
-
 if (!module.parent) {
   console.log("Not to be executed directly. Instead call import_txt.js");
   console.log("usage: $ node import_txt.js 2016 1");
   process.exit(1);
 }
 
-var db = require('../db');
-var async = require('async');
-var LectureModel = require('../model/lecture');
-var CourseBook = require('../model/courseBook');
-var Notification = require('../model/notification');
-var Lecture = LectureModel.Lecture;
-var Timetable = require('../model/timetable');
-var TagList = require('../model/tagList');
-var Util = require('../lib/util');
+import db = require('../db');
+import async = require('async');
+import {LectureModel} from '../model/lecture';
+import {CourseBookModel} from '../model/courseBook';
+import {NotificationModel, Type as NotificationType} from '../model/notification';
+import {TimetableModel} from '../model/timetable';
+import {TagListModel} from '../model/tagList';
+import Util = require('../lib/util');
 
 /*
  * 교양 영역을 한글로 번역.
@@ -44,7 +41,7 @@ var str_category = {
   "general_korean":"한국의 이해"
 };
 
-function insert_course(lines, year, semesterIndex, next)
+export function insert_course(lines, year, semesterIndex, next)
 {
   var semesterString = (['1', '여름', '2', '겨울'])[semesterIndex-1];
   var saved_cnt = 0, err_cnt = 0;
@@ -124,7 +121,7 @@ function insert_course(lines, year, semesterIndex, next)
           }
         }
 
-        new_lectures.push(new Lecture({
+        new_lectures.push(new LectureModel({
           year: Number(year),
           semester: semesterIndex,
           classification: components[0],
@@ -150,7 +147,7 @@ function insert_course(lines, year, semesterIndex, next)
     },
     function (callback) {
       console.log ("Pulling existing lectures...");
-      Lecture.find({year : year, semester : semesterIndex}).lean()
+      LectureModel.find({year : year, semester : semesterIndex}).lean()
         .exec(function(err, docs) {
           old_lectures = docs;
           callback(err);
@@ -164,7 +161,7 @@ function insert_course(lines, year, semesterIndex, next)
           if (old_lectures[j].checked) continue;
           if (old_lectures[j].course_number != new_lectures[i].course_number) continue;
           if (old_lectures[j].lecture_number != new_lectures[i].lecture_number) continue;
-          var diff_update = Util.compareLecture(old_lectures[j], new_lectures[i]);
+          var diff_update:any = Util.compareLecture(old_lectures[j], new_lectures[i]);
           if (diff_update) {
             diff_update.course_number = old_lectures[j].course_number;
             diff_update.lecture_number = old_lectures[j].lecture_number;
@@ -210,7 +207,7 @@ function insert_course(lines, year, semesterIndex, next)
       async.series([
         function(callback){
           async.each(diff.updated, function(updated_lecture, callback) {
-            Timetable.find(
+            TimetableModel.find(
               {
                 year: year,
                 semester: semesterIndex,
@@ -231,11 +228,11 @@ function insert_course(lines, year, semesterIndex, next)
               }, function(err, timetables) {
                 async.each(timetables, function(timetable, callback) {
                   if (timetable.lecture_list.length != 1) {
-                    return callback(new Error({
+                    return callback({
                       message: "Lecture update error",
                       timetable_id: timetable,
                       lecture: updated_lecture
-                    }));
+                    });
                   }
                   var noti_detail = {
                     timetable_id : timetable._id,
@@ -243,10 +240,10 @@ function insert_course(lines, year, semesterIndex, next)
                   };
                   timetable.update_lecture(timetable.lecture_list[0]._id, updated_lecture.after,
                     function(err, timetable){
-                      Notification.createNotification(
+                      NotificationModel.createNotification(
                         timetable.user_id,
                         "'"+timetable.title+"' 시간표의 '"+updated_lecture.course_title+"' 강의가 업데이트 되었습니다.",
-                        Notification.Type.LECTURE,
+                        NotificationType.LECTURE,
                         noti_detail,
                         function(err) {
                           callback(err);
@@ -262,7 +259,7 @@ function insert_course(lines, year, semesterIndex, next)
         },
         function(callback){
           async.each(diff.removed, function(removed_lecture, callback) {
-            Timetable.find(
+            TimetableModel.find(
               {
                 year: year,
                 semester: semesterIndex,
@@ -283,11 +280,11 @@ function insert_course(lines, year, semesterIndex, next)
               }, function(err, timetables) {
                 async.each(timetables, function(timetable, callback) {
                   if (timetable.lecture_list.length != 1) {
-                    return callback(new Error({
+                    return callback({
                       message: "Lecture update error",
                       timetable_id: timetable,
                       lecture: removed_lecture
-                    }));
+                    });
                   }
                   var noti_detail = {
                     timetable_id : timetable._id,
@@ -295,10 +292,10 @@ function insert_course(lines, year, semesterIndex, next)
                   };
                   timetable.delete_lecture(timetable.lecture_list[0]._id, function(err, timetable) {
                     if (err) return callback(err);
-                    Notification.createNotification(
+                    NotificationModel.createNotification(
                       timetable.user_id,
                       "'"+timetable.title+"' 시간표의 '"+removed_lecture.course_title+"' 강의가 폐강되었습니다.",
-                      Notification.Type.LECTURE,
+                      NotificationType.LECTURE,
                       noti_detail,
                       function(err) {
                         callback(err);
@@ -317,7 +314,7 @@ function insert_course(lines, year, semesterIndex, next)
       });
     },
     function (callback){
-      Lecture.remove({ year: year, semester: semesterIndex}, function(err) {
+      LectureModel.remove({ year: year, semester: semesterIndex}, function(err) {
         if (err) {
           console.log(err);
           callback(err, 'remove lectures');
@@ -349,7 +346,7 @@ function insert_course(lines, year, semesterIndex, next)
       });
     },
     function (callback){
-      TagList.remove({ year: year, semester: semesterIndex}, function(err) {
+      TagListModel.remove({ year: year, semester: semesterIndex}, function(err) {
         if (err) callback(err, 'tag remove');
         console.log("Removed existing tags");
         callback(null, 'tag remove');
@@ -357,7 +354,7 @@ function insert_course(lines, year, semesterIndex, next)
     },
     function (callback){
       console.log("Inserting tags from new lectures...");
-      var tagList = new TagList({
+      var tagList = new TagListModel({
         year: Number(year),
         semester: semesterIndex,
         tags: tags,
@@ -373,7 +370,7 @@ function insert_course(lines, year, semesterIndex, next)
     },
     function (callback) {
       console.log("saving coursebooks...");
-      CourseBook.findOneAndUpdate({ year: Number(year), semester: semesterIndex },
+      CourseBookModel.findOneAndUpdate({ year: Number(year), semester: semesterIndex },
         { updated_at: Date.now() },
         {
           new: false,   // return new doc
@@ -382,7 +379,7 @@ function insert_course(lines, year, semesterIndex, next)
         .exec(function(err, doc) {
           if (!doc) {
             var msg = year+"년도 "+semesterString+"학기 수강 편람이 업데이트 되었습니다.";
-            Notification.createNotification(null, msg, Notification.Type.COURSEBOOK, null,
+            NotificationModel.createNotification(null, msg, NotificationType.COURSEBOOK, null,
               function(err) {
                 if (!err) console.log("Notification inserted");
                 callback(err);
@@ -400,6 +397,3 @@ function insert_course(lines, year, semesterIndex, next)
     next();
   });
 }
-
-module.exports = {
-  insert_course: insert_course};

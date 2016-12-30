@@ -6,10 +6,10 @@
  */
 "use strict";
 
-var assert = require('assert');
-var async = require('async');
+import assert = require('assert');
+import async = require('async');
 
-module.exports = function(app, db, request) {
+export = function(app, db, request) {
   var token;
   var table_id;
   var table2_id;

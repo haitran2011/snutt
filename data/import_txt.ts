@@ -1,5 +1,5 @@
-var fs = require('fs');
-var updateLectures = require('./update_lectures').insert_course;
+import fs = require('fs');
+import {insert_course} from './update_lectures';
 
 if (process.argv.length != 4) {
 	console.log("Invalid arguments");
@@ -22,13 +22,13 @@ fs.readFile(datapath, function (err, data) {
 	var header = lines.slice(0, 3);
 	var courses = lines.slice(3);
 
-	if (year != header[0].split("/")[0].trim() ||
+	if (year != parseInt(header[0].split("/")[0].trim()) ||
 		semester != header[0].split("/")[1].trim()) {
 		console.log("Textfile does not match with given parameter");
 		process.exit(1);
 	}
 	var semesterIndex = ['1', 'S', '2', 'W'].indexOf(semester) + 1;
-	updateLectures(courses, year, semesterIndex, function(){
+	insert_course(courses, year, semesterIndex, function(){
 		process.exit(0);
 	});
 });

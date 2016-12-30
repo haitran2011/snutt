@@ -1,10 +1,6 @@
 node_modules
 .DS_Store
-lib/*.js
-model/*.js
-routes/*.js
-routes/api/*.js
-config/*.js
+*.js
 .vscode/
 .idea
 *.log

@@ -3,19 +3,19 @@
  * This script is parent script for api tests.
  * usage : $ npm test
  */
-"use strict";
-
 process.env.NODE_ENV = 'mocha';
 
-var assert = require('assert');
-var request = require('supertest');
-var config = require('../../config/config');
-var db = require('../../db');
-var app = require('../../app');
+import mocha = require("mocha");
+ 
+import assert = require('assert');
+import supertest = require('supertest');
+import config = require('../../config/config');
+import db = require('../../db');
+import app = require('../../app');
 
 var CourseBookModel = require('../../model/courseBook').CourseBookModel;
 
-request = request(app);
+let request = supertest(app);
 describe('API Test', function() {
   before(function(done) {
     if (config.secretKey && config.host && config.port && config.email)

@@ -1,5 +1,3 @@
-"use strict";
-
 import mongoose = require('mongoose');
 
 var QueryLogSchema = new mongoose.Schema ({

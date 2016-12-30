@@ -1,6 +1,5 @@
-var assert = require('assert');
-var timeAndPlaceToJson = require('../lib/util').timeAndPlaceToJson;
-var timeJsonToMask = require('../lib/util').timeJsonToMask;
+import assert = require('assert');
+import {timeAndPlaceToJson, timeJsonToMask} from '../lib/util';
 
 describe('Library Test', function() {
   describe('TimeConverter', function() {
