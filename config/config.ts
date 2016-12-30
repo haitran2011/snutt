@@ -16,4 +16,4 @@ class SnuttConfig {
     }
 }
 
-export let config = new SnuttConfig();
+export = new SnuttConfig();

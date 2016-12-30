@@ -1,15 +1,13 @@
-"use strict";
-
 import {UserModel, UserDocument} from '../model/user';
 import request = require('request-promise-native');
-import {config} from '../config/config';
+import config = require('../config/config');
 
 /*
  * create_device
  * Add this registration_id for the user
  * and add topic
  */
-function create_device(user, registration_id) {
+export function create_device(user:UserDocument, registration_id:string) {
   var promise;
   // If user doesn't have key, create or fetch key
   if (!user.fcm_key) {
@@ -131,7 +129,7 @@ function create_device(user, registration_id) {
  * remove_device
  * Remove this registration_id for the user
  */
-function remove_device(user, registration_id) {
+export function remove_device(user:UserDocument, registration_id:string) {
   var promise = new Promise(function(resolve, reject){
     // User should have had key
     if (!user.fcm_key) return reject("no key");
@@ -201,11 +199,11 @@ function remove_device(user, registration_id) {
  * send_msg
  * If user_id is null, it's a global message
  */
-function send_msg(user_id, message, cb) {
+export function send_msg(user_id:string, message:string, cb?) {
   var promise;
   if (user_id) {
     var fcm_key;
-    promise = User.getFCMKey(user_id);
+    promise = UserModel.getFCMKey(user_id);
     promise = promise.then(function(fcm_key){
       return request({
         method: 'POST',
@@ -267,9 +265,3 @@ function send_msg(user_id, message, cb) {
 
   return promise;
 }
-
-module.exports = {
-  send_msg: send_msg,
-  create_device: create_device,
-  remove_device: remove_device,
-};

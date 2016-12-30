@@ -1,10 +1,6 @@
 import express = require('express');
 var router = express.Router();
-
-var User = require('../model/user');
-var Lecture = require('../model/lecture');
-var Timetable = require('../model/timetable');
-
+/*
 //DEBUG ONLY
 router.get('/', function(req, res, next) {
   var me = new User({
@@ -19,5 +15,6 @@ router.get('/', function(req, res, next) {
     res.json({success : true});
   });
 });
+*/
 
-module.exports = router;
+export = router;

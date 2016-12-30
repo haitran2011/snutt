@@ -1,9 +1,7 @@
-"use strict";
-
 import request = require('request');
 import {UserModel, UserDocument} from '../model/user';
 
-export function local_auth (id: string, password: string, done: (err, user: UserDocument, msg)=>any) {
+export function local_auth (id: string, password: string, done: (err, user: UserDocument, info)=>void) {
   UserModel.get_local(id, function(err, user) {
     if(err) return done(err, null, null);
     if(!user) return done(null, null, { message: 'wrong id' });
@@ -15,7 +13,7 @@ export function local_auth (id: string, password: string, done: (err, user: User
   });
 }
 
-export function fb_auth (fb_id: string, fb_token: string, done) {
+export function fb_auth (fb_id: string, fb_token: string, done: (err, _, info)=>void) {
   if (process.env.NODE_ENV == 'mocha') {
     if (fb_token == 'correct' && fb_id == "1234") return done(null, null, {fb_name: "John", fb_id: "1234"});
     if (fb_token == 'correct2' && fb_id == "12345") return done(null, null, {fb_name: "Smith", fb_id: "12345"});

@@ -3,15 +3,15 @@
 import express = require('express');
 var router = express.Router();
 
-var CourseBook = require('../../model/courseBook');
+import {CourseBookModel} from '../../model/courseBook';
 
-var authRouter = require('./auth');
-var timetableRouter = require('./timetable');
-var searchQueryRouter = require('./searchQuery');
-var tagsRouter = require('./tags');
-var notificationRouter = require('./notification');
-var userRouter = require('./user');
-var adminRouter = require('./admin');
+import authRouter = require('./auth');
+import timetableRouter = require('./timetable');
+import searchQueryRouter = require('./searchQuery');
+import tagsRouter = require('./tags');
+import notificationRouter = require('./notification');
+import userRouter = require('./user');
+import adminRouter = require('./admin');
 var apiKey = require('../../config/apiKey');
 import {UserModel, UserDocument} from '../../model/user';
 
@@ -31,14 +31,14 @@ router.use(function(req, res, next) {
 });
 
 router.get('/course_books', function(req, res, next) {
-  CourseBook.getAll({lean: true}, function (err, courseBooks) {
+  CourseBookModel.getAll({lean: true}, function (err, courseBooks) {
     if (err) return res.status(500).json({message: "server fault"});
     res.json(courseBooks);
   });
 });
 
 router.get('/course_books/recent', function(req, res, next) {
-  CourseBook.getRecent({lean: true}, function (err, courseBook) {
+  CourseBookModel.getRecent({lean: true}, function (err, courseBook) {
     if (err) return res.status(500).json({message: "server fault"});
     res.json(courseBook);
   });

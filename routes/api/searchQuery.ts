@@ -1,9 +1,7 @@
-"use strict";
-
-var router = require('express').Router();
-var LectureModel = require('../../model/lecture');
-var Lecture = LectureModel.Lecture;
-var Util = require('../../lib/util');
+import express = require('express');
+var router = express.Router();
+import {LectureModel} from '../../model/lecture';
+import Util = require('../../lib/util');
 
 //something similar to LIKE query in SQL
 function like(str, option) {
@@ -25,35 +23,34 @@ function timeRangesToBinaryConditions(timeJson) {
 }
 */
 
-
-module.exports = router.post('/', function(req, res, next) {
+router.post('/', function(req, res, next) {
   if (!req.body.year || !req.body.semester) {
     return res.status(400).json({message: 'no year and semester'});
   }
   var query = {};
-  query.year = req.body.year;
-  query.semester = req.body.semester;
+  query["year"] = req.body.year;
+  query["semester"] = req.body.semester;
   if (req.body.title)
-    query.course_title = { $regex: like(req.body.title), $options: 'i' };
+    query["course_title"] = { $regex: like(req.body.title, null), $options: 'i' };
   if (req.body.credit && req.body.credit.length)
-    query.credit = { $in: req.body.credit };
+    query["credit"] = { $in: req.body.credit };
   if (req.body.instructor && req.body.instructor.length)
-    query.instructor = { $in : req.body.instructor };
+    query["instructor"] = { $in : req.body.instructor };
   if (req.body.academic_year && req.body.academic_year.length)
-    query.academic_year = { $in : req.body.academic_year };
+    query["academic_year"] = { $in : req.body.academic_year };
   if (req.body.course_number && req.body.course_number.length)
-    query.course_number = { $in : req.body.course_number };
+    query["course_number"] = { $in : req.body.course_number };
   if (req.body.classification && req.body.classification.length)
-    query.classification = { $in : req.body.classification };
+    query["classification"] = { $in : req.body.classification };
   if (req.body.category && req.body.category.length)
-    query.category = { $in : req.body.category };
+    query["category"] = { $in : req.body.category };
   if (req.body.department && req.body.department.length) // in this case result should be sorted by departments
-    query.department = { $in : req.body.department };
+    query["department"] = { $in : req.body.department };
   if (req.body.time_mask && req.body.time_mask.length == 6) {
-    query.$where = "";
+    query["$where"] = "";
     req.body.time_mask.forEach(function(bit, idx) {
-      if (idx > 0) query.$where += " && ";
-      query.$where += "((this.class_time_mask["+idx+"] & "+(~bit<<1>>>1)+") == 0)";
+      if (idx > 0) query["$where"] += " && ";
+      query["$where"] += "((this.class_time_mask["+idx+"] & "+(~bit<<1>>>1)+") == 0)";
     });
   }
 
@@ -63,7 +60,7 @@ module.exports = router.post('/', function(req, res, next) {
   if (!req.body.limit) limit = 20;
   else limit = Number(req.body.limit);
 
-  Lecture.find(query).sort('course_number').lean()
+  LectureModel.find(query).sort('course_number').lean()
     .skip(offset)
     .limit(limit)
     .exec(function (err, lectures) {
@@ -74,3 +71,5 @@ module.exports = router.post('/', function(req, res, next) {
       return res.json(lectures);
   });
 });
+
+export = router;

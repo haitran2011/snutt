@@ -1,18 +1,18 @@
-"use strict";
-
-var router = require('express').Router();
-var Notification = require('../../model/notification');
-var User = require('../../model/user');
+import express = require('express');
+var router = express.Router();
+import {NotificationModel} from '../../model/notification';
+import {UserDocument} from '../../model/user';
 
 router.get('/', function(req, res, next){
+  var user:UserDocument = <UserDocument>req["user"];
   var offset, limit;
   if (!req.query.offset) offset = 0;
   else offset = Number(req.query.offset);
   if (!req.query.limit) limit = 20;
   else limit = Number(req.query.limit);
-  Notification.getNewest(req.user, offset, limit).then(function(value){
+  NotificationModel.getNewest(user, offset, limit).then(function(value){
     if (req.query.explicit) {
-      req.user.updateNotificationCheckDate(function (err) {
+      user.updateNotificationCheckDate(function (err) {
         if (err) {
           console.log(err);
           return res.status(500).json({message: 'error'});
@@ -29,7 +29,8 @@ router.get('/', function(req, res, next){
 });
 
 router.get('/count', function(req, res, next){
-  Notification.countUnread(req.user).then(function(value){
+  var user:UserDocument = <UserDocument>req["user"];
+  NotificationModel.countUnread(user).then(function(value){
     res.json({count: value});
   }, function(err) {
     console.log(err);
@@ -37,4 +38,4 @@ router.get('/count', function(req, res, next){
   });
 });
 
-module.exports = router;
+export = router;

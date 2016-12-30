@@ -3,11 +3,45 @@
  * Lecture는 수강편람 상의 강의
  * UserLecture는 유저 시간표 상의 강의
  */
-"use strict";
+import mongoose = require('mongoose');
 
-var mongoose = require('mongoose');
+interface BaseLectureDocument extends mongoose.Document {
+  classification: string,                           // 교과 구분
+  department: string,                               // 학부
+  academic_year: string,                            // 학년
+  course_title: string,   // 과목명
+  credit: number,                                   // 학점
+  class_time: string,
+  class_time_json: [
+    { day : number, start: number, len: number, place : string }
+  ],
+  class_time_mask: number[],
+  instructor: string,                               // 강사
+  quota: number,                                    // 정원
+  enrollment: number,                               // 신청인원
+  remark: string,                                   // 비고
+  category: string
+
+  is_equal(lecture:BaseLectureDocument):boolean;
+}
+
+export interface LectureDocument extends BaseLectureDocument {
+  year: number,           // 연도
+  semester: number,       // 학기
+  course_number: string,   // 교과목 번호
+  lecture_number: string,  // 강좌 번호
+}
+
+export interface UserLectureDocument extends BaseLectureDocument {
+  course_number: string,
+  lecture_number: string,
+  created_at: Date,
+  updated_at: Date,
+  color: {fg : string, bg : string}
+}
+
 function BaseSchema(add){
-  var schema = mongoose.Schema({
+  var schema = new mongoose.Schema({
     classification: String,                           // 교과 구분
     department: String,                               // 학부
     academic_year: String,                            // 학년
@@ -58,22 +92,17 @@ function BaseSchema(add){
   return schema;
 }
 
-var Lecture = mongoose.model('Lecture', BaseSchema({
+export let LectureModel = mongoose.model<LectureDocument>('Lecture', BaseSchema({
   year: { type: Number, required: true },           // 연도
   semester: { type: Number, required: true },       // 학기
   course_number: { type: String, required: true},   // 교과목 번호
   lecture_number: { type: String, required: true},  // 강좌 번호
 }));
 
-var UserLecture = mongoose.model('UserLecture', BaseSchema({
+export let UserLectureModel = mongoose.model<UserLectureDocument>('UserLecture', BaseSchema({
   course_number: String,
   lecture_number: String,
   created_at: Date,
   updated_at: Date,
   color: {fg : String, bg : String}
 }));
-
-module.exports = {
-  Lecture : Lecture,
-  UserLecture : UserLecture
-};

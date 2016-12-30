@@ -2,19 +2,34 @@
  * Notification Model
  * Jang Ryeol, ryeolj5911@gmail.com
  */
-"use strict";
+import mongoose = require('mongoose');
+import {UserModel, UserDocument} from './user';
+import fcm = require('../lib/fcm');
 
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-var User = require('./user');
-var fcm = require('../lib/fcm');
+export interface NotificationDocument extends mongoose.Document{
+  user_id : mongoose.Schema.Types.ObjectId,
+  message : String,
+  created_at : Date,
+  type : Number,
+  detail : mongoose.Schema.Types.Mixed,
+  fcm_status : String
+}
 
-var NotificationSchema = mongoose.Schema({
-  user_id : { type: Schema.Types.ObjectId, ref: 'User', default : null},
+interface _NotificationModel extends mongoose.Model<NotificationDocument>{
+  getNewest(user:UserDocument, offset:number, limit:number,
+      cb?:(err, docs:mongoose.Types.DocumentArray<NotificationDocument>)=>void)
+      :Promise<mongoose.Types.DocumentArray<NotificationDocument>>;
+  countUnread(user, cb?:(err, count:number)=>void):Promise<number>;
+  createNotification(user_id:string, message:string, type:Number, detail:any,
+      cb?:(err, doc:NotificationDocument)=>void):Promise<NotificationDocument>;
+}
+
+var NotificationSchema = new mongoose.Schema({
+  user_id : { type: mongoose.Schema.Types.ObjectId, ref: 'User', default : null},
   message : { type : String, required : true },
   created_at : { type : Date, required : true},
   type : { type: Number, required : true, default : 0 },
-  detail : { type: Schema.Types.Mixed, default : null },
+  detail : { type: mongoose.Schema.Types.Mixed, default : null },
   fcm_status : { type : String, default : null }
 });
 
@@ -51,7 +66,7 @@ NotificationSchema.statics.Type = {
 // if user_id_array is null or not array, create it as global
 NotificationSchema.statics.createNotification = function (user_id, message, type, detail, callback) {
   if (!type) type = 0;
-  var Notification = mongoose.model('Notification');
+  var Notification = <_NotificationModel>mongoose.model('Notification');
   var notification = new Notification({
     user_id : user_id,
     message : message,
@@ -73,4 +88,4 @@ NotificationSchema.statics.createNotification = function (user_id, message, type
   return promise;
 };
 
-module.exports = mongoose.model('Notification', NotificationSchema);
+export let NotificationModel = <_NotificationModel>mongoose.model<NotificationDocument>('Notification', NotificationSchema);

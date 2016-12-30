@@ -1,4 +1,3 @@
-"use strict";
 import mongoose = require('mongoose');
 import assert = require('assert');
 import _ = require('lodash');

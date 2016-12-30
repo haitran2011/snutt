@@ -1,11 +1,23 @@
 /**
  * Created by north on 16. 2. 24.
  */
-"use strict";
+import mongoose = require('mongoose');
 
-var mongoose = require('mongoose');
+export interface TagListDocument extends mongoose.Document {
+  year: number,
+  semester: number,
+  updated_at: Date,
+  tags: {
+    classification: string[],
+    department: string[],
+    academic_year: string[],
+    credit: string[],
+    instructor: string[],
+    category: string[]
+  }
+}
 
-var TagListSchema = mongoose.Schema({
+var TagListSchema = new mongoose.Schema({
   year: {type: Number, required: true},
   semester: {type: Number, required: true},
   updated_at: {type: Date, default: Date.now()},
@@ -21,4 +33,4 @@ var TagListSchema = mongoose.Schema({
 
 TagListSchema.index({year: 1, semester: 1});
 
-module.exports = mongoose.model('TagList', TagListSchema);
+export let TagListModel = mongoose.model<TagListDocument>('TagList', TagListSchema);

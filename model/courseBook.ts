@@ -1,8 +1,20 @@
-"use strict";
+import mongoose = require('mongoose');
 
-var mongoose = require('mongoose');
+export interface CourseBookDocument extends mongoose.Document{
+  year: number,
+  semester: number,
+  updated_at: Date,
+  start_date: Date,
+  end_date: Date
+}
 
-var CourseBookSchema = mongoose.Schema({
+interface _CourseBookModel extends mongoose.Model<CourseBookDocument>{
+  getAll(flags, cb?:(err, docs:mongoose.Types.DocumentArray<CourseBookDocument>)=>void)
+      :Promise<mongoose.Types.DocumentArray<CourseBookDocument>>;
+  getRecent(flags, cb?:(err, doc:CourseBookDocument)=>void):Promise<CourseBookDocument>;
+}
+
+var CourseBookSchema = new mongoose.Schema({
   year: { type: Number, required: true },
   semester: { type: Number, required: true },
   updated_at: {type: Date, default: Date.now()},
@@ -29,4 +41,4 @@ CourseBookSchema.statics.getRecent = function(flags, callback) {
   return query.exec(callback);
 };
 
-module.exports = mongoose.model('CourseBook', CourseBookSchema);
+export let CourseBookModel = <_CourseBookModel>mongoose.model<CourseBookDocument>('CourseBook', CourseBookSchema);

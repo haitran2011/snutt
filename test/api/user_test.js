@@ -375,7 +375,7 @@ module.exports = function(app, db, request) {
         .send({fb_id:"1234", fb_token: fb_token})
         .expect(200)
         .end(function(err, res){
-          if (err) console.log(err);
+          if (err) console.log(res);
           token = res.body.token;
           done(err);
         });

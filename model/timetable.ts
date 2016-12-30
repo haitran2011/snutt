@@ -1,19 +1,39 @@
-"use strict";
+import mongoose = require('mongoose');
+import {UserLectureDocument, UserLectureModel} from './lecture';
+import Util = require('../lib/util');
 
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-var LectureModel = require('./lecture');
-var UserLecture = LectureModel.UserLecture;
-var Util = require('../lib/util');
-
-var TimetableSchema = mongoose.Schema({
-  user_id : { type: Schema.Types.ObjectId, ref: 'User' },
+var TimetableSchema = new mongoose.Schema({
+  user_id : { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   year : {type : Number, required : true },
   semester : {type : Number, required : true, min:1, max:4 },
   title : {type : String, required : true },
-  lecture_list: [UserLecture.schema],
+  lecture_list: [UserLectureModel.schema],
   updated_at : Date
 });
+
+export interface TimetableDocument extends mongoose.Document {
+  user_id: string;
+  year: number;
+  semester: number;
+  title: string;
+  lecture_list: mongoose.Types.DocumentArray<UserLectureDocument>;
+  updated_at: number;
+
+  checkDuplicate(cb?:(err)=>void):void;
+  copy(new_title:string, cb?:(err, doc:TimetableDocument)=>void):void;
+  add_lecture(lecture:UserLectureDocument, cb?:(err, doc:TimetableDocument)=>void):void;
+  update_lecture(lecture_id:string, lecture_raw, cb?:(err, doc:TimetableDocument)=>void):void;
+  delete_lecture(lecture_id:string, cb?:(err, doc:TimetableDocument)=>void):void;
+}
+
+export interface _TimetableModel extends mongoose.Model<TimetableDocument> {
+  getTimetables(user_id:string, flags, cb?:(err, docs:TimetableDocument[])=>void):Promise<TimetableDocument[]>;
+  getTimetablesBySemester(user_id:string, year:number, semester:number, flags, cb?:(err, docs:TimetableDocument[])=>void):Promise<TimetableDocument[]>;
+  getTimetable(user_id:string, timetable_id:string, flags, cb?:(err, docs:TimetableDocument)=>void):Promise<TimetableDocument>;
+  getRecent(user_id:string, flags, cb?:(err, docs:TimetableDocument)=>void):Promise<TimetableDocument>;
+  createTimetable(params, cb?:(err, doc:TimetableDocument)=>void):Promise<TimetableDocument>;
+  update_lecture(timetable_id:string, lecture_id:string, lecture_raw, cb?:(err, doc:TimetableDocument)=>void);
+}
 
 TimetableSchema.index({ year: 1, semester: 1, user_id: 1 });
 
@@ -71,7 +91,7 @@ TimetableSchema.statics.getRecent = function(user_id, flags, callback) {
 };
 
 TimetableSchema.statics.createTimetable = function(params, callback) {
-  var Timetable = mongoose.model("Timetable");
+  var Timetable = <_TimetableModel>mongoose.model("Timetable");
   if (!callback) callback = function(){};
   return new Promise(function(resolve, reject) {
     if (!params || !params.user_id || !params.year || !params.semester || !params.title) {
@@ -185,7 +205,7 @@ TimetableSchema.statics.update_lecture = function(timetable_id, lecture_id, lect
   }
 
   (function (timetable_id, lecture_id, lecture, patch) {
-    mongoose.model("Timetable").findOneAndUpdate({ "_id" : timetable_id, "lecture_list._id" : lecture_id},
+    (<_TimetableModel>mongoose.model('Timetable')).findOneAndUpdate({ "_id" : timetable_id, "lecture_list._id" : lecture_id},
       {$set : patch}, {new: true}, function (err, doc) {
         if (err) return next(err);
         if (!doc) err = new Error("timetable not found");
@@ -203,7 +223,7 @@ TimetableSchema.statics.update_lecture = function(timetable_id, lecture_id, lect
  * callback : callback (err) when finished
  */
 TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, next) {
-  mongoose.model('Timetable').update_lecture(this._id, lecture_id, lecture_raw, next);
+  (<_TimetableModel>mongoose.model('Timetable')).update_lecture(this._id, lecture_id, lecture_raw, next);
 };
 
 
@@ -214,4 +234,4 @@ TimetableSchema.methods.delete_lecture = function(lecture_id, callback) {
     { $pull: {lecture_list : {_id: lecture_id} } }, {new: true})
     .exec(callback);
 };
-module.exports = mongoose.model('Timetable', TimetableSchema);
+export let TimetableModel = <_TimetableModel>mongoose.model<TimetableDocument>('Timetable', TimetableSchema);

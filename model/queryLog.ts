@@ -1,8 +1,8 @@
 "use strict";
 
-var mongoose = require('mongoose');
+import mongoose = require('mongoose');
 
-var QueryLogSchema = mongoose.Schema ({
+var QueryLogSchema = new mongoose.Schema ({
   time: { type: Date, default: Date.now },
   year: { type: Number, min: 2000, max: 2999 },
   semester: { type: String },

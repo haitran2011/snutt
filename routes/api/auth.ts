@@ -1,11 +1,9 @@
-"use strict";
-
 import express = require('express');
 var router = express.Router();
 
 import {UserModel, UserDocument} from '../../model/user';
-var CourseBook = require('../../model/courseBook');
-var Timetable = require('../../model/timetable');
+import {CourseBookModel} from '../../model/courseBook';
+import {TimetableModel} from '../../model/timetable';
 import auth = require('../../lib/auth');
 
 /**
@@ -30,8 +28,8 @@ router.post('/register_local', function (req, res, next) {
     if (err) {
       return res.status(403).json({message:err.message});
     }
-    CourseBook.getRecent({lean:true}).then(function(coursebook){
-      return Timetable.createTimetable({
+    CourseBookModel.getRecent({lean:true}).then(function(coursebook){
+      return TimetableModel.createTimetable({
         user_id : user._id,
         year : coursebook.year,
         semester : coursebook.semester,
@@ -65,4 +63,4 @@ router.post('/login_fb', function(req, res, next) {
   });
 });
 
-module.exports = router;
+export = router;

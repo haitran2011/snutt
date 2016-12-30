@@ -1,12 +1,9 @@
-"use strict";
-
 import mongoose = require('mongoose');
-import {config} from '../config/config';
+import config = require('../config/config');
 import bcrypt = require('bcrypt');
 import crypto = require('crypto');
-
-var Timetable = require('./timetable');
-var CourseBook = require('./courseBook');
+import {TimetableModel, TimetableDocument} from './timetable';
+import {CourseBookModel} from './courseBook';
 
 export interface UserDocument extends mongoose.Document {
   credential : {
@@ -17,29 +14,29 @@ export interface UserDocument extends mongoose.Document {
   };
   credentialHash : string;
   isAdmin: boolean;
-  regDate: number;
-  notificationCheckedAt: number;
+  regDate: Date;
+  notificationCheckedAt: Date;
   email: string;
   fcm_key: string;
   active: boolean;
 
-  verify_password(password: string, cb: (err, isMatch)=>void) : void;
-  signCredential(callback: any);
-  getCredentialHash();
-  compareCredentialHash(hash);
-  updateNotificationCheckDate(callback);
-  changeLocalPassword(password, callback);
-  attachFBId(fb_name, fb_id, callback);
-  detachFBId(callback);
+  verify_password(password: string, cb: (err, isMatch:boolean)=>void) : void;
+  signCredential(callback?:(err, user:UserDocument)=>void):Promise<UserDocument>;
+  getCredentialHash():string;
+  compareCredentialHash(hash):string;
+  updateNotificationCheckDate(callback?:(err, user:UserDocument)=>void):Promise<UserDocument>;
+  changeLocalPassword(password:string, callback?:(err, user:UserDocument)=>void):void;
+  attachFBId(fb_name:string, fb_id:string, callback?:(err, user:UserDocument)=>void):Promise<UserDocument>;
+  detachFBId(callback?:(err, user:UserDocument)=>void):Promise<UserDocument>;
 };
 
-interface UserModel extends mongoose.Model<UserDocument> {
+interface _UserModel extends mongoose.Model<UserDocument> {
   getUserFromCredentialHash(hash:string) : Promise<UserDocument>;
-  getFCMKey(id, callback) : Promise<string>;
-  get_local(id, callback:(err, user:UserDocument)=>void) : Promise<UserDocument>;
-  create_local(old_user, id, password, callback);
-  get_fb(name, id, callback);
-  get_fb_or_create(name, id, callback);
+  getFCMKey(id:string, callback?:(err, key:string)=>void) : Promise<string>;
+  get_local(id:string, callback:(err, user:UserDocument)=>void) : Promise<UserDocument>;
+  create_local(old_user:UserDocument, id:string, password:string, callback?:(err, user:UserDocument)=>void) : Promise<UserDocument>;
+  get_fb(name:string, id:string, callback?:(err, user:UserDocument)=>void) : Promise<UserDocument>;
+  get_fb_or_create(name:string, id:string, callback?:(err, user:UserDocument)=>void) : Promise<UserDocument>;
 }
 
 var UserSchema = new mongoose.Schema({
@@ -169,7 +166,7 @@ UserSchema.statics.get_local = function(id, callback) {
 };
 
 UserSchema.statics.create_local = function(old_user, id, password, callback) {
-  var User = <UserModel>mongoose.model('User');
+  var User = <_UserModel>mongoose.model('User');
   if (!old_user) {
     old_user = new User({
       credential : {
@@ -222,7 +219,7 @@ UserSchema.statics.get_fb = function(name, id, callback) {
 };
 
 UserSchema.statics.get_fb_or_create = function(name, id, callback) {
-  var User = <UserModel>mongoose.model('User');
+  var User = <_UserModel>mongoose.model('User');
   return User.get_fb(name, id, null)
     .then(function(user){
       if (!user) {
@@ -232,8 +229,8 @@ UserSchema.statics.get_fb_or_create = function(name, id, callback) {
             fb_id: id
           }
         });
-        CourseBook.getRecent({lean:true}).then(function(coursebook){
-            return Timetable.createTimetable({
+        CourseBookModel.getRecent({lean:true}).then(function(coursebook){
+            return TimetableModel.createTimetable({
               user_id : user._id,
               year : coursebook.year,
               semester : coursebook.semester,
@@ -251,4 +248,4 @@ UserSchema.statics.get_fb_or_create = function(name, id, callback) {
     });
 };
 
-export let UserModel = <UserModel>mongoose.model<UserDocument>('User', UserSchema);
+export let UserModel = <_UserModel>mongoose.model<UserDocument>('User', UserSchema);

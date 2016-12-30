@@ -1,6 +1,10 @@
 node_modules
 .DS_Store
-config/secretKey.js
+lib/*.js
+model/*.js
+routes/*.js
+routes/api/*.js
+config/*.js
 .vscode/
 .idea
 *.log

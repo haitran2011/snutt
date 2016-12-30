@@ -13,13 +13,10 @@ var config = require('../../config/config');
 var db = require('../../db');
 var app = require('../../app');
 
-var CourseBook = require('../../model/courseBook');
+var CourseBookModel = require('../../model/courseBook').CourseBookModel;
 
 request = request(app);
 describe('API Test', function() {
-
-
-
   before(function(done) {
     if (config.secretKey && config.host && config.port && config.email)
       return done();
@@ -50,7 +47,7 @@ describe('API Test', function() {
 
   // Add 2 coursebooks, 2016-2 and 2015-W
   before(function(done) {
-    CourseBook.findOneAndUpdate({ year: 2016, semester: 3 },
+    CourseBookModel.findOneAndUpdate({ year: 2016, semester: 3 },
       { updated_at: Date.now() },
       {
         new: true,   // return new doc
@@ -60,7 +57,7 @@ describe('API Test', function() {
         if (err) return done(err);
         assert.equal(doc.year, 2016);
         assert.equal(doc.semester, 3);
-        CourseBook.findOneAndUpdate({ year: 2015, semester: 4 },
+        CourseBookModel.findOneAndUpdate({ year: 2015, semester: 4 },
           { updated_at: Date.now() },
           {
             new: true,   // return new doc
