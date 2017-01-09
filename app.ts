@@ -76,35 +76,46 @@ var host = config.host || 'localhost';
 app.set('port', port);
 app.set('host', host);
 
+if (process.env.NODE_ENV != 'mocha') {
+    var server = createServer();
+    serverListen(server);
+}
+
+
 /**
  * Create server.
  */
-if (config.protocol == "https")
-  var protocol = "https";
-else
-  var protocol = "http";
+function createServer() {
+  if (config.protocol == "https")
+    var protocol = "https";
+  else
+    var protocol = "http";
 
-var server:any;
+  var server:any;
 
-if (protocol == "https") {
-  var ssl_options = {
-    key: fs.readFileSync(config.ssl_key),
-    cert: fs.readFileSync(config.ssl_cert)
-  };
-  server = https.createServer(ssl_options, app);
-} else {
-  server = http.createServer(app);
+  if (protocol == "https") {
+    var ssl_options = {
+      key: fs.readFileSync(config.ssl_key),
+      cert: fs.readFileSync(config.ssl_cert)
+    };
+    server = https.createServer(ssl_options, app);
+  } else {
+    server = http.createServer(app);
+  }
+
+  return server;
 }
 
 /**
  * Listen on provided port, on all network interfaces.
  */
-
-server.listen(port, host, function() {
-   console.log("Server listening on " + protocol + "://" + host + ":" + port);
-});
-server.on('error', onError);
-server.on('listening', onListening);
+function serverListen(server) {
+  server.listen(port, host, function() {
+    console.log("Server listening on " + config.protocol + "://" + host + ":" + port);
+  });
+  server.on('error', onError);
+  server.on('listening', onListening);
+}
 
 /**
  * Normalize a port into a number, string, or false.
