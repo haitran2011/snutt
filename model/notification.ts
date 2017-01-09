@@ -19,7 +19,7 @@ interface _NotificationModel extends mongoose.Model<NotificationDocument>{
   getNewest(user:UserDocument, offset:number, limit:number,
       cb?:(err, docs:mongoose.Types.DocumentArray<NotificationDocument>)=>void)
       :Promise<mongoose.Types.DocumentArray<NotificationDocument>>;
-  countUnread(user, cb?:(err, count:number)=>void):Promise<number>;
+  countUnread(user:UserDocument, cb?:(err, count:number)=>void):Promise<number>;
   createNotification(user_id:string, message:string, type:Number, detail:any,
       cb?:(err, doc:NotificationDocument)=>void):Promise<NotificationDocument>;
 }
@@ -75,7 +75,7 @@ NotificationSchema.statics.createNotification = function (user_id, message, type
     detail : detail
   });
 
-  var promise = fcm.send_msg(user_id, message);
+  var promise:Promise<any> = fcm.send_msg(user_id, message);
 
   promise = promise.then(function(result){
     notification.fcm_status = result;

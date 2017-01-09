@@ -199,38 +199,21 @@ export function remove_device(user:UserDocument, registration_id:string) {
  * send_msg
  * If user_id is null, it's a global message
  */
-export function send_msg(user_id:string, message:string, cb?) {
-  var promise;
-  if (user_id) {
-    var fcm_key;
+export function send_msg(user_id:string, message:string, cb?): Promise<string> {
+  var promise:Promise<any>;
+  if (user_id && user_id.length > 0) {
     promise = UserModel.getFCMKey(user_id);
-    promise = promise.then(function(fcm_key){
-      return request({
-        method: 'POST',
-        uri: 'https://fcm.googleapis.com/fcm/send',
-        headers: {
-          "Content-Type":"application/json",
-          "Authorization":"key="+config.fcm_api_key
-        },
-        body: {
-              "to": fcm_key,
-              "notification" : {
-                "body" : message,
-                "title" : "SNUTT"
-              },
-              "priority" : "high",
-              "content_available" : true
-        },
-        json:true,
-        resolveWithFullResponse: true
-      });
-    });
-    promise = promise.then(function(res){
-      if (res.statusCode === 200) return Promise.resolve("ok");
-      else return Promise.reject("failed");
+    promise = promise.then(function(fcmkey){
+      return Promise.resolve(fcmkey);
+    }).catch(function(err){
+      return Promise.reject("failed to get FCM Key"); 
     });
   } else {
-    promise = request({
+    promise = Promise.resolve("/topics/global")
+  }
+
+  promise = promise.then(function(target) {
+    return request({
       method: 'POST',
       uri: 'https://fcm.googleapis.com/fcm/send',
       headers: {
@@ -238,7 +221,7 @@ export function send_msg(user_id:string, message:string, cb?) {
         "Authorization":"key="+config.fcm_api_key
       },
       body: {
-            "to": "/topics/global",
+            "to": target,
             "notification" : {
               "body" : message,
               "title" : "SNUTT"
@@ -249,17 +232,18 @@ export function send_msg(user_id:string, message:string, cb?) {
       json:true,
       resolveWithFullResponse: true
     });
-    promise = promise.then(function(res){
-      if (res.statusCode === 200) return Promise.resolve("ok");
-      else return Promise.reject("failed");
-    });
-  }
+  });
+
+  promise = promise.then(function(res){
+    if (res.statusCode === 200) return Promise.resolve("ok");
+    else return Promise.reject(res.body);
+  });
 
   promise = promise.then(function(result){
-    cb(null, result);
+    if(cb) cb(null, result);
     return Promise.resolve(result);
   }).catch(function(err){
-    cb(err);
+    if(cb) cb(err);
     return Promise.reject(err);
   });
 
