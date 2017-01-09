@@ -21,7 +21,7 @@
     "jsonwebtoken": "~5.5.0",
     "kerberos": "0.0.21",
     "lodash": "^3.10.1",
-    "mongoose": "^4.7.5",
+    "mongoose": "4.7.2",
     "morgan": "~1.6.1",
     "request": "^2.74.0",
     "request-promise-native": "^1.0.3",

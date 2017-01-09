@@ -30,8 +30,7 @@ router.get('/recent', function(req, res, next) {
 
 router.get('/:id', function(req, res, next) { //get
   var user:UserDocument = <UserDocument>req["user"];
-  var timetable_id:mongoose.Types.ObjectId = mongoose.Types.ObjectId(req.params.id);
-  TimetableModel.getTimetable(user._id, timetable_id, {lean:true}, function(err, timetable) {
+  TimetableModel.getTimetable(user._id, req.params.id, {lean:true}, function(err, timetable) {
     if(err) return res.status(500).json({message:"find table failed"});
     if(!timetable) return res.status(404).json({message:'timetable not found'});
     res.json(timetable);

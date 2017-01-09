@@ -22,17 +22,17 @@ export interface TimetableDocument extends mongoose.Document {
   checkDuplicate(cb?:(err)=>void):void;
   copy(new_title:string, cb?:(err, doc:TimetableDocument)=>void):void;
   add_lecture(lecture:UserLectureDocument, cb?:(err, doc:TimetableDocument)=>void):void;
-  update_lecture(lecture_id:mongoose.Types.ObjectId, lecture_raw, cb?:(err, doc:TimetableDocument)=>void):void;
-  delete_lecture(lecture_id:mongoose.Types.ObjectId, cb?:(err, doc:TimetableDocument)=>void):void;
+  update_lecture(lecture_id:string, lecture_raw, cb?:(err, doc:TimetableDocument)=>void):void;
+  delete_lecture(lecture_id:string, cb?:(err, doc:TimetableDocument)=>void):void;
 }
 
 export interface _TimetableModel extends mongoose.Model<TimetableDocument> {
-  getTimetables(user_id:mongoose.Types.ObjectId, flags, cb?:(err, docs:TimetableDocument[])=>void):Promise<TimetableDocument[]>;
-  getTimetablesBySemester(user_id:mongoose.Types.ObjectId, year:number, semester:number, flags, cb?:(err, docs:TimetableDocument[])=>void):Promise<TimetableDocument[]>;
-  getTimetable(user_id:mongoose.Types.ObjectId, timetable_id:mongoose.Types.ObjectId, flags, cb?:(err, docs:TimetableDocument)=>void):Promise<TimetableDocument>;
-  getRecent(user_id:mongoose.Types.ObjectId, flags, cb?:(err, docs:TimetableDocument)=>void):Promise<TimetableDocument>;
+  getTimetables(user_id:string, flags, cb?:(err, docs:TimetableDocument[])=>void):Promise<TimetableDocument[]>;
+  getTimetablesBySemester(user_id:string, year:number, semester:number, flags, cb?:(err, docs:TimetableDocument[])=>void):Promise<TimetableDocument[]>;
+  getTimetable(user_id:string, timetable_id:string, flags, cb?:(err, docs:TimetableDocument)=>void):Promise<TimetableDocument>;
+  getRecent(user_id:string, flags, cb?:(err, docs:TimetableDocument)=>void):Promise<TimetableDocument>;
   createTimetable(params, cb?:(err, doc:TimetableDocument)=>void):Promise<TimetableDocument>;
-  update_lecture(timetable_id:mongoose.Types.ObjectId, lecture_id:mongoose.Types.ObjectId, lecture_raw, cb?:(err, doc:TimetableDocument)=>void);
+  update_lecture(timetable_id:string, lecture_id:string, lecture_raw, cb?:(err, doc:TimetableDocument)=>void);
 }
 
 TimetableSchema.index({ year: 1, semester: 1, user_id: 1 });
