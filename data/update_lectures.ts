@@ -4,7 +4,7 @@ if (!module.parent) {
   process.exit(1);
 }
 
-import db = require('../db');
+import mongoose = require('../db');
 import async = require('async');
 import {LectureModel} from '../model/lecture';
 import {CourseBookModel} from '../model/courseBook';
@@ -41,7 +41,7 @@ var str_category = {
   "general_korean":"한국의 이해"
 };
 
-export function insert_course(lines, year, semesterIndex, next)
+export function insert_course(lines:Array<String>, year:number, semesterIndex:number, next:()=>void)
 {
   var semesterString = (['1', '여름', '2', '겨울'])[semesterIndex-1];
   var saved_cnt = 0, err_cnt = 0;
@@ -111,10 +111,10 @@ export function insert_course(lines, year, semesterIndex, next)
         }
 
         var timeJson = Util.timeAndPlaceToJson(components[7], components[8]);
-        if (timeJson === -1) console.log(line);
+        if (timeJson === null) console.log(line);
         // TimeMask limit is 15*2
         for (let j=0; j<timeJson.length; j++) {
-          var t_end = parseFloat(timeJson[j].start)+parseFloat(timeJson[j].len);
+          var t_end = timeJson[j].start+timeJson[j].len;
           if (t_end > 15) {
             console.log("Warning: ("+components[3]+", "+components[4]+", "+components[5]+
               ") ends at "+t_end);
@@ -122,7 +122,7 @@ export function insert_course(lines, year, semesterIndex, next)
         }
 
         new_lectures.push(new LectureModel({
-          year: Number(year),
+          year: year,
           semester: semesterIndex,
           classification: components[0],
           department: components[1],

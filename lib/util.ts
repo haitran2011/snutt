@@ -2,7 +2,21 @@ import mongoose = require('mongoose');
 import assert = require('assert');
 import _ = require('lodash');
 
-export function timeAndPlaceToJson(timesString: string, locationsString: string) {
+class TimePlace {
+  day: number;
+  start: number;
+  len: number;
+  place: string;
+
+  constructor(obj:Object) {
+    this.day = obj["day"];
+    this.start = obj["start"];
+    this.len = obj["len"];
+    this.place = obj["place"];
+  }
+}
+
+export function timeAndPlaceToJson(timesString: string, locationsString: string): Array<TimePlace> {
   if (timesString === '')
     return [];
 
@@ -10,19 +24,19 @@ export function timeAndPlaceToJson(timesString: string, locationsString: string)
   var times = timesString.split('/');
   assert.equal(locations.length, times.length, "locations does not match with times");
 
-  var classes = times.map(function(time, idx) {
-    return {
+  var classes = times.map(function(time, idx) { 
+    return new TimePlace({
       day: ['월', '화', '수', '목', '금', '토', '일'].indexOf(time.charAt(0)),
       start: Number(time.split('-')[0].slice(2)),
       len: Number(time.split('-')[1].slice(0, -1)),
       place: (locationsString == '/' ? '' : locations[idx])
-    };
+    });
   });
 
   for (let i = 0; i< classes.length; i++) {
     // If the day of the week is not the one we expected
     if (classes[i].day < 0) {
-      return -1;
+      return null;
     }
   }
 
@@ -44,7 +58,7 @@ export function timeAndPlaceToJson(timesString: string, locationsString: string)
   return classes;
 }
 
-export function equalTimeJson(t1, t2) {
+export function equalTimeJson(t1:Array<TimePlace>, t2:Array<TimePlace>) {
   if (t1.length != t2.length) return false;
   for (var i=0; i<t1.length; i++) {
     if (t1[i].day != t2[i].day ||
