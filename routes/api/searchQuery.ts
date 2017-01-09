@@ -5,12 +5,9 @@ import Util = require('../../lib/util');
 
 //something similar to LIKE query in SQL
 function like(str, option) {
-  if (option === undefined)
-    option = { fromFirstChar: false };
   //replace every character(eg. 'c') to '.+c', except for first character
   var reg = str.replace(/(?!^)(.)/g, '.*$1');
-  if (option.fromFirstChar)
-    reg = '^' + reg;
+  if (option && option.fromFirstChar) reg = '^' + reg;
   return reg;
 }
 
