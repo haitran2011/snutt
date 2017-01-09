@@ -4,7 +4,7 @@ if (!module.parent) {
   process.exit(1);
 }
 
-import mongoose = require('../db');
+const db = require('../db'); // Unused imports will be deleted
 import async = require('async');
 import {LectureModel} from '../model/lecture';
 import {CourseBookModel} from '../model/courseBook';
