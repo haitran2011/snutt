@@ -195,7 +195,7 @@ TimetableSchema.methods.add_lectures = function(lectures, next) {
 
 TimetableSchema.statics.update_lecture = function(timetable_id, lecture_id, lecture_raw, next) {
   if (lecture_raw.course_number || lecture_raw.lecture_number)
-    return next({errcode: errcode.ATTEMPT_TO_MODIFY_IDENTITIY, message: "modifying identities forbidden"});
+    return next({errcode: errcode.ATTEMPT_TO_MODIFY_IDENTITY, message: "modifying identities forbidden"});
 
   lecture_raw.updated_at = Date.now();
 
