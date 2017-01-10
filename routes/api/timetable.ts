@@ -127,6 +127,10 @@ router.post('/:id/lecture', function(req, res, next) {
         return res.status(403).json({errcode: errcode.NOT_CUSTOM_LECTURE, message:"only custom lectures allowed"});
       */
 
+      if (json["year"] && json["semester"] && (json["year"] != timetable.year || json["semester"] != timetable.semester)) {
+        return res.status(403).json({errcode: errcode.WRONG_SEMESTER, message:"wrong semester"});
+      }
+
       /*
        * Sanitize json using object_del_id.
        * If you don't do it,

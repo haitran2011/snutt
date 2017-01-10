@@ -8,13 +8,16 @@
 
 import assert = require('assert');
 import async = require('async');
+import errcode = require('../../lib/errcode');
 
 export = function(app, db, request) {
   var token;
   var table_id;
   var table2_id;
+  var table_ws_id;
   var table_updated_at;
   var lecture_id;
+  var ref_lecture;
   var lecture;
 
   before(function(done) {
@@ -117,7 +120,8 @@ export = function(app, db, request) {
       .expect(200)
       .end(function(err, res) {
         if (err) return done(err);
-        assert.equal(res.body[3].title, "MyTimeTable");
+        assert.equal(res.body[3].semester, 1);
+        table_ws_id = res.body[3]._id;
         done(err);
       });
   });
@@ -168,7 +172,7 @@ export = function(app, db, request) {
       .send({title:"MyTimeTable2"})
       .expect(403)
       .end(function(err, res) {
-        assert.equal(res.body.message, 'duplicate title');
+        assert.equal(res.body.errcode, errcode.DUPLICATE_TIMETABLE_TITLE);
         done(err);
       });
   });
@@ -181,13 +185,13 @@ export = function(app, db, request) {
       .end(function(err, res) {
         if (err) done(err);
         assert.equal(!res.body.length, false);
-        lecture = res.body[0];
+        ref_lecture = res.body[0];
         done();
       })
   });
 
   it ('Create a user lecture', function(done) {
-    request.post('/api/tables/'+table_id+'/lecture/'+lecture._id)
+    request.post('/api/tables/'+table_id+'/lecture/'+ref_lecture._id)
       .set('x-access-token', token)
       .expect(200)
       .end(function(err, res) {
@@ -199,6 +203,19 @@ export = function(app, db, request) {
         lecture_id = lecture._id;
         assert.equal(lecture.course_number, "400.320");
         assert.equal(lecture.class_time_json[0].place, "302-308");
+        done();
+      });
+  });
+
+  it ('Create a user lecture with wrong semester will fail', function(done) {
+    request.post('/api/tables/'+table_ws_id+'/lecture/'+ref_lecture._id)
+      .set('x-access-token', token)
+      .expect(403)
+      .end(function(err, res) {
+        if (err) {
+          console.log(res.body);
+          done(err);
+        }
         done();
       });
   });
@@ -258,56 +275,8 @@ export = function(app, db, request) {
   });
 
   it ('Creating a same lecture should fail', function(done) {
-    request.post('/api/tables/'+table_id+'/lecture/')
+    request.post('/api/tables/'+table_id+'/lecture/'+ref_lecture._id)
       .set('x-access-token', token)
-      .send({
-        "year": 2016,
-        "semester": 1,
-        "classification": "전선",
-        "department": "컴퓨터공학부",
-        "academic_year": "3학년",
-        "course_number": "400.320",
-        "lecture_number": "002",
-        "course_title": "공학연구의 실습 1",
-        "credit": 1,
-        "class_time": "화(13-1)/목(13-1)",
-        "instructor": "이제희",
-        "quota": 15,
-        "enrollment": 0,
-        "remark": "컴퓨터공학부 및 제2전공생만 수강가능",
-        "category": "",
-        "created_at": "2016-03-31T07:56:44.137Z",
-        "updated_at": "2016-03-31T07:56:44.137Z",
-        /*
-         * See to it that the server removes _id fields correctly
-         */
-        "_id": "56fcd83c041742971bd20a86",
-        "class_time_mask": [
-          0,
-          12,
-          0,
-          12,
-          0,
-          0
-        ],
-        "class_time_json": [
-          {
-            "day": 1,
-            "start": 13,
-            "len": 1,
-            "place": "302-308",
-            "_id": "56fcd83c041742971bd20a88"
-          },
-          {
-            "day": 3,
-            "start": 13,
-            "len": 1,
-            "place": "302-308",
-            "_id": "56fcd83c041742971bd20a87"
-          }
-        ],
-        "__v": 0
-      })
       .expect(403)
       .end(function(err, res) {
         done(err);
@@ -335,8 +304,6 @@ export = function(app, db, request) {
     request.post('/api/tables/'+table_id+'/lecture/')
       .set('x-access-token', token)
       .send({
-        "year": 2016,
-        "semester": 1,
         "classification": "전선",
         "department": "컴퓨터공학부",
         "academic_year": "3학년",
@@ -394,8 +361,6 @@ export = function(app, db, request) {
     request.post('/api/tables/'+table_id+'/lecture/')
       .set('x-access-token', token)
       .send({
-        "year": 2016,
-        "semester": 1,
         "classification": "전선",
         "department": "컴퓨터공학부",
         "academic_year": "3학년",
@@ -443,6 +408,62 @@ export = function(app, db, request) {
       .end(function(err, res) {
         if (err) done(err);
         assert.equal(res.body.lecture_list.length, 2);
+        done();
+      });
+  });
+
+  it ('Create a custom user lecture with identity will fail', function(done) {
+    request.post('/api/tables/'+table_id+'/lecture/')
+      .set('x-access-token', token)
+      .send({
+        "course_number": "0000",
+        "lecture_number": "0000",
+        "classification": "전선",
+        "department": "컴퓨터공학부",
+        "academic_year": "3학년",
+        "course_title": "My Custom Lecture Fail",
+        "credit": 1,
+        "class_time": "화(13-1)/목(13-1)",
+        "instructor": "이제희",
+        "quota": 15,
+        "enrollment": 0,
+        "remark": "컴퓨터공학부 및 제2전공생만 수강가능",
+        "category": "",
+        "created_at": "2016-03-31T07:56:44.137Z",
+        "updated_at": "2016-03-31T07:56:44.137Z",
+        /*
+         * See to it that the server removes _id fields correctly
+         */
+        "_id": "56fcd83c041742971bd20a86",
+        "class_time_mask": [
+          0,
+          12,
+          0,
+          12,
+          0,
+          0
+        ],
+        "class_time_json": [
+          {
+            "day": 1,
+            "start": 13,
+            "len": 1,
+            "place": "302-308",
+            "_id": "56fcd83c041742971bd20a88"
+          },
+          {
+            "day": 3,
+            "start": 13,
+            "len": 1,
+            "place": "302-308",
+            "_id": "56fcd83c041742971bd20a87"
+          }
+        ],
+        "__v": 0
+      })
+      .expect(403)
+      .end(function(err, res) {
+        if (err) return done(err);
         done();
       });
   });
