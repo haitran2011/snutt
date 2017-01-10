@@ -7,7 +7,7 @@ var router = express.Router();
 import {timeJsonToMask} from '../../lib/util';
 
 import {TimetableModel, TimetableDocument} from '../../model/timetable';
-import {UserLectureModel} from '../../model/lecture';
+import {LectureModel, UserLectureModel} from '../../model/lecture';
 import {UserModel, UserDocument} from '../../model/user';
 import util = require('../../lib/util');
 import errcode = require('../../lib/errcode');
@@ -86,6 +86,9 @@ router.post('/:timetable_id/lecture/:lecture_id', function(req, res, next) {
       LectureModel.findOne({'_id': req.params.lecture_id}).lean()
         .exec(function(err, ref_lecture){
           util.object_del_id(ref_lecture);
+          if (ref_lecture["year"] != timetable.year || ref_lecture["semester"] != timetable.semester) {
+            return res.status(403).json({errcode: errcode.WRONG_SEMESTER, message:"wrong semester"});
+          }
           var lecture = new UserLectureModel(ref_lecture);
           timetable.add_lecture(lecture, function(err, timetable){
             if(err) {
@@ -118,6 +121,12 @@ router.post('/:id/lecture', function(req, res, next) {
       var json = req.body;
       if (json.class_time_json) json.class_time_mask = timeJsonToMask(json.class_time_json);
       else if (json.class_time_mask) delete json.class_time_mask;
+
+      /*
+      if (json.course_number || json.lecture_number)
+        return res.status(403).json({errcode: errcode.NOT_CUSTOM_LECTURE, message:"only custom lectures allowed"});
+      */
+
       /*
        * Sanitize json using object_del_id.
        * If you don't do it,

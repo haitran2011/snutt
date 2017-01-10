@@ -15,6 +15,7 @@ export = function(app, db, request) {
   var table2_id;
   var table_updated_at;
   var lecture_id;
+  var lecture;
 
   before(function(done) {
     request.post('/api/auth/login_local')
@@ -29,7 +30,7 @@ export = function(app, db, request) {
   before(function(done) {
     request.post('/api/tables/')
       .set('x-access-token', token)
-      .send({year:2016, semester:1, title:"MyTimeTable"})
+      .send({year:2016, semester:3, title:"MyTimeTable"})
       .expect(200)
       .end(function(err, res){
         if (!res.body.length && !err) err = new Error("Timetable List Incorrect");
@@ -66,7 +67,7 @@ export = function(app, db, request) {
   it ('Create timetable succeeds', function(done){
     request.post('/api/tables/')
       .set('x-access-token', token)
-      .send({year:2016, semester:1, title:"MyTimeTable2"})
+      .send({year:2016, semester:3, title:"MyTimeTable2"})
       .expect(200)
       .end(function(err, res) {
         if (err) return done(err);
@@ -77,12 +78,12 @@ export = function(app, db, request) {
   });
 
   it ('Get timetable by semester succeeds', function(done){
-    request.get('/api/tables/2016/1')
+    request.get('/api/tables/2016/3')
       .set('x-access-token', token)
       .expect(200)
       .end(function(err, res) {
         if (err) return done(err);
-        assert.deepEqual(res.body.map(function(val) {return val.title;}), ["MyTimeTable", "MyTimeTable2"]);
+        assert.deepEqual(res.body.map(function(val) {return val.title;}), ["나의 시간표", "MyTimeTable", "MyTimeTable2"]);
         done(err);
       });
   });
@@ -101,10 +102,22 @@ export = function(app, db, request) {
   it ('Create timetable with the same title should fail', function(done){
     request.post('/api/tables/')
       .set('x-access-token', token)
-      .send({year:2016, semester:1, title:"MyTimeTable"})
+      .send({year:2016, semester:3, title:"MyTimeTable"})
       .expect(403)
       .end(function(err, res) {
         assert.equal(res.body.message, 'duplicate title');
+        done(err);
+      });
+  });
+
+  it ('Create timetable with the same title but differen semester will succeed', function(done){
+    request.post('/api/tables/')
+      .set('x-access-token', token)
+      .send({year:2016, semester:1, title:"MyTimeTable"})
+      .expect(200)
+      .end(function(err, res) {
+        if (err) return done(err);
+        assert.equal(res.body[3].title, "MyTimeTable");
         done(err);
       });
   });
@@ -160,77 +173,29 @@ export = function(app, db, request) {
       });
   });
 
-  /* Search query does not work on test db
-  it ('Get 글쓰기의 기초', function(done) {
+  it ('Search Lecture', function(done) {
     request.post('/api/search_query/')
       .set('x-access-token', token)
-      .send({title:"글기", year:2016, semester:1})
+      .send({title:"공실1", year:2016, semester:3})
       .expect(200)
       .end(function(err, res) {
         if (err) done(err);
-        console.log(res.body);
         assert.equal(!res.body.length, false);
         lecture = res.body[0];
         done();
       })
   });
-  */
 
   it ('Create a user lecture', function(done) {
-    request.post('/api/tables/'+table_id+'/lecture/')
+    request.post('/api/tables/'+table_id+'/lecture/'+lecture._id)
       .set('x-access-token', token)
-      .send({
-        "year": 2016,
-        "semester": 1,
-        "classification": "전선",
-        "department": "컴퓨터공학부",
-        "academic_year": "3학년",
-        "course_number": "400.320",
-        "lecture_number": "002",
-        "course_title": "공학연구의 실습 1",
-        "credit": 1,
-        "class_time": "화(13-1)/목(13-1)",
-        "instructor": "이제희",
-        "quota": 15,
-        "enrollment": 0,
-        "remark": "컴퓨터공학부 및 제2전공생만 수강가능",
-        "category": "",
-        "created_at": "2016-03-31T07:56:44.137Z",
-        "updated_at": "2016-03-31T07:56:44.137Z",
-        /*
-         * See to it that the server removes _id fields correctly
-         */
-        "_id": "56fcd83c041742971bd20a86",
-        "class_time_mask": [
-          0,
-          12,
-          0,
-          12,
-          0,
-          0
-        ],
-        "class_time_json": [
-          {
-            "day": 1,
-            "start": 13,
-            "len": 1,
-            "place": "302-308",
-            "_id": "56fcd83c041742971bd20a88"
-          },
-          {
-            "day": 3,
-            "start": 13,
-            "len": 1,
-            "place": "302-308",
-            "_id": "56fcd83c041742971bd20a87"
-          }
-        ],
-        "__v": 0
-      })
       .expect(200)
       .end(function(err, res) {
-        if (err) done(err);
-        var lecture = res.body.lecture_list[0];
+        if (err) {
+          console.log(res.body);
+          done(err);
+        }
+        lecture = res.body.lecture_list[0];
         lecture_id = lecture._id;
         assert.equal(lecture.course_number, "400.320");
         assert.equal(lecture.class_time_json[0].place, "302-308");

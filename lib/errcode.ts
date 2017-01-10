@@ -33,6 +33,8 @@ class ErrorCode {
   static NOT_LOCAL_ACCOUNT = 0x3007;
   static NOT_FB_ACCOUNT = 0x3008;
   static FB_ID_WITH_SOMEONE_ELSE = 0x3009;
+  static WRONG_SEMESTER = 0x300A;
+  static NOT_CUSTOM_LECTURE = 0x300B;
 
   /* 404 - Not found */
   static TAG_NOT_FOUND = 0x4000;
