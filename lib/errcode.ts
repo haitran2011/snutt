@@ -3,7 +3,6 @@ class ErrorCode {
   static SERVER_FAULT = 0x0000;
 
   /* 401 - Request was invalid */
-  static NO_USER_TOKEN = 0x1000;
   static NO_FB_ID_OR_TOKEN = 0x1001;
   static NO_YEAR_OR_SEMESTER = 0x1002;
   static NOT_ENOUGH_TO_CREATE_TIMETABLE = 0x1003;
@@ -15,12 +14,13 @@ class ErrorCode {
 
   /* 403 - Authorization-related */
   static WRONG_API_KEY = 0x2000;
-  static WRONG_USER_TOKEN = 0x2001;
-  static NO_ADMIN_PRIVILEGE = 0x2002;
-  static WRONG_ID = 0x2003;
-  static WRONG_PASSWORD = 0x2004;
-  static WRONG_FB_TOKEN = 0x2005;
-  static UNKNOWN_APP = 0x2006;
+  static NO_USER_TOKEN = 0x2001;
+  static WRONG_USER_TOKEN = 0x2002;
+  static NO_ADMIN_PRIVILEGE = 0x2003;
+  static WRONG_ID = 0x2004;
+  static WRONG_PASSWORD = 0x2005;
+  static WRONG_FB_TOKEN = 0x2006;
+  static UNKNOWN_APP = 0x2007;
 
   /* 403 - Restrictions */
   static INVALID_ID = 0x3000;
