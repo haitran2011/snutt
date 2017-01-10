@@ -326,22 +326,8 @@ export function insert_course(lines:Array<String>, year:number, semesterIndex:nu
     },
     function (callback){
       console.log("Inserting new lectures...");
-      async.each(new_lectures, function(lecture, callback) {
-        lecture.save(function (err, lecture) {
-          if (err) {
-            console.log(err);
-            err_cnt++;
-          }
-          process.stdout.write("Inserting " + (++saved_cnt) + "th course\r");
-          callback();
-        });
-      }, function(err) {
-        console.log("\nInsert complete with " + (saved_cnt-err_cnt) + " success and "+ err_cnt + " errors");
-        for (var key in tags) {
-          if (tags.hasOwnProperty(key)){
-            tags[key].sort();
-          }
-        }
+      LectureModel.insertMany(new_lectures, function(err, docs) {
+        console.log("\nInsert complete with " + docs.length + " success and "+ (new_lectures.length - docs.length) + " errors");
         callback(null, 'insert lectures');
       });
     },
@@ -354,6 +340,11 @@ export function insert_course(lines:Array<String>, year:number, semesterIndex:nu
     },
     function (callback){
       console.log("Inserting tags from new lectures...");
+      for (var key in tags) {
+        if (tags.hasOwnProperty(key)){
+          tags[key].sort();
+        }
+      }
       var tagList = new TagListModel({
         year: Number(year),
         semester: semesterIndex,
