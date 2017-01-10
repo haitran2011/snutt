@@ -6,6 +6,28 @@ import {CourseBookModel} from '../../model/courseBook';
 import {TimetableModel} from '../../model/timetable';
 import auth = require('../../lib/auth');
 import errcode = require('../../lib/errcode');
+
+router.post('/request_temp', function(req, res, next) {
+  UserModel.create_temp().then(function(user){
+    CourseBookModel.getRecent({lean:true}).then(function(coursebook){
+      return TimetableModel.createTimetable({
+        user_id : user._id,
+        year : coursebook.year,
+        semester : coursebook.semester,
+        title : "나의 시간표"});
+    }).then(function(timetable){
+      var token = user.getCredentialHash();
+      return res.json({message:"ok", token: token});
+    }).catch(function(err){
+      console.log(err);
+      var token = user.getCredentialHash();
+      return res.json({message:"ok, but no default table", token: token});
+    });
+  }, function(err) {
+    res.status(500).json({errcode: errcode.SERVER_FAULT, message:"server fault"});
+  });
+});
+
 /**
  * POST
  * id, password

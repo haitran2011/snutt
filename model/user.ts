@@ -38,6 +38,7 @@ interface _UserModel extends mongoose.Model<UserDocument> {
   create_local(old_user:UserDocument, id:string, password:string, callback?:(err, user:UserDocument)=>void) : Promise<UserDocument>;
   get_fb(name:string, id:string, callback?:(err, user:UserDocument)=>void) : Promise<UserDocument>;
   get_fb_or_create(name:string, id:string, callback?:(err, user:UserDocument)=>void) : Promise<UserDocument>;
+  create_temp(callback?: (err:any, doc:UserDocument)=>void) : Promise<UserDocument>;
 }
 
 var UserSchema = new mongoose.Schema({
@@ -168,6 +169,19 @@ UserSchema.statics.get_local = function(id, callback) {
 
 UserSchema.statics.create_local = function(old_user, id, password, callback) {
   var User = <_UserModel>mongoose.model('User');
+  var err;
+
+  if (!id || !id.match(/^[a-z0-9]{4,32}$/i)) {
+      err = { errcode:errcode.INVALID_ID, message: "incorrect id"};
+      callback(err);
+      return Promise.reject(err);
+    }
+  if (!password || !password.match(/^(?=.*\d)(?=.*[a-z])\S{6,20}$/i)) {
+      err = { errcode:errcode.INVALID_PASSWORD, message: "incorrect password"};
+      callback(err);
+      return Promise.reject(err);
+    }
+
   if (!old_user) {
     old_user = new User({
       credential : {
@@ -179,25 +193,16 @@ UserSchema.statics.create_local = function(old_user, id, password, callback) {
     old_user.credential.local_id = id;
     old_user.credential.local_pw = password;
   }
+
   return User.get_local(id, null)
     .then(function(user){
       return new Promise(function (resolve, reject) {
-        var err;
         if (user) {
           err = { errcode:errcode.DUPLICATE_ID, message: "same id already exists" };
           return reject(err);
         }
+
         user = old_user;
-        if (!user.credential.local_id ||
-          !user.credential.local_id.match(/^[a-z0-9]{4,32}$/i)) {
-            err = { errcode:errcode.INVALID_ID, message: "incorrect id"};
-            return reject(err);
-          }
-        if (!user.credential.local_pw ||
-          !user.credential.local_pw.match(/^(?=.*\d)(?=.*[a-z])\S{6,20}$/i)) {
-            err = { errcode:errcode.INVALID_PASSWORD, message: "incorrect password"};
-            return reject(err);
-          }
 
         bcrypt.hash(user.credential.local_pw, 4, function (err, hash) {
           if (err) return reject({ errcode:errcode.SERVER_FAULT, message: "server fault"});
@@ -248,5 +253,16 @@ UserSchema.statics.get_fb_or_create = function(name, id, callback) {
       return Promise.reject(err);
     });
 };
+
+UserSchema.statics.create_temp = function(callback?: (err:any, doc:UserDocument)=>void) : Promise<UserDocument> {
+  var User = <_UserModel>mongoose.model('User');
+  var user = new User({
+    credential: {
+      tempDate: Date.now(),
+      tempSeed: Math.random()
+    }
+  });
+  return user.signCredential(callback);
+}
 
 export let UserModel = <_UserModel>mongoose.model<UserDocument>('User', UserSchema);

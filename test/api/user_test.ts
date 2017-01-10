@@ -10,6 +10,7 @@ import errcode = require('../../lib/errcode');
 export = function(app, db, request) {
   var token;
   var token2;
+  var token_temp;
 
   it('Log-in succeeds', function(done) {
     request.post('/api/auth/login_local')
@@ -625,5 +626,60 @@ export = function(app, db, request) {
           done(err);
         });
     });
+  });
+
+
+  it('Request temporary account', function(done) {
+    request.post('/api/auth/request_temp')
+      .expect(200)
+      .end(function(err, res) {
+        if (err) console.log(res.body);
+        token_temp = res.body.token;
+        done(err);
+      });
+  });
+
+  it('Request temporary account again', function(done) {
+    request.post('/api/auth/request_temp')
+      .expect(200)
+      .end(function(err, res) {
+        if (err) console.log(res.body);
+        token_temp = res.body.token;
+        done(err);
+      });
+  });
+
+  it ('Temporary account works OK', function(done){
+    request.get('/api/tables/')
+      .set('x-access-token', token_temp)
+      .expect(200)
+      .end(function(err, res) {
+        if (err) done(err);
+        assert.equal(res.body.length, 1);
+        done();
+      });
+  });
+
+  it('attach local id into temp account', function(done){
+    request.post('/api/user/password')
+      .set('x-access-token', token_temp)
+      .send({id:"snutttemp", password:"abc1234"})
+      .expect(200)
+      .end(function(err, res){
+        if (err) console.log(err);
+        token_temp = res.body.token;
+        done(err);
+      });
+  });
+
+  it('Log-in succeeds after attaching local_id into temp account', function(done) {
+    request.post('/api/auth/login_local')
+      .send({id:"snutttemp", password:"abc1234"})
+      .expect(200)
+      .end(function(err, res){
+        if (err) console.log(res);
+        assert.equal(res.body.token, token_temp);
+        done(err);
+      });
   });
 };
