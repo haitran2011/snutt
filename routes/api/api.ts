@@ -15,6 +15,8 @@ import adminRouter = require('./admin');
 var apiKey = require('../../config/apiKey');
 import {UserModel, UserDocument} from '../../model/user';
 
+import errcode = require('../../lib/errcode');
+
 var api_info;
 
 /**
@@ -26,20 +28,20 @@ router.use(function(req, res, next) {
     api_info = value;
     next();
   }, function(err) {
-    res.status(403).json({errcode: 0x0000, message: err});
+    res.status(403).json({errcode: errcode.WRONG_API_KEY, message: err});
   });
 });
 
 router.get('/course_books', function(req, res, next) {
   CourseBookModel.getAll({lean: true}, function (err, courseBooks) {
-    if (err) return res.status(500).json({message: "server fault"});
+    if (err) return res.status(500).json({errcode: errcode.SERVER_FAULT, message: "server fault"});
     res.json(courseBooks);
   });
 });
 
 router.get('/course_books/recent', function(req, res, next) {
   CourseBookModel.getRecent({lean: true}, function (err, courseBook) {
-    if (err) return res.status(500).json({message: "server fault"});
+    if (err) return res.status(500).json({errcode: errcode.SERVER_FAULT, message: "server fault"});
     res.json(courseBook);
   });
 });
@@ -51,7 +53,7 @@ router.use('/tags', tagsRouter);
 router.get('/app_version', function(req, res, next) {
   var version = apiKey.getAppVersion(api_info.string);
   if (version) res.json({version: version});
-  else res.status(404).json({message: "unknown app"});
+  else res.status(404).json({errcode:errcode.UNKNOWN_APP, message: "unknown app"});
 });
 
 router.use('/auth', authRouter);
@@ -67,18 +69,18 @@ router.use(function(req, res, next) {
   var token = req.query.token || req.body.token || req.headers['x-access-token'];
   if (!token) {
     return res.status(401).json({
-      errcode: 0x0002,
+      errcode: errcode.NO_USER_TOKEN,
       message: 'No token provided.'
     });
   }
   UserModel.getUserFromCredentialHash(token).then(function(user){
     if (!user)
-      return res.status(403).json({ errcode: 0x0001, message: 'Failed to authenticate token.' });
+      return res.status(403).json({ errcode: errcode.WRONG_USER_TOKEN, message: 'Failed to authenticate token.' });
     req["user"] = user;
     next();
   }, function (err) {
     console.log(err);
-    return res.status(403).json({ errcode: 0x0001, message: 'Failed to authenticate token.' });
+    return res.status(403).json({ errcode: errcode.WRONG_USER_TOKEN, message: 'Failed to authenticate token.' });
   });
 });
 

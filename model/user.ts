@@ -2,6 +2,7 @@ import mongoose = require('mongoose');
 import config = require('../config/config');
 import bcrypt = require('bcrypt');
 import crypto = require('crypto');
+import errcode = require('../lib/errcode');
 import {TimetableModel, TimetableDocument} from './timetable';
 import {CourseBookModel} from './courseBook';
 
@@ -88,7 +89,7 @@ UserSchema.methods.updateNotificationCheckDate = function (callback) {
 UserSchema.methods.changeLocalPassword = function(password, callback) {
   if (!password ||
         !password.match(/^(?=.*\d)(?=.*[a-z])\S{6,20}$/i))
-    return callback(new Error("incorrect password"));
+    return callback({errcode: errcode.INVALID_PASSWORD, message: "incorrect password"});
 
   var user = this;
   user.credential.local_pw = password;
@@ -183,23 +184,23 @@ UserSchema.statics.create_local = function(old_user, id, password, callback) {
       return new Promise(function (resolve, reject) {
         var err;
         if (user) {
-          err = new Error("same id already exists");
+          err = { errcode:errcode.DUPLICATE_ID, message: "same id already exists" };
           return reject(err);
         }
         user = old_user;
         if (!user.credential.local_id ||
           !user.credential.local_id.match(/^[a-z0-9]{4,32}$/i)) {
-            err = new Error("incorrect id");
+            err = { errcode:errcode.INVALID_ID, message: "incorrect id"};
             return reject(err);
           }
         if (!user.credential.local_pw ||
           !user.credential.local_pw.match(/^(?=.*\d)(?=.*[a-z])\S{6,20}$/i)) {
-            err = new Error("incorrect password");
+            err = { errcode:errcode.INVALID_PASSWORD, message: "incorrect password"};
             return reject(err);
           }
 
         bcrypt.hash(user.credential.local_pw, 4, function (err, hash) {
-          if (err) return reject(err);
+          if (err) return reject({ errcode:errcode.SERVER_FAULT, message: "server fault"});
           user.credential.local_pw = hash;
           user.signCredential(callback).then(function(user) {
             resolve(user);

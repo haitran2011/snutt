@@ -3,6 +3,8 @@ var router = express.Router();
 import {NotificationModel} from '../../model/notification';
 import {UserDocument} from '../../model/user';
 
+import errcode = require('../../lib/errcode');
+
 router.get('/', function(req, res, next){
   var user:UserDocument = <UserDocument>req["user"];
   var offset, limit;
@@ -15,7 +17,7 @@ router.get('/', function(req, res, next){
       user.updateNotificationCheckDate(function (err) {
         if (err) {
           console.log(err);
-          return res.status(500).json({message: 'error'});
+          return res.status(500).json({errcode:errcode.SERVER_FAULT, message: 'error'});
         }
         res.json(value);
       });
@@ -24,7 +26,7 @@ router.get('/', function(req, res, next){
     }
   }, function(err) {
     console.log(err);
-    res.status(500).json({message: 'error'});
+    res.status(500).json({errcode:errcode.SERVER_FAULT, message: 'error'});
   });
 });
 
@@ -34,7 +36,7 @@ router.get('/count', function(req, res, next){
     res.json({count: value});
   }, function(err) {
     console.log(err);
-    res.status(500).json({message: 'error'});
+    res.status(500).json({errcode:errcode.SERVER_FAULT, message: 'error'});
   });
 });
 

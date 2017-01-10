@@ -5,6 +5,7 @@
  * mocha: http://mochajs.org/#usage
  */
 import assert = require('assert');
+import errcode = require('../../lib/errcode');
 
 export = function(app, db, request) {
   var token;
@@ -36,7 +37,7 @@ export = function(app, db, request) {
       .expect(401)
       .end(function(err, res){
         if (err) console.log(res);
-        assert.equal(res.body.errcode, 0x0002);
+        assert.equal(res.body.errcode, errcode.NO_USER_TOKEN);
         done(err);
       });
   });
@@ -47,7 +48,7 @@ export = function(app, db, request) {
       .expect(403)
       .end(function(err, res){
         if (err) console.log(res);
-        assert.equal(res.body.errcode, 0x0001);
+        assert.equal(res.body.errcode, errcode.WRONG_USER_TOKEN);
         done(err);
       });
   });
@@ -58,7 +59,7 @@ export = function(app, db, request) {
         .send({id:"FakeSnutt", password:"abc1234"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'wrong id');
+          assert.equal(res.body.errcode, errcode.WRONG_ID);
           done(err);
         });
     });
@@ -67,7 +68,7 @@ export = function(app, db, request) {
         .send({id:"snutt", password:"abc12345"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'wrong password');
+          assert.equal(res.body.errcode, errcode.WRONG_PASSWORD);
           done(err);
         });
     });
@@ -113,7 +114,7 @@ export = function(app, db, request) {
         .send({new_password:"abc1234*"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'wrong old password');
+          assert.equal(res.body.errcode, errcode.WRONG_PASSWORD);
           done(err);
         });
     });
@@ -124,7 +125,7 @@ export = function(app, db, request) {
         .send({new_password:"abc1234!"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'wrong old password');
+          assert.equal(res.body.errcode, errcode.WRONG_PASSWORD);
           done(err);
         });
     });
@@ -135,7 +136,7 @@ export = function(app, db, request) {
         .send({old_password:"abc1234*"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'incorrect password');
+          assert.equal(res.body.errcode, errcode.INVALID_PASSWORD);
           done(err);
         });
     });
@@ -146,7 +147,7 @@ export = function(app, db, request) {
         .send({new_password:"a1111", old_password:"abc1234*"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'incorrect password');
+          assert.equal(res.body.errcode, errcode.INVALID_PASSWORD);
           done(err);
         });
     });
@@ -157,7 +158,7 @@ export = function(app, db, request) {
         .send({new_password:"abcdefghijklmnopqrst1", old_password:"abc1234*"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'incorrect password');
+          assert.equal(res.body.errcode, errcode.INVALID_PASSWORD);
           done(err);
         });
     });
@@ -168,7 +169,7 @@ export = function(app, db, request) {
         .send({new_password:"111111", old_password:"abc1234*"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'incorrect password');
+          assert.equal(res.body.errcode, errcode.INVALID_PASSWORD);
           done(err);
         });
     });
@@ -179,7 +180,7 @@ export = function(app, db, request) {
         .send({new_password:"abcdef", old_password:"abc1234*"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'incorrect password');
+          assert.equal(res.body.errcode, errcode.INVALID_PASSWORD);
           done(err);
         });
     });
@@ -190,7 +191,7 @@ export = function(app, db, request) {
         .send({new_password:"sql injection", old_password:"abc1234*"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'incorrect password');
+          assert.equal(res.body.errcode, errcode.INVALID_PASSWORD);
           done(err);
         });
     });
@@ -215,7 +216,7 @@ export = function(app, db, request) {
         .send({password:"IDontNeedID"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'incorrect id');
+          assert.equal(res.body.errcode, errcode.INVALID_ID);
           done(err);
         });
     });
@@ -225,7 +226,7 @@ export = function(app, db, request) {
         .send({id:"snutt", password:"abc1234"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'same id already exists');
+          assert.equal(res.body.errcode, errcode.DUPLICATE_ID);
           done(err);
         });
     });
@@ -235,7 +236,7 @@ export = function(app, db, request) {
         .send({id:"snutt##*", password:"abc1234"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'incorrect id');
+          assert.equal(res.body.errcode, errcode.INVALID_ID);
           done(err);
         });
     });
@@ -245,7 +246,7 @@ export = function(app, db, request) {
         .send({id:"tt", password:"abc1234"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'incorrect id');
+          assert.equal(res.body.errcode, errcode.INVALID_ID);
           done(err);
         });
     });
@@ -255,7 +256,7 @@ export = function(app, db, request) {
         .send({id:"ThisIsVeryLongIdYouKnowThatThisIsFreakingLongManVeryLong", password:"abc1234"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'incorrect id');
+          assert.equal(res.body.errcode, errcode.INVALID_ID);
           done(err);
         });
     });
@@ -265,7 +266,7 @@ export = function(app, db, request) {
         .send({id:"IDontNeedPw"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'incorrect password');
+          assert.equal(res.body.errcode, errcode.INVALID_PASSWORD);
           done(err);
         });
     });
@@ -275,7 +276,7 @@ export = function(app, db, request) {
         .send({id:"idiot", password:"a1111"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'incorrect password');
+          assert.equal(res.body.errcode, errcode.INVALID_PASSWORD);
           done(err);
         });
     });
@@ -285,7 +286,7 @@ export = function(app, db, request) {
         .send({id:"dumb", password:"abcdefghijklmnopqrst1"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'incorrect password');
+          assert.equal(res.body.errcode, errcode.INVALID_PASSWORD);
           done(err);
         });
     });
@@ -295,7 +296,7 @@ export = function(app, db, request) {
         .send({id:"numb", password:"111111"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'incorrect password');
+          assert.equal(res.body.errcode, errcode.INVALID_PASSWORD);
           done(err);
         });
     });
@@ -305,7 +306,7 @@ export = function(app, db, request) {
         .send({id:"numbnumb", password:"abcdef"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'incorrect password');
+          assert.equal(res.body.errcode, errcode.INVALID_PASSWORD);
           done(err);
         });
     });
@@ -315,7 +316,7 @@ export = function(app, db, request) {
         .send({id:"hacker", password:"sql injection"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'incorrect password');
+          assert.equal(res.body.errcode, errcode.INVALID_PASSWORD);
           done(err);
         });
     });
@@ -386,7 +387,7 @@ export = function(app, db, request) {
         .expect(403)
         .end(function(err, res){
           if (err) console.log(err);
-          assert.equal(res.body.message, "already attached");
+          assert.equal(res.body.errcode, errcode.ALREADY_FB_ACCOUNT);
           done(err);
         });
     });
@@ -398,7 +399,7 @@ export = function(app, db, request) {
         .expect(403)
         .end(function(err, res){
           if (err) console.log(err);
-          assert.equal(res.body.message, "already attached with this fb_id");
+          assert.equal(res.body.errcode, errcode.FB_ID_WITH_SOMEONE_ELSE);
           done(err);
         });
     });
@@ -454,7 +455,7 @@ export = function(app, db, request) {
         .expect(403)
         .end(function(err, res){
           if (err) console.log(err);
-          assert.equal(res.body.message, "not attached yet");
+          assert.equal(res.body.errcode, errcode.NOT_FB_ACCOUNT);
           done(err);
         });
     });
@@ -489,7 +490,7 @@ export = function(app, db, request) {
         .expect(403)
         .end(function(err, res){
           if (err) console.log(err);
-          assert.equal(res.body.message, "no local id");
+          assert.equal(res.body.errcode, errcode.NOT_LOCAL_ACCOUNT);
           done(err);
         });
     });
@@ -499,7 +500,7 @@ export = function(app, db, request) {
         .send({fb_id:"12345", fb_token: "incorrect"})
         .expect(403)
         .end(function(err, res){
-          if (err) console.log(err);
+          if (err) console.log(res.body);
           done(err);
         });
     });
@@ -509,7 +510,7 @@ export = function(app, db, request) {
         .send({fb_id:"123456", fb_token: fb_token2})
         .expect(403)
         .end(function(err, res){
-          if (err) console.log(err);
+          if (err) console.log(res.body);
           done(err);
         });
     });
@@ -555,7 +556,7 @@ export = function(app, db, request) {
         .expect(403)
         .end(function(err, res){
           if (err) console.log(err);
-          assert.equal(res.body.message, "already have local id");
+          assert.equal(res.body.errcode, errcode.ALREADY_LOCAL_ACCOUNT);
           done(err);
         });
     });
@@ -600,7 +601,7 @@ export = function(app, db, request) {
         .expect(403)
         .end(function(err, res){
           if (err) console.log(res);
-          assert.equal(res.body.errcode, 0x0001);
+          assert.equal(res.body.errcode, errcode.WRONG_USER_TOKEN);
           done(err);
         });
     });
@@ -610,7 +611,7 @@ export = function(app, db, request) {
         .send({id:"snuttar", password:"abc1234*"})
         .expect(403)
         .end(function(err, res){
-          assert.equal(res.body.message, 'wrong id');
+          assert.equal(res.body.errcode, errcode.WRONG_ID);
           done(err);
         });
     });

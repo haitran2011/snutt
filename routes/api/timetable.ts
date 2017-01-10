@@ -10,11 +10,12 @@ import {TimetableModel, TimetableDocument} from '../../model/timetable';
 import {UserLectureModel} from '../../model/lecture';
 import {UserModel, UserDocument} from '../../model/user';
 import util = require('../../lib/util');
+import errcode = require('../../lib/errcode');
 
 router.get('/', function(req, res, next) { //timetable list
   var user:UserDocument = <UserDocument>req["user"];
   TimetableModel.getTimetables(user._id, {lean:true}, function(err, timetables) {
-    if (err) return res.status(500).json({message:'fetch timetable list failed'});
+    if (err) return res.status(500).json({errcode: errcode.SERVER_FAULT, message:'fetch timetable list failed'});
     res.json(timetables);
   });
 });
@@ -22,8 +23,8 @@ router.get('/', function(req, res, next) { //timetable list
 router.get('/recent', function(req, res, next) {
   var user:UserDocument = <UserDocument>req["user"];
   TimetableModel.getRecent(user._id, {lean:true}, function(err, timetable) {
-    if (err) return res.status(500).json({message:'find table failed'});
-    if (!timetable) return res.status(404).json({message:'no timetable'});
+    if (err) return res.status(500).json({errcode: errcode.SERVER_FAULT, message:'find table failed'});
+    if (!timetable) return res.status(404).json({errcode: errcode.TIMETABLE_NOT_FOUND, message:'no timetable'});
     res.json(timetable);
   });
 });
@@ -31,8 +32,8 @@ router.get('/recent', function(req, res, next) {
 router.get('/:id', function(req, res, next) { //get
   var user:UserDocument = <UserDocument>req["user"];
   TimetableModel.getTimetable(user._id, req.params.id, {lean:true}, function(err, timetable) {
-    if(err) return res.status(500).json({message:"find table failed"});
-    if(!timetable) return res.status(404).json({message:'timetable not found'});
+    if(err) return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"find table failed"});
+    if(!timetable) return res.status(404).json({errcode: errcode.TIMETABLE_NOT_FOUND, message:'timetable not found'});
     res.json(timetable);
   });
 });
@@ -41,8 +42,8 @@ router.get('/:year/:semester', function(req, res, next) {
   var user:UserDocument = <UserDocument>req["user"];
   TimetableModel.getTimetablesBySemester(user._id, req.params.year, req.params.semester, {lean:true},
     function(err, timetable) {
-      if(err) return res.status(500).json({message:"find table failed"});
-      if(!timetable) return res.status(404).json({message:"No timetable for given semester"});
+      if(err) return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"find table failed"});
+      if(!timetable) return res.status(404).json({errcode: errcode.TIMETABLE_NOT_FOUND, message:"No timetable for given semester"});
       res.json(timetable);
   });
 });
@@ -50,7 +51,7 @@ router.get('/:year/:semester', function(req, res, next) {
 router.post('/', function(req, res, next) { //create
   var user:UserDocument = <UserDocument>req["user"];
   if (!req.body.year || !req.body.semester || !req.body.title)
-    return res.status(400).json({message:'not enough parameters'});
+    return res.status(400).json({errcode: errcode.NOT_ENOUGH_TO_CREATE_TIMETABLE, message:'not enough parameters'});
 
   TimetableModel.createTimetable({
     user_id : user._id,
@@ -59,15 +60,15 @@ router.post('/', function(req, res, next) { //create
     title : req.body.title})
     .then(function(doc) {
       TimetableModel.getTimetables(user._id, {lean:true}, function(err, timetables){
-        if (err) return res.status(500).json({message:'get timetable list failed'});
+        if (err) return res.status(500).json({errcode: errcode.SERVER_FAULT, message:'get timetable list failed'});
         res.json(timetables);
       });
     })
     .catch(function(err) {
       if (err == 'duplicate title')
-        return res.status(403).json({message: err});
+        return res.status(403).json({errcode: errcode.DUPLICATE_TIMETABLE_TITLE, message: err});
       else
-        return res.status(500).json({message: err});
+        return res.status(500).json({errcode: errcode.SERVER_FAULT, message: err});
     });
 });
 
@@ -81,21 +82,24 @@ router.post('/:timetable_id/lecture/:lecture_id', function(req, res, next) {
   var user:UserDocument = <UserDocument>req["user"];
   TimetableModel.findOne({'user_id': user._id, '_id' : req.params.timetable_id}).exec()
     .then(function(timetable){
-      if(!timetable) return res.status(404).json({message:"timetable not found"});
-      UserLectureModel.findOne({'_id': req.params.lecture_id}).lean()
+      if(!timetable) return res.status(404).json({errcode: errcode.TIMETABLE_NOT_FOUND, message:"timetable not found"});
+      LectureModel.findOne({'_id': req.params.lecture_id}).lean()
         .exec(function(err, ref_lecture){
           util.object_del_id(ref_lecture);
           var lecture = new UserLectureModel(ref_lecture);
           timetable.add_lecture(lecture, function(err, timetable){
             if(err) {
-              return res.status(403).json({message:"insert lecture failed"});
+              if (err === errcode.DUPLICATE_LECTURE)
+                return res.status(403).json({errcode:err, message:"duplicate lecture"});
+              else
+                return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"insert lecture failed"});
             }
             res.json(timetable);
           });
         });
     })
     .catch(function(err) {
-      return res.status(500).json({message:"find table failed"});
+      return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"find table failed"});
     });
 });
 
@@ -109,8 +113,8 @@ router.post('/:id/lecture', function(req, res, next) {
   var user:UserDocument = <UserDocument>req["user"];
   TimetableModel.findOne({'user_id': user._id, '_id' : req.params.id})
     .exec(function(err, timetable){
-      if(err) return res.status(500).json({message:"find table failed"});
-      if(!timetable) return res.status(404).json({message:"timetable not found"});
+      if(err) return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"find table failed"});
+      if(!timetable) return res.status(404).json({errcode: errcode.TIMETABLE_NOT_FOUND, message:"timetable not found"});
       var json = req.body;
       if (json.class_time_json) json.class_time_mask = timeJsonToMask(json.class_time_json);
       else if (json.class_time_mask) delete json.class_time_mask;
@@ -124,7 +128,10 @@ router.post('/:id/lecture', function(req, res, next) {
       var lecture = new UserLectureModel(json);
       timetable.add_lecture(lecture, function(err, timetable){
         if(err) {
-          return res.status(403).json({message:"insert lecture failed"});
+          if (err === errcode.DUPLICATE_LECTURE)
+            return res.status(403).json({errcode:err, message:"duplicate lecture"});
+          else
+            return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"insert lecture failed"});
         }
         res.json(timetable);
       });
@@ -169,24 +176,23 @@ router.post('/:id/lectures', function(req, res, next) {
 router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
   var user:UserDocument = <UserDocument>req["user"];
   var lecture_raw = req.body;
-  if(!lecture_raw || Object.keys(lecture_raw).length < 1) return res.status(400).json({message:"empty body"});
+  if(!lecture_raw || Object.keys(lecture_raw).length < 1) return res.status(400).json({errcode: errcode.NO_LECTURE_INPUT, message:"empty body"});
 
   if (!req.params.lecture_id)
-    return res.status(400).json({message:"need lecture_id"});
+    return res.status(400).json({errcode: errcode.NO_LECTURE_ID, message:"need lecture_id"});
 
   TimetableModel.findOne({'user_id': user._id, '_id' : req.params.table_id})
     .exec(function(err, timetable){
-      if(err) return res.status(500).json({message:"find table failed"});
-      if(!timetable) return res.status(404).json({message:"timetable not found"});
+      if(err) return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"find table failed"});
+      if(!timetable) return res.status(404).json({errcode: errcode.TIMETABLE_NOT_FOUND, message:"timetable not found"});
       if (lecture_raw.class_time_json)
         lecture_raw.class_time_mask = timeJsonToMask(lecture_raw.class_time_json);
       timetable.update_lecture(req.params.lecture_id, lecture_raw, function(err, doc) {
         if(err) {
-          if (err.message == "modifying identities forbidden" ||
-            err.message == "lecture not found")
-            return res.status(403).json({message:err.message});
+          if (err.errcode)
+            return res.status(403).json({errcode:err.errcode, message:err.message});
           console.log(err);
-          return res.status(500).json({message:"update lecture failed"});
+          return res.status(500).json({errcode:errcode.SERVER_FAULT, message:"update lecture failed"});
         }
         res.json(doc);
       });
@@ -205,9 +211,9 @@ router.delete('/:table_id/lecture/:lecture_id', function(req, res, next) {
     .exec(function (err, doc) {
       if (err) {
         console.log(err);
-        return res.status(500).json({message:"delete lecture failed"});
+        return res.status(500).json({errcode:errcode.SERVER_FAULT, message:"delete lecture failed"});
       }
-      if (!doc) return res.status(404).json({message:"timetable not found"});
+      if (!doc) return res.status(404).json({errcode:errcode.TIMETABLE_NOT_FOUND, message:"timetable not found"});
       res.json(doc);
     });
 });
@@ -220,10 +226,10 @@ router.delete('/:id', function(req, res, next) { // delete
   var user:UserDocument = <UserDocument>req["user"];
   TimetableModel.findOneAndRemove({'user_id': user._id, '_id' : req.params.id}).lean()
   .exec(function(err, timetable) {
-    if(err) return res.status(500).json({message:"delete timetable failed"});
-    if (!timetable) return res.status(404).json({message:"timetable not found"});
+    if(err) return res.status(500).json({errcode:errcode.SERVER_FAULT, message:"delete timetable failed"});
+    if (!timetable) return res.status(404).json({errcode:errcode.TIMETABLE_NOT_FOUND, message:"timetable not found"});
     TimetableModel.getTimetables(user._id, {lean:true}, function(err, timetables) {
-      if (err) return res.status(500).json({message:"failed to get list"});
+      if (err) return res.status(500).json({errcode:errcode.SERVER_FAULT, message:"failed to get list"});
       res.json(timetables);
     });
   });
@@ -237,12 +243,12 @@ router.post('/:id/copy', function(req, res, next) {
   var user:UserDocument = <UserDocument>req["user"];
   TimetableModel.findOne({'user_id': user._id, '_id' : req.params.id})
     .exec(function(err, timetable){
-      if(err) return res.status(500).json({message:"find table failed"});
-      if(!timetable) return res.status(404).json({message:"timetable not found"});
+      if(err) return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"find table failed"});
+      if(!timetable) return res.status(404).json({errcode: errcode.TIMETABLE_NOT_FOUND, message:"timetable not found"});
       timetable.copy(timetable.title, function(err, doc) {
-        if(err) return res.status(500).json({message:"timetable copy failed"});
+        if(err) return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"timetable copy failed"});
         TimetableModel.getTimetables(user._id, {lean:true}, function(err, timetables) {
-          if (err) return res.status(500).json({message:"failed to get list"});
+          if (err) return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"failed to get list"});
           res.json(timetables);
         });
       });
@@ -251,17 +257,17 @@ router.post('/:id/copy', function(req, res, next) {
 
 router.put('/:id', function(req, res, next) {
   var user:UserDocument = <UserDocument>req["user"];
-  if (!req.body.title) return res.status(400).json({message:"should provide title"});
+  if (!req.body.title) return res.status(400).json({errcode: errcode.NO_TIMETABLE_TITLE, message:"should provide title"});
   TimetableModel.findOne({'user_id': user._id, '_id' : req.params.id})
     .exec(function(err, timetable) {
-      if(err) return res.status(500).json({message:"update timetable title failed"});
+      if(err) return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"update timetable title failed"});
       timetable.title = req.body.title;
       timetable.checkDuplicate(function(err) {
-        if (err) return res.status(403).json({message:"duplicate title"});
+        if (err) return res.status(403).json({errcode: errcode.DUPLICATE_TIMETABLE_TITLE, message:"duplicate title"});
         timetable.save(function (err, doc) {
-          if (err) return res.status(500).json({message:"update timetable title failed"});
+          if (err) return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"update timetable title failed"});
           TimetableModel.getTimetables(user._id, {lean:true}, function(err, timetables) {
-            if (err) return res.status(500).json({message:"failed to get list"});
+            if (err) return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"failed to get list"});
             res.json(timetables);
           });
         });

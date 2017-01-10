@@ -1,6 +1,7 @@
 import mongoose = require('mongoose');
 import {UserLectureDocument, UserLectureModel} from './lecture';
 import Util = require('../lib/util');
+import errcode = require('../lib/errcode');
 
 var TimetableSchema = new mongoose.Schema({
   user_id : { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -158,7 +159,7 @@ TimetableSchema.methods.copy = function(new_title, next) {
 TimetableSchema.methods.add_lecture = function(lecture, next) {
   for (var i = 0; i<this.lecture_list.length; i++){
     if (lecture.is_equal(this.lecture_list[i])) {
-      var err = new Error("Same lecture already exists in the timetable.");
+      var err = errcode.DUPLICATE_LECTURE;
       next(err);
       return;
     }
@@ -194,7 +195,7 @@ TimetableSchema.methods.add_lectures = function(lectures, next) {
 
 TimetableSchema.statics.update_lecture = function(timetable_id, lecture_id, lecture_raw, next) {
   if (lecture_raw.course_number || lecture_raw.lecture_number)
-    return next(new Error("modifying identities forbidden"));
+    return next({errcode: errcode.ATTEMPT_TO_MODIFY_IDENTITIY, message: "modifying identities forbidden"});
 
   lecture_raw.updated_at = Date.now();
 
@@ -208,8 +209,8 @@ TimetableSchema.statics.update_lecture = function(timetable_id, lecture_id, lect
     (<_TimetableModel>mongoose.model('Timetable')).findOneAndUpdate({ "_id" : timetable_id, "lecture_list._id" : lecture_id},
       {$set : patch}, {new: true}, function (err, doc) {
         if (err) return next(err);
-        if (!doc) err = new Error("timetable not found");
-        else if (!doc.lecture_list.id(lecture_id)) err = new Error("lecture not found");
+        if (!doc) err = {errcode: errcode.TIMETABLE_NOT_FOUND, message: "timetable not found"};
+        else if (!doc.lecture_list.id(lecture_id)) err = {errcode: errcode.LECTURE_NOT_FOUND, message: "lecture not found"};
         return next(err, doc);
       });
   }) (timetable_id, lecture_id, lecture_raw, update_set);

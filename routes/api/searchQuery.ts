@@ -2,6 +2,7 @@ import express = require('express');
 var router = express.Router();
 import {LectureModel} from '../../model/lecture';
 import Util = require('../../lib/util');
+import errcode = require('../../lib/errcode');
 
 //something similar to LIKE query in SQL
 function like(str, option) {
@@ -22,7 +23,7 @@ function timeRangesToBinaryConditions(timeJson) {
 
 router.post('/', function(req, res, next) {
   if (!req.body.year || !req.body.semester) {
-    return res.status(400).json({message: 'no year and semester'});
+    return res.status(400).json({errcode:errcode.NO_YEAR_OR_SEMESTER, message: 'no year and semester'});
   }
   var query = {};
   query["year"] = req.body.year;
@@ -63,7 +64,7 @@ router.post('/', function(req, res, next) {
     .exec(function (err, lectures) {
       if (err) {
         console.log(err);
-        return res.status(500).json({message: "search error"});
+        return res.status(500).json({errcode:errcode.SERVER_FAULT, message: "search error"});
       }
       return res.json(lectures);
   });

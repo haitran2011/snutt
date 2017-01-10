@@ -4,12 +4,13 @@
  */
 import express = require('express');
 import libfcm = require('../../lib/fcm');
+import errcode = require('../../lib/errcode');
 var router = express.Router();
 
 router.use(function(req, res, next) {
   if (req["user"].isAdmin) return next();
   else {
-    return res.status(403).json({ errcode: 0x0003, message: 'Admin privilege required.' });
+    return res.status(403).json({ errcode: errcode.NO_ADMIN_PRIVILEGE, message: 'Admin privilege required.' });
   }
 });
 
@@ -18,7 +19,7 @@ router.post('/send_fcm', function(req, res, next) {
   p.then(function(result) {
     res.status(200).send(result);
   }).catch(function(err){
-    res.status(500).send(err);
+    res.status(500).send({errcode: errcode.SERVER_FAULT, message:err});
   });
 });
 
