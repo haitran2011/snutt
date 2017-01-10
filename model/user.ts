@@ -11,7 +11,9 @@ export interface UserDocument extends mongoose.Document {
     local_id: string,
     local_pw: string,
     fb_name: string,
-    fb_id: string
+    fb_id: string,
+    temp_date: Date,
+    temp_seed: number
   };
   credentialHash : string;
   isAdmin: boolean;
@@ -46,7 +48,9 @@ var UserSchema = new mongoose.Schema({
     local_id: {type: String, default: null},
     local_pw: {type: String, default: null},
     fb_name: {type: String, default: null},
-    fb_id: {type: String, default: null}
+    fb_id: {type: String, default: null},
+    temp_date: {type: Date, default: null},
+    temp_seed: {type: Number, default: null}
   },
   credentialHash : {type: String, default: null},
   isAdmin: {type: Boolean, default: false},
@@ -257,9 +261,9 @@ UserSchema.statics.get_fb_or_create = function(name, id, callback) {
 UserSchema.statics.create_temp = function(callback?: (err:any, doc:UserDocument)=>void) : Promise<UserDocument> {
   var User = <_UserModel>mongoose.model('User');
   var user = new User({
-    credential: {
-      tempDate: Date.now(),
-      tempSeed: Math.random()
+    credential : {
+      temp_date: new Date(),
+      temp_seed: Math.floor(Math.random() * 1000)
     }
   });
   return user.signCredential(callback);
