@@ -29,7 +29,7 @@ export function create_device(user:UserDocument, registration_id:string) {
       return Promise.resolve(body.notification_key);
     }).catch(function (err) {
       if (err.response.body.error == "notification_key already exists") {
-        request({
+        return request({
           method: 'GET',
           uri: 'https://android.googleapis.com/gcm/notification',
           headers: {
