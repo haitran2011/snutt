@@ -62,7 +62,7 @@ export function create_device(user:UserDocument, registration_id:string) {
       return Promise.resolve(status);
 
     // User should have had key
-    if (!user.fcm_key) return Promise.reject("server fault");
+    if (!user.fcm_key) return Promise.reject("server fault - user has no fcm key");
 
     // Add the device
     return request({
@@ -96,7 +96,7 @@ export function create_device(user:UserDocument, registration_id:string) {
   // Add topic
   promise = promise.then(function(status){
     // User should have had key
-    if (!user.fcm_key) return Promise.reject("server fault");
+    if (!user.fcm_key) return Promise.reject("server fault - user has no fcm key");
 
     // Add topic
     return request({

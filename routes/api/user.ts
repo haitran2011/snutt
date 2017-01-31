@@ -114,7 +114,7 @@ router.post('/device', function (req, res, next) {
     if (status === 'done') {
       return res.json({message:"ok"});
     } else {
-      return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"server fault"});
+      return res.status(500).json({errcode: errcode.SERVER_FAULT, message:status});
     }
   }).catch(function(err){
     res.status(500).json({errcode: errcode.SERVER_FAULT, message:err});
