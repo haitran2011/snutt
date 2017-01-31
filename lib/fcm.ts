@@ -26,9 +26,9 @@ export function create_device(user:UserDocument, registration_id:string) {
       },
       json: true
     }).then(function (body) {
-      if (body.notification_key)
-          return Promise.resolve('device ready');
-      if (body.error == "notification_key already exists") {
+      return Promise.resolve(body.notification_key);
+    }).catch(function (err) {
+      if (err.response.body.error == "notification_key already exists") {
         request({
           method: 'GET',
           uri: 'https://android.googleapis.com/gcm/notification',
@@ -42,17 +42,14 @@ export function create_device(user:UserDocument, registration_id:string) {
           },
           json: true
         }).then(function (body) {
-          if (body.notification_key) {
-            user.fcm_key = body.notification_key;
-            return user.save().then(function(user){
-              return Promise.resolve('key ready');
-            });
-          } else {
-            return Promise.reject("cannot get fcm key");
-          }
+          return Promise.resolve(body.notification_key);
         });
       }
-      return Promise.reject("cannot get fcm key");
+    }).then(function (notification_key) {
+      user.fcm_key = notification_key;
+      return user.save().then(function(user){
+        return Promise.resolve('key ready');
+      });
     });
   } else {
     promise = Promise.resolve('key ready');

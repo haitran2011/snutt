@@ -644,6 +644,7 @@ export = function(app, db, request) {
       .expect(200)
       .end(function(err, res) {
         if (err) console.log(res.body);
+        assert.notEqual(res.body.token, token_temp);
         token_temp = res.body.token;
         done(err);
       });
