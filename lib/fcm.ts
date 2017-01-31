@@ -101,7 +101,7 @@ export function create_device(user:UserDocument, registration_id:string) {
     // Add topic
     return request({
       method: 'POST',
-      uri: 'https://iid.googleapis.com/iid/v1/'+user.fcm_key+'/rel/topics/global',
+      uri: 'https://iid.googleapis.com/iid/v1/'+registration_id+'/rel/topics/global',
       headers: {
         "Content-Type":"application/json",
         "Authorization":"key="+config.fcm_api_key
