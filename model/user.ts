@@ -155,13 +155,13 @@ UserSchema.statics.getFCMKey = function(id, callback) {
   return mongoose.model('User').findOne({'_id' : id, 'active' : true }, "fcm_key").lean()
     .exec().then(function(user: UserDocument){
       if (!user) {
-        callback("no user");
+        if (callback) callback("no user");
         return Promise.reject("no user");
       }
-      callback(null, user.fcm_key);
+      if (callback) callback(null, user.fcm_key);
       return Promise.resolve(user.fcm_key);
     }, function(err){
-      callback(err);
+      if (callback) callback(err);
       return Promise.reject(err);
     });
 };
@@ -177,12 +177,12 @@ UserSchema.statics.create_local = function(old_user, id, password, callback) {
 
   if (!id || !id.match(/^[a-z0-9]{4,32}$/i)) {
       err = { errcode:errcode.INVALID_ID, message: "incorrect id"};
-      callback(err);
+      if (callback) callback(err);
       return Promise.reject(err);
     }
   if (!password || !password.match(/^(?=.*\d)(?=.*[a-z])\S{6,20}$/i)) {
       err = { errcode:errcode.INVALID_PASSWORD, message: "incorrect password"};
-      callback(err);
+      if (callback) callback(err);
       return Promise.reject(err);
     }
 
@@ -218,7 +218,7 @@ UserSchema.statics.create_local = function(old_user, id, password, callback) {
       });
     })
     .catch(function(err){
-      callback(err);
+      if (callback) callback(err);
       return Promise.reject(err);
     });
 };
@@ -248,12 +248,12 @@ UserSchema.statics.get_fb_or_create = function(name, id, callback) {
         });
         return user.signCredential(callback);
       } else {
-        callback(null, user);
+        if (callback) callback(null, user);
         return Promise.resolve(user);
       }
     })
     .catch(function(err){
-      callback(err);
+      if (callback) callback(err);
       return Promise.reject(err);
     });
 };
