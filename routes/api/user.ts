@@ -111,12 +111,9 @@ router.post('/device', function (req, res, next) {
   var promise = fcm.create_device(user, req.body.registration_id);
 
   promise.then(function(status){
-    if (status === 'done') {
-      return res.json({message:"ok"});
-    } else {
-      return res.status(500).json({errcode: errcode.SERVER_FAULT, message:status});
-    }
+    return res.json({message:"ok"});
   }).catch(function(err){
+    console.log(err);
     res.status(500).json({errcode: errcode.SERVER_FAULT, message:err});
   });
 });
@@ -127,12 +124,9 @@ router.delete('/device', function (req, res, next) {
   var promise = fcm.remove_device(user, req.body.registration_id);
 
   promise.then(function(status){
-    if (status === 'done') {
-      return res.json({message:"ok"});
-    } else {
-      return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"server fault"});
-    }
+    return res.json({message:"ok"});
   }).catch(function(err){
+    console.log(err);
     res.status(500).json({errcode: errcode.SERVER_FAULT, message:err});
   });
 });
