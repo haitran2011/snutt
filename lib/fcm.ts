@@ -2,16 +2,8 @@ import {UserModel, UserDocument} from '../model/user';
 import request = require('request-promise-native');
 import config = require('../config/config');
 
-/*
- * create_device
- * Add this registration_id for the user
- * and add topic
- */
-export function create_device(user:UserDocument, registration_id:string) {
-  var promise;
-  // If user doesn't have key, create or fetch key
-  if (!user.fcm_key) {
-    promise = request({
+function fcm_create_noti_key(key_name:string, registration_ids:[string]): Promise<string> {
+  return request({
       method: 'POST',
       uri: 'https://android.googleapis.com/gcm/notification',
       headers: {
@@ -21,51 +13,39 @@ export function create_device(user:UserDocument, registration_id:string) {
       },
       body: {
             "operation": "create",
-            "notification_key_name": "user-"+user._id,
-            "registration_ids": [registration_id]
+            "notification_key_name": key_name,
+            "registration_ids": registration_ids
+      },
+      json: true
+    }).then(function(body){
+      return Promise.resolve(body.notification_key);
+    }).catch(function(err){
+      return Promise.reject(err.response.body.error);
+    });
+}
+
+function fcm_get_noti_key(key_name:string): Promise<string> {
+  return request({
+      method: 'GET',
+      uri: 'https://android.googleapis.com/gcm/notification',
+      headers: {
+        "Content-Type":"application/json",
+        "Authorization":"key="+config.fcm_api_key,
+        "project_id":config.fcm_project_id
+      },
+      qs: {
+        "notification_key_name": key_name
       },
       json: true
     }).then(function (body) {
       return Promise.resolve(body.notification_key);
     }).catch(function (err) {
-      if (err.response.body.error == "notification_key already exists") {
-        return request({
-          method: 'GET',
-          uri: 'https://android.googleapis.com/gcm/notification',
-          headers: {
-            "Content-Type":"application/json",
-            "Authorization":"key="+config.fcm_api_key,
-            "project_id":config.fcm_project_id
-          },
-          qs: {
-            "notification_key_name": "user-"+user._id
-          },
-          json: true
-        }).then(function (body) {
-          return Promise.resolve(body.notification_key);
-        });
-      }
-    }).then(function (notification_key) {
-      user.fcm_key = notification_key;
-      return user.save().then(function(user){
-        return Promise.resolve('key ready');
-      });
+      return Promise.reject(err.response.body.error);
     });
-  } else {
-    promise = Promise.resolve('key ready');
-  }
+}
 
-  // Now user has key
-  promise = promise.then(function(status){
-    // Device is already added during key creation
-    if (status === 'device ready')
-      return Promise.resolve(status);
-
-    // User should have had key
-    if (!user.fcm_key) return Promise.reject("server fault - user has no fcm key");
-
-    // Add the device
-    return request({
+function fcm_add_device(key_name:string, key:string, registration_ids:[string]): Promise<string> {
+  return request({
       method: 'POST',
       uri: 'https://android.googleapis.com/gcm/notification',
       headers: {
@@ -75,48 +55,141 @@ export function create_device(user:UserDocument, registration_id:string) {
       },
       body: {
             "operation": "add",
-            "notification_key_name": "user-"+user._id,
-            "notification_key": user.fcm_key,
-            "registration_ids": [registration_id]
+            "notification_key_name": key_name,
+            "notification_key": key,
+            "registration_ids": registration_ids
       },
       json: true
     }).then(function(body){
-      if (body.notification_key) {
-        return Promise.resolve('device ready');
-      } else if (body.error) {
-        return Promise.reject(body.error);
-      }
-      return Promise.reject('cannot add device');
+      return Promise.resolve(body.notification_key);
+    }).catch(function(err){
+      return Promise.reject(err.response.body.error);
     });
-  }).catch(function(err){
-    // pass along errors
-    return Promise.reject(err);
-  });
+}
 
-  // Add topic
-  promise = promise.then(function(status){
-    // User should have had key
-    if (!user.fcm_key) return Promise.reject("server fault - user has no fcm key");
+function fcm_remove_device(key_name:string, key:string, registration_ids:[string]): Promise<string> {
+  return request({
+      method: 'POST',
+      uri: 'https://android.googleapis.com/gcm/notification',
+      headers: {
+        "Content-Type":"application/json",
+        "Authorization":"key="+config.fcm_api_key,
+        "project_id":config.fcm_project_id
+      },
+      body: {
+            "operation": "remove",
+            "notification_key_name": key_name,
+            "notification_key": key,
+            "registration_ids": registration_ids
+      },
+      json: true
+    }).then(function(body){
+      return Promise.resolve(body.notification_key);
+    }).catch(function(err){
+      return Promise.reject(err.response.body.error);
+    });
+}
 
-    // Add topic
-    return request({
+function fcm_add_topic(registration_id:string): Promise<any> {
+  return request({
       method: 'POST',
       uri: 'https://iid.googleapis.com/iid/v1/'+registration_id+'/rel/topics/global',
       headers: {
         "Content-Type":"application/json",
         "Authorization":"key="+config.fcm_api_key
         // no need for project_id
-      },
-      resolveWithFullResponse: true
-    }).then(function(res){
-      if (res.statusCode == 200) {
-        return Promise.resolve('done');
       }
-      return Promise.reject('cannot add topic');
+    }).catch(function(err){
+      return Promise.reject(err.response);
     });
+}
+
+function fcm_remove_topic_batch(registration_tokens:[string]): Promise<any> {
+  return request({
+      method: 'POST',
+      uri: 'https://iid.googleapis.com/iid/v1:batchRemove',
+      headers: {
+        "Content-Type":"application/json",
+        "Authorization":"key="+config.fcm_api_key
+        // no need for project_id
+      },
+      body: {
+        "to": "/topics/global",
+        "registration_tokens": registration_tokens
+      },
+      json: true
+    }).catch(function(err){
+      return Promise.reject(err.response);
+    });
+}
+
+function fcm_send_msg(to:string, title:string, body:string) {
+  return request({
+      method: 'POST',
+      uri: 'https://fcm.googleapis.com/fcm/send',
+      headers: {
+        "Content-Type":"application/json",
+        "Authorization":"key="+config.fcm_api_key
+      },
+      body: {
+            "to": to,
+            "notification" : {
+              "body" : body,
+              "title" : title
+            },
+            "priority" : "high",
+            "content_available" : true
+      },
+      json:true,
+    }).catch(function(err){
+      return Promise.reject(err.response);
+    });
+}
+
+function get_or_create_key(user:UserDocument, registration_id:string): Promise<string> {
+  var key_name = "user-"+user._id;
+  var promise:Promise<any> = fcm_create_noti_key(key_name, [registration_id]);
+  promise = promise.catch(function (err) {
+    if (err == "notification_key already exists") {
+      return fcm_get_noti_key(key_name)
+    } else {
+      return Promise.reject(err);
+    }
+  });
+  promise = promise.then(function(fcm_key){
+    user.fcm_key = fcm_key;
+    return user.save();
+  });
+  promise = promise.then(function(user) {
+    return Promise.resolve(user.fcm_key);
+  });
+  return promise;
+}
+
+/*
+ * create_device
+ * Add this registration_id for the user
+ * and add topic
+ */
+export function create_device(user:UserDocument, registration_id:string): Promise<string> {
+  var promise;
+  if (!user.fcm_key) {
+    promise = get_or_create_key(user, registration_id);
+  } else {
+    promise = Promise.resolve(user.fcm_key);
+  }
+
+  promise = promise.then(function(fcm_key) {
+    return fcm_add_device("user-"+user._id, fcm_key, [registration_id]);
   }).catch(function(err){
-    // pass along errors
-    return Promise.reject(err);
+    // User fcm key could be invalid
+    return get_or_create_key(user, registration_id).then(function(fcm_key){
+      return fcm_add_device("user-"+user._id, fcm_key, [registration_id]);
+    });
+  });
+
+  promise = promise.then(function(fcm_key){
+    return fcm_add_topic(registration_id);
   });
 
   return promise;
@@ -127,68 +200,25 @@ export function create_device(user:UserDocument, registration_id:string) {
  * Remove this registration_id for the user
  */
 export function remove_device(user:UserDocument, registration_id:string) {
-  var promise = new Promise(function(resolve, reject){
-    // User should have had key
-    if (!user.fcm_key) return reject("no key");
+  var promise;
+  if (!user.fcm_key) {
+    promise = get_or_create_key(user, registration_id);
+  } else {
+    promise = Promise.resolve(user.fcm_key);
+  }
 
-    // Remove the device
-    return request({
-      method: 'POST',
-      uri: 'https://android.googleapis.com/gcm/notification',
-      headers: {
-        "Content-Type":"application/json",
-        "Authorization":"key="+config.fcm_api_key,
-        "project_id":config.fcm_project_id
-      },
-      body: {
-            "operation": "remove",
-            "notification_key_name": "user-"+user._id,
-            "notification_key": user.fcm_key,
-            "registration_ids": [registration_id]
-      },
-      json: true
-    }).then(function(body){
-      if (body.notification_key) {
-        return resolve('device ready');
-      } else if (body.error) {
-        return reject(body.error);
-      }
-      return reject('cannot remove device');
-    });
-  });
-
-  /*
-  // remove topic
-  promise = promise.then(function(status){
-    // User should have had key
-    if (!user.fcm_key) return Promise.reject("server fault");
-
-    return request({
-      method: 'POST',
-      uri: 'https://iid.googleapis.com/iid/v1:batchRemove',
-      headers: {
-        "Content-Type":"application/json",
-        "Authorization":"key="+config.fcm_api_key
-        // no need for project_id
-      },
-      body: {
-        "to": "/topics/global",
-        "registration_tokens": [user.fcm_key]
-      },
-      json: true,
-      resolveWithFullResponse: true
-    }).then(function(res){
-      if (res.statusCode == 200 && !res.body.results[0].error) {
-        return Promise.resolve('done');
-      }
-      return Promise.reject('cannot remove topic');
-    });
+  promise = promise.then(function(fcm_key) {
+    return fcm_remove_device("user-"+user._id, fcm_key, [registration_id]);
   }).catch(function(err){
-    // pass along errors
-    return Promise.reject(err);
+    // User fcm key could be invalid
+    return get_or_create_key(user, registration_id).then(function(fcm_key){
+      return fcm_remove_device("user-"+user._id, fcm_key, [registration_id]);
+    });
   });
-  */
 
+  promise = promise.then(function(fcm_key) {
+    return fcm_remove_topic_batch([registration_id]);
+  });
   return promise;
 }
 
@@ -209,31 +239,10 @@ export function send_msg(user_id:string, message:string, cb?): Promise<string> {
     promise = Promise.resolve("/topics/global")
   }
 
-  promise = promise.then(function(target) {
-    return request({
-      method: 'POST',
-      uri: 'https://fcm.googleapis.com/fcm/send',
-      headers: {
-        "Content-Type":"application/json",
-        "Authorization":"key="+config.fcm_api_key
-      },
-      body: {
-            "to": target,
-            "notification" : {
-              "body" : message,
-              "title" : "SNUTT"
-            },
-            "priority" : "high",
-            "content_available" : true
-      },
-      json:true,
-      resolveWithFullResponse: true
+  promise = promise.then(function(to) {
+    return fcm_send_msg(to, "SNUTT", message).then(function(body){
+      return Promise.resolve("ok");
     });
-  });
-
-  promise = promise.then(function(res){
-    if (res.statusCode === 200) return Promise.resolve("ok");
-    else return Promise.reject(res.body);
   });
 
   promise = promise.then(function(result){
