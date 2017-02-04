@@ -185,7 +185,6 @@ router.post('/:id/lectures', function(req, res, next) {
  * json object of lecture to update
  */
 
-// TODO : duplicate timetable query fix
 router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
   var user:UserDocument = <UserDocument>req["user"];
   var lecture_raw = req.body;
@@ -209,6 +208,37 @@ router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
         }
         res.json(doc);
       });
+    });
+});
+
+router.put('/:table_id/lecture/:lecture_id/reset', function(req, res, next) {
+  var user:UserDocument = <UserDocument>req["user"];
+
+  if (!req.params.lecture_id)
+    return res.status(400).json({errcode: errcode.NO_LECTURE_ID, message:"need lecture_id"});
+
+  TimetableModel.findOne({'user_id': user._id, '_id' : req.params.table_id}).exec()
+    .then(function(timetable){
+      if(!timetable) return res.status(404).json({errcode: errcode.TIMETABLE_NOT_FOUND, message:"timetable not found"});
+
+      UserLectureModel.findOne({'_id': req.params.lecture_id})
+        .exec(function(err, lecture){
+          if (!lecture) return res.status(404).json({errcode:errcode.LECTURE_NOT_FOUND, message:"lecture not found"});
+          lecture.reset_with_ref(timetable.year, timetable.semester, function(err, lecture) {
+            if (err) {
+              if (err === errcode.IS_CUSTOM_LECTURE) {
+                return res.status(403).json({errcode:err, message:"cannot reset custom lectures"});
+              } else {
+                if (err === errcode.LECTURE_NOT_FOUND) console.log("Lecture reset requested, but ref_lecture not found");
+                return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"reset lecture failed"});
+              }
+            }
+            res.json(lecture);
+          });
+        });
+    })
+    .catch(function(err) {
+      return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"find table failed"});
     });
 });
 

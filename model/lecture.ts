@@ -4,6 +4,8 @@
  * UserLecture는 유저 시간표 상의 강의
  */
 import mongoose = require('mongoose');
+import errcode = require('../lib/errcode');
+import Util = require('../lib/util');
 
 interface BaseLectureDocument extends mongoose.Document {
   classification: string,                           // 교과 구분
@@ -23,6 +25,8 @@ interface BaseLectureDocument extends mongoose.Document {
   category: string
 
   is_equal(lecture:BaseLectureDocument):boolean;
+  reset_with_ref(year:number, semester:number,
+      cb?: (err:any, doc?:UserLectureDocument)=>void): Promise<UserLectureDocument>;
 }
 
 export interface LectureDocument extends BaseLectureDocument {
@@ -51,13 +55,50 @@ function BaseSchema(add){
     class_time_json: [
       { day : Number, start: Number, len: Number, place : String }
     ],
-    class_time_mask: { type: [ Number ], required: true, default: [0,0,0,0,0,0] },
+    class_time_mask: { type: [ Number ], required: true, default: [0,0,0,0,0,0,0] },
     instructor: String,                               // 강사
     quota: Number,                                    // 정원
     enrollment: Number,                               // 신청인원
     remark: String,                                   // 비고
     category: String
   });
+
+  schema.methods.is_custom = function() {
+    return !this.course_number && !this.lecture_number;
+  }
+
+  schema.methods.reset_with_ref = function(year:number, semester:number,
+      cb?: (err:any, doc?:UserLectureDocument)=>void): Promise<UserLectureDocument> {
+    if (this.is_custom()) {
+      if (cb) cb(errcode.IS_CUSTOM_LECTURE);
+      return Promise.reject(errcode.IS_CUSTOM_LECTURE);
+    }
+    
+    var promise:Promise<any> = LectureModel.findOne({'year':year, 'semester':semester,
+      'course_number':this.course_number, 'lecture_number':this.lecture_number}).lean().exec();
+
+    promise = promise.then(function(ref_lecture) {
+      if (!ref_lecture) return Promise.reject(errcode.LECTURE_NOT_FOUND);
+      Util.object_del_id(ref_lecture);
+      ref_lecture.updated_at = Date.now();
+
+      var update_set = {};
+      for (var field in ref_lecture) {
+        this[field] = ref_lecture[field];
+      }
+      return this.save();
+    });
+
+    promise = promise.then(function(lecture) {
+      if(cb) cb(null, lecture);
+      return Promise.resolve(lecture);
+    }).catch(function(err) {
+      if(cb) cb(err);
+      return Promise.reject(err);
+    });
+
+    return promise;
+  }
 
   /*
    * Lecture.add_lecture(lecture)
@@ -67,7 +108,7 @@ function BaseSchema(add){
    */
   schema.methods.is_equal = function(lecture) {
     /* User-created lectures are always different */
-    if (!this.course_number && !this.lecture_number) return false;
+    if (this.is_custom()) return false;
     var ret = true;
     if (this.year && lecture.year)
       ret = ret && (this.year == lecture.year);

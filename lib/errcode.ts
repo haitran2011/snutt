@@ -11,6 +11,7 @@ class ErrorCode {
   static ATTEMPT_TO_MODIFY_IDENTITY = 0x1006;
   static NO_TIMETABLE_TITLE= 0x1007;
   static NO_REGISTRATION_ID = 0x1008;
+  static INVALID_TIMEMASK = 0x1009;
 
   /* 403 - Authorization-related */
   static WRONG_API_KEY = 0x2000;
@@ -36,6 +37,7 @@ class ErrorCode {
   static WRONG_SEMESTER = 0x300A;
   static NOT_CUSTOM_LECTURE = 0x300B;
   static LECTURE_TIME_OVERLAP = 0x300C;
+  static IS_CUSTOM_LECTURE = 0x300D;
 
   /* 404 - Not found */
   static TAG_NOT_FOUND = 0x4000;

@@ -44,7 +44,8 @@ router.post('/', function(req, res, next) {
     query["category"] = { $in : req.body.category };
   if (req.body.department && req.body.department.length) // in this case result should be sorted by departments
     query["department"] = { $in : req.body.department };
-  if (req.body.time_mask && req.body.time_mask.length == 6) {
+  if (req.body.time_mask) {
+    if (req.body.time_mask.length != 7) return res.status(401).json({errcode:errcode.INVALID_TIMEMASK, message: "invalid timemask"})
     query["$where"] = "";
     req.body.time_mask.forEach(function(bit, idx) {
       if (idx > 0) query["$where"] += " && ";

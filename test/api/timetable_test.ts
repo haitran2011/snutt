@@ -19,6 +19,7 @@ export = function(app, db, request) {
   var lecture_id;
   var ref_lecture;
   var lecture;
+  var old_title;
 
   before(function(done) {
     request.post('/api/auth/login_local')
@@ -201,6 +202,7 @@ export = function(app, db, request) {
         }
         lecture = res.body.lecture_list[0];
         lecture_id = lecture._id;
+        old_title = lecture.title;
         assert.equal(lecture.course_number, "400.320");
         assert.equal(lecture.class_time_json[0].place, "302-308");
         done();
@@ -249,6 +251,21 @@ export = function(app, db, request) {
             if (err) done(err);
             if (res.body.lecture_list[0].course_title == "abcd") done();
             else done(new Error("lecture not updated"));
+          });
+      });
+  });
+
+  it ('Reset a lecture', function(done) {
+    request.put('/api/tables/'+table_id+'/lecture/'+lecture_id+'/reset')
+      .set('x-access-token', token)
+      .expect(200)
+      .end(function(err, res) {
+        request.get('/api/tables/'+table_id)
+          .set('x-access-token', token)
+          .expect(200)
+          .end(function(err, res) {
+            if (err) done(err);
+            assert.equal(res.body.lecture_list[0].course_title, old_title);
           });
       });
   });
@@ -354,6 +371,16 @@ export = function(app, db, request) {
         assert.equal(lecture.instructor, "이제희");
         assert.equal(lecture.class_time_json[0].place, "302-308");
         done();
+      });
+  });
+
+  it ('Reset a custom lecture should fail', function(done) {
+    request.put('/api/tables/'+table_id+'/lecture/'+lecture._id+'/reset')
+      .set('x-access-token', token)
+      .expect(403)
+      .end(function(err, res) {
+        assert.equal(res.body.errcode, errcode.IS_CUSTOM_LECTURE);
+        done(err);
       });
   });
 
