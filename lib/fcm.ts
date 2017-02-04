@@ -180,12 +180,12 @@ export function create_device(user:UserDocument, registration_id:string): Promis
   }
 
   promise = promise.then(function(fcm_key) {
-    return fcm_add_device("user-"+user._id, fcm_key, [registration_id]);
-  }).catch(function(err){
-    // User fcm key could be invalid
-    return get_or_create_key(user, registration_id).then(function(fcm_key){
-      return fcm_add_device("user-"+user._id, fcm_key, [registration_id]);
-    });
+    return fcm_add_device("user-"+user._id, fcm_key, [registration_id]).catch(function(err){
+      // User fcm key could be invalid
+      return get_or_create_key(user, registration_id).then(function(fcm_key){
+        return fcm_add_device("user-"+user._id, fcm_key, [registration_id]);
+      });
+    });;
   });
 
   promise = promise.then(function(fcm_key){
@@ -208,12 +208,12 @@ export function remove_device(user:UserDocument, registration_id:string) {
   }
 
   promise = promise.then(function(fcm_key) {
-    return fcm_remove_device("user-"+user._id, fcm_key, [registration_id]);
-  }).catch(function(err){
-    // User fcm key could be invalid
-    return get_or_create_key(user, registration_id).then(function(fcm_key){
-      return fcm_remove_device("user-"+user._id, fcm_key, [registration_id]);
-    });
+    return fcm_remove_device("user-"+user._id, fcm_key, [registration_id]).catch(function(err){
+      // User fcm key could be invalid
+      return get_or_create_key(user, registration_id).then(function(fcm_key){
+        return fcm_remove_device("user-"+user._id, fcm_key, [registration_id]);
+      });
+    });;
   });
 
   promise = promise.then(function(fcm_key) {
