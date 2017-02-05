@@ -11,6 +11,7 @@ import {LectureModel, UserLectureModel} from '../../model/lecture';
 import {UserModel, UserDocument} from '../../model/user';
 import util = require('../../lib/util');
 import errcode = require('../../lib/errcode');
+import Color = require('../../lib/color');
 
 router.get('/', function(req, res, next) { //timetable list
   var user:UserDocument = <UserDocument>req["user"];
@@ -90,6 +91,7 @@ router.post('/:timetable_id/lecture/:lecture_id', function(req, res, next) {
             return res.status(403).json({errcode: errcode.WRONG_SEMESTER, message:"wrong semester"});
           }
           var lecture = new UserLectureModel(ref_lecture);
+          lecture.color = Color.get_random_color();
           timetable.add_lecture(lecture, function(err, timetable){
             if(err) {
               if (err === errcode.DUPLICATE_LECTURE)
@@ -137,6 +139,7 @@ router.post('/:id/lecture', function(req, res, next) {
        */
       util.object_del_id(json);
       var lecture = new UserLectureModel(json);
+      if (!lecture.color) lecture.color = Color.get_random_color();
       timetable.add_lecture(lecture, function(err, timetable){
         if(err) {
           if (err === errcode.DUPLICATE_LECTURE)
