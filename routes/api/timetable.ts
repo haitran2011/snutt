@@ -150,33 +150,6 @@ router.post('/:id/lecture', function(req, res, next) {
 });
 
 /**
- * POST /tables/:id/lectures
- * add lectures into a timetable
- * param ===================================
- * lectures : array of lectures to add
- */
-/*
-router.post('/:id/lectures', function(req, res, next) {
-  Timetable.findOne({'user_id': req.user_id, '_id' : req.params.id})
-    .exec(function(err, timetable){
-      if(err) return res.status(500).json({message:"find table failed"});
-      if(!timetable) return res.status(404).json({message:"timetable not found"});
-      var lectures = [];
-      var lectures_raw = req.body['lectures'];
-      for (var lecture_raw in lectures_raw) {
-        lecture_raw.class_time_mask = timeJsonToMask(lecture_raw.class_time_json);
-        var lecture = new Lecture(lecture_raw);
-        lectures.push(lecture);
-      }
-      timetable.add_lectures(lectures, function(err){
-        if(err) return res.status(500).json({message:"insert lecture failed"});
-        res.json({message:"ok"});
-      });
-  })
-});
-*/
-
-/**
  * PUT /tables/:table_id/lecture/:lecture_id
  * update a lecture of a timetable
  * param ===================================

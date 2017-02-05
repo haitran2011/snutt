@@ -14,6 +14,7 @@ import userRouter = require('./user');
 import adminRouter = require('./admin');
 var apiKey = require('../../config/apiKey');
 import {UserModel, UserDocument} from '../../model/user';
+import {FeedbackModel, FeedbackDocument} from '../../model/feedback';
 
 import errcode = require('../../lib/errcode');
 
@@ -54,6 +55,17 @@ router.get('/app_version', function(req, res, next) {
   var version = apiKey.getAppVersion(api_info.string);
   if (version) res.json({version: version});
   else res.status(404).json({errcode:errcode.UNKNOWN_APP, message: "unknown app"});
+});
+
+router.post('/feedback', function(req, res, next) {
+  /*
+   * date: Date
+   * email: string
+   * message: string
+   */
+  var feedback = new FeedbackModel(req.body);
+  feedback.save();
+  res.json({message:"ok"});
 });
 
 router.use('/auth', authRouter);
