@@ -2,7 +2,7 @@ class ErrorCode {
   /* 500 - Server fault */
   static SERVER_FAULT = 0x0000;
 
-  /* 401 - Request was invalid */
+  /* 400 - Request was invalid */
   static NO_FB_ID_OR_TOKEN = 0x1001;
   static NO_YEAR_OR_SEMESTER = 0x1002;
   static NOT_ENOUGH_TO_CREATE_TIMETABLE = 0x1003;
@@ -13,7 +13,7 @@ class ErrorCode {
   static NO_REGISTRATION_ID = 0x1008;
   static INVALID_TIMEMASK = 0x1009;
 
-  /* 403 - Authorization-related */
+  /* 401, 403 - Authorization-related */
   static WRONG_API_KEY = 0x2000;
   static NO_USER_TOKEN = 0x2001;
   static WRONG_USER_TOKEN = 0x2002;
@@ -43,6 +43,7 @@ class ErrorCode {
   static TAG_NOT_FOUND = 0x4000;
   static TIMETABLE_NOT_FOUND = 0x4001;
   static LECTURE_NOT_FOUND = 0x4002;
+  static REF_LECTURE_NOT_FOUND = 0x4003;
 }
 
 export = ErrorCode;

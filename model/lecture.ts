@@ -25,8 +25,7 @@ interface BaseLectureDocument extends mongoose.Document {
   category: string
 
   is_equal(lecture:BaseLectureDocument):boolean;
-  reset_with_ref(year:number, semester:number,
-      cb?: (err:any, doc?:UserLectureDocument)=>void): Promise<UserLectureDocument>;
+  is_custom():boolean;
 }
 
 export interface LectureDocument extends BaseLectureDocument {
@@ -65,39 +64,6 @@ function BaseSchema(add){
 
   schema.methods.is_custom = function() {
     return !this.course_number && !this.lecture_number;
-  }
-
-  schema.methods.reset_with_ref = function(year:number, semester:number,
-      cb?: (err:any, doc?:UserLectureDocument)=>void): Promise<UserLectureDocument> {
-    if (this.is_custom()) {
-      if (cb) cb(errcode.IS_CUSTOM_LECTURE);
-      return Promise.reject(errcode.IS_CUSTOM_LECTURE);
-    }
-    
-    var promise:Promise<any> = LectureModel.findOne({'year':year, 'semester':semester,
-      'course_number':this.course_number, 'lecture_number':this.lecture_number}).lean().exec();
-
-    promise = promise.then(function(ref_lecture) {
-      if (!ref_lecture) return Promise.reject(errcode.LECTURE_NOT_FOUND);
-      Util.object_del_id(ref_lecture);
-      ref_lecture.updated_at = Date.now();
-
-      var update_set = {};
-      for (var field in ref_lecture) {
-        this[field] = ref_lecture[field];
-      }
-      return this.save();
-    });
-
-    promise = promise.then(function(lecture) {
-      if(cb) cb(null, lecture);
-      return Promise.resolve(lecture);
-    }).catch(function(err) {
-      if(cb) cb(err);
-      return Promise.reject(err);
-    });
-
-    return promise;
   }
 
   /*

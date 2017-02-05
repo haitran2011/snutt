@@ -106,7 +106,7 @@ export function object_del_id(object) {
     if (typeof(object.length) == 'undefined') {
       delete object._id;
       for (var key in object) {
-        if (object.hasOwnProperty(key) && object[key]._id) object_del_id(object[key]); //recursive del calls on object elements
+        if (object.hasOwnProperty(key)) object_del_id(object[key]); //recursive del calls on object elements
       }
     } else {
       for (var i = 0; i < object.length; i++) {

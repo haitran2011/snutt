@@ -1,5 +1,5 @@
 import mongoose = require('mongoose');
-import {UserLectureDocument, UserLectureModel} from './lecture';
+import {UserLectureDocument, UserLectureModel, LectureDocument, LectureModel} from './lecture';
 import Util = require('../lib/util');
 import errcode = require('../lib/errcode');
 
@@ -23,8 +23,10 @@ export interface TimetableDocument extends mongoose.Document {
   checkDuplicate(cb?:(err)=>void):void;
   copy(new_title:string, cb?:(err, doc:TimetableDocument)=>void):void;
   add_lecture(lecture:UserLectureDocument, cb?:(err, doc:TimetableDocument)=>void):void;
-  update_lecture(lecture_id:string, lecture_raw, cb?:(err, doc:TimetableDocument)=>void):void;
+  update_lecture(lecture_id:string, lecture_raw, cb?:(err, doc:TimetableDocument)=>void):Promise<TimetableDocument>;
   delete_lecture(lecture_id:string, cb?:(err, doc:TimetableDocument)=>void):void;
+  get_lecture(lecture_id:string):UserLectureDocument;
+  reset_lecture(lecture_id, cb?: (err:any, doc?:UserLectureDocument)=>void): Promise<UserLectureDocument>;
 }
 
 export interface _TimetableModel extends mongoose.Model<TimetableDocument> {
@@ -33,7 +35,7 @@ export interface _TimetableModel extends mongoose.Model<TimetableDocument> {
   getTimetable(user_id:string, timetable_id:string, flags, cb?:(err, docs:TimetableDocument)=>void):Promise<TimetableDocument>;
   getRecent(user_id:string, flags, cb?:(err, docs:TimetableDocument)=>void):Promise<TimetableDocument>;
   createTimetable(params, cb?:(err, doc:TimetableDocument)=>void):Promise<TimetableDocument>;
-  update_lecture(timetable_id:string, lecture_id:string, lecture_raw, cb?:(err, doc:TimetableDocument)=>void);
+  update_lecture(timetable_id:string, lecture_id:string, lecture_raw, cb?:(err, doc:TimetableDocument)=>void):Promise<TimetableDocument>;
 }
 
 TimetableSchema.index({ year: 1, semester: 1, user_id: 1 });
@@ -193,9 +195,12 @@ TimetableSchema.methods.add_lectures = function(lectures, next) {
 };
 */
 
-TimetableSchema.statics.update_lecture = function(timetable_id, lecture_id, lecture_raw, next) {
-  if (lecture_raw.course_number || lecture_raw.lecture_number)
-    return next({errcode: errcode.ATTEMPT_TO_MODIFY_IDENTITY, message: "modifying identities forbidden"});
+TimetableSchema.statics.update_lecture = function(timetable_id, lecture_id, lecture_raw, cb):Promise<TimetableDocument> {
+  if (lecture_raw.course_number || lecture_raw.lecture_number) {
+    var err = {errcode: errcode.ATTEMPT_TO_MODIFY_IDENTITY, message: "modifying identities forbidden"};
+    if(cb) cb(err);
+    return Promise.reject(err);
+  }
 
   lecture_raw.updated_at = Date.now();
 
@@ -205,15 +210,20 @@ TimetableSchema.statics.update_lecture = function(timetable_id, lecture_id, lect
     update_set['lecture_list.$.' + field] = lecture_raw[field];
   }
 
-  (function (timetable_id, lecture_id, lecture, patch) {
-    (<_TimetableModel>mongoose.model('Timetable')).findOneAndUpdate({ "_id" : timetable_id, "lecture_list._id" : lecture_id},
-      {$set : patch}, {new: true}, function (err, doc) {
-        if (err) return next(err);
-        if (!doc) err = {errcode: errcode.TIMETABLE_NOT_FOUND, message: "timetable not found"};
-        else if (!doc.lecture_list.id(lecture_id)) err = {errcode: errcode.LECTURE_NOT_FOUND, message: "lecture not found"};
-        return next(err, doc);
-      });
-  }) (timetable_id, lecture_id, lecture_raw, update_set);
+  var promise = TimetableModel.findOneAndUpdate({ "_id" : timetable_id, "lecture_list._id" : lecture_id},
+    {$set : update_set}, {new: true}).exec().then(function(doc){
+      if (!doc) return Promise.reject({errcode: errcode.TIMETABLE_NOT_FOUND, message: "timetable not found"});
+      else if (!doc.lecture_list.id(lecture_id)) return Promise.reject({errcode: errcode.LECTURE_NOT_FOUND, message: "lecture not found"})
+      return Promise.resolve(doc);
+    });
+
+  promise = promise.then(function(lecture) {
+      if(cb) cb(null, lecture);
+      return Promise.resolve(lecture);
+    }).catch(function(err) {
+      if(cb) cb(err);
+      return Promise.reject(err);
+    });
 };
 
 /**
@@ -223,9 +233,43 @@ TimetableSchema.statics.update_lecture = function(timetable_id, lecture_id, lect
  *            If a same lecture doesn't exist, error.
  * callback : callback (err) when finished
  */
-TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, next) {
-  (<_TimetableModel>mongoose.model('Timetable')).update_lecture(this._id, lecture_id, lecture_raw, next);
+TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, next): Promise<TimetableDocument> {
+  return TimetableModel.update_lecture(this._id, lecture_id, lecture_raw, next);
 };
+
+TimetableSchema.methods.get_lecture = function(lecture_id): UserLectureDocument {
+  var timetable:TimetableDocument = this;
+  return timetable.lecture_list.id(lecture_id);
+}
+
+TimetableSchema.methods.reset_lecture = function(lecture_id,
+      cb?: (err:any, doc?:UserLectureDocument)=>void): Promise<UserLectureDocument> {
+    var timetable:TimetableDocument = this;
+    var lecture:UserLectureDocument = timetable.get_lecture(lecture_id);
+    if (lecture.is_custom()) {
+      if (cb) cb(errcode.IS_CUSTOM_LECTURE);
+      return Promise.reject(errcode.IS_CUSTOM_LECTURE);
+    }
+    
+    var promise:Promise<any> = LectureModel.findOne({'year':this.year, 'semester':this.semester,
+      'course_number':lecture.course_number, 'lecture_number':lecture.lecture_number}).lean()
+      .exec().then(function(ref_lecture:LectureDocument){
+        if (!ref_lecture) return Promise.reject(errcode.REF_LECTURE_NOT_FOUND);
+        delete ref_lecture.lecture_number;
+        delete ref_lecture.course_number;
+        return timetable.update_lecture(lecture_id, ref_lecture);
+      });
+
+    promise = promise.then(function(lecture) {
+      if(cb) cb(null, lecture);
+      return Promise.resolve(lecture);
+    }).catch(function(err) {
+      if(cb) cb(err);
+      return Promise.reject(err);
+    });
+
+    return promise;
+  }
 
 
 

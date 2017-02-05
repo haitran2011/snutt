@@ -202,7 +202,7 @@ export = function(app, db, request) {
         }
         lecture = res.body.lecture_list[0];
         lecture_id = lecture._id;
-        old_title = lecture.title;
+        old_title = lecture.course_title;
         assert.equal(lecture.course_number, "400.320");
         assert.equal(lecture.class_time_json[0].place, "302-308");
         done();
@@ -260,12 +260,20 @@ export = function(app, db, request) {
       .set('x-access-token', token)
       .expect(200)
       .end(function(err, res) {
+        if (err) {
+          console.log(res.body);
+        }
+        assert(!res.body.errcode, "No Errcode");
+        assert.equal(lecture.course_title, old_title, "Lecture title reset");
         request.get('/api/tables/'+table_id)
           .set('x-access-token', token)
           .expect(200)
           .end(function(err, res) {
-            if (err) done(err);
-            assert.equal(res.body.lecture_list[0].course_title, old_title);
+            if (err) {
+              console.log(res.body);
+            }
+            assert.equal(res.body.lecture_list[0].course_title, old_title, "Timetable applied");
+            done(err);
           });
       });
   });
@@ -367,7 +375,7 @@ export = function(app, db, request) {
       .expect(200)
       .end(function(err, res) {
         if (err) done(err);
-        var lecture = res.body.lecture_list[0];
+        lecture = res.body.lecture_list[0];
         assert.equal(lecture.instructor, "이제희");
         assert.equal(lecture.class_time_json[0].place, "302-308");
         done();
