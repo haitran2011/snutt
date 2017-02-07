@@ -23,7 +23,7 @@ router.get('/', function(req, res, next) { //timetable list
 
 router.get('/official_url', function(req, res, next) {
   var year = req.query.year;
-  var semester = req.query.semester;
+  var semester = Number(req.query.semester);
   var lecture_number = req.query.lecture_number;
   var course_number = req.query.course_number;
 
