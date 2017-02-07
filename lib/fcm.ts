@@ -130,7 +130,7 @@ function fcm_remove_topic_batch(registration_tokens:[string]): Promise<any> {
     });
 }
 
-function fcm_send_msg(to:string, title:string, body:string) {
+function fcm_send_msg(to:string, title:string, body:string): Promise<any> {
   return request({
       method: 'POST',
       uri: 'https://fcm.googleapis.com/fcm/send',
@@ -254,7 +254,7 @@ export function send_msg(user_id:string, message:string, author:string, cause:st
         cause: cause,
         to : user_id,
         message: message,
-        response: body
+        response: JSON.stringify(body)
       });
       return log.save();;
     });
