@@ -158,6 +158,10 @@ UserSchema.statics.getFCMKey = function(id, callback) {
         if (callback) callback("no user");
         return Promise.reject("no user");
       }
+      if (!user.fcm_key) {
+        if (callback) callback("no fcmkey");
+        return Promise.reject("no fcmkey");
+      }
       if (callback) callback(null, user.fcm_key);
       return Promise.resolve(user.fcm_key);
     }, function(err){
