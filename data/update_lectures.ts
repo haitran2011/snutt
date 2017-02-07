@@ -267,7 +267,7 @@ function notifyUpdated(year:number, semesterIndex:number, diff:LectureDiff, call
               NotificationModel.createNotification(
                 timetable.user_id,
                 "'"+timetable.title+"' 시간표의 '"+updated_lecture.course_title+"' 강의가 업데이트 되었습니다.",
-                NotificationType.LECTURE,
+                NotificationType.LECTURE_UPDATE,
                 noti_detail,
                 "unused",
                 function(err) {
@@ -311,7 +311,7 @@ function notifyRemoved(year:number, semesterIndex:number, diff:LectureDiff, call
             NotificationModel.createNotification(
               timetable.user_id,
               "'"+timetable.title+"' 시간표의 '"+removed_lecture.course_title+"' 강의가 폐강되었습니다.",
-              NotificationType.LECTURE,
+              NotificationType.LECTURE_REMOVE,
               noti_detail,
               "unused",
               function(err) {

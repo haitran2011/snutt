@@ -236,6 +236,7 @@ export function remove_device(user:UserDocument, registration_id:string) {
  */
 export function send_msg(user_id:string, message:string, author:string, cause:string, cb?): Promise<string> {
   var promise:Promise<any>;
+
   if (user_id && user_id.length > 0) {
     promise = UserModel.getFCMKey(user_id);
     promise = promise.then(function(fcmkey){

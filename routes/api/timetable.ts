@@ -91,7 +91,7 @@ router.post('/:timetable_id/lecture/:lecture_id', function(req, res, next) {
             return res.status(403).json({errcode: errcode.WRONG_SEMESTER, message:"wrong semester"});
           }
           var lecture = new UserLectureModel(ref_lecture);
-          lecture.color = Color.get_random_color();
+          lecture.color = timetable.get_new_color();
           timetable.add_lecture(lecture, function(err, timetable){
             if(err) {
               if (err === errcode.DUPLICATE_LECTURE)
@@ -139,7 +139,7 @@ router.post('/:id/lecture', function(req, res, next) {
        */
       util.object_del_id(json);
       var lecture = new UserLectureModel(json);
-      if (!lecture.color) lecture.color = Color.get_random_color();
+      if (!lecture.color) lecture.color = timetable.get_new_color();
       timetable.add_lecture(lecture, function(err, timetable){
         if(err) {
           if (err === errcode.DUPLICATE_LECTURE)

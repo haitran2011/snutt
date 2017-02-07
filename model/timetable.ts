@@ -2,6 +2,7 @@ import mongoose = require('mongoose');
 import {UserLectureDocument, UserLectureModel, LectureDocument, LectureModel} from './lecture';
 import Util = require('../lib/util');
 import errcode = require('../lib/errcode');
+import Color = require('../lib/color');
 
 var TimetableSchema = new mongoose.Schema({
   user_id : { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -27,6 +28,8 @@ export interface TimetableDocument extends mongoose.Document {
   delete_lecture(lecture_id:string, cb?:(err, doc:TimetableDocument)=>void):void;
   get_lecture(lecture_id:string):UserLectureDocument;
   reset_lecture(lecture_id, cb?: (err:any, doc?:UserLectureDocument)=>void): Promise<UserLectureDocument>;
+  available_color(): {fg:string, bg:string}[];
+  get_new_color(): {fg:string, bg:string};
 }
 
 export interface _TimetableModel extends mongoose.Model<TimetableDocument> {
@@ -270,6 +273,34 @@ TimetableSchema.methods.reset_lecture = function(lecture_id,
 
     return promise;
   }
+
+TimetableSchema.methods.available_color = function(): {fg:string, bg:string}[] {
+  var checked = [];
+  var timetable:TimetableDocument = this;
+  var colors = Color.colors;
+  for (var i=0; i<timetable.lecture_list.length; i++) {
+    var lecture_color = timetable.lecture_list[i].color;
+    for (var j=0; j<colors.length; j++) {
+      if (lecture_color.fg == colors[j].fg && lecture_color.bg == colors[j].bg) {
+        checked[j] = true;
+        break;
+      }
+    }
+  }
+
+  var ret = [];
+  for (var i=0; i<colors.length; i++) {
+    if (!checked[i]) ret.push(colors[i]);
+  }
+  return ret;
+}
+
+TimetableSchema.methods.get_new_color = function(): {fg:string, bg:string} {
+  var timetable:TimetableDocument = this;
+  var available_colors = timetable.available_color();
+  if (available_colors.length == 0) return Color.get_random_color();
+  else return available_colors[Math.floor(Math.random() * available_colors.length)]
+}
 
 
 

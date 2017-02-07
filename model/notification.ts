@@ -60,7 +60,8 @@ NotificationSchema.statics.countUnread = function (user, callback) {
 export let Type = {
   NORMAL : 0,
   COURSEBOOK : 1,
-  LECTURE : 2
+  LECTURE_UPDATE : 2,
+  LECTURE_REMOVE : 3
 };
 
 // if user_id_array is null or not array, create it as global
