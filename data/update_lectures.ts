@@ -12,6 +12,7 @@ import {NotificationModel, Type as NotificationType} from '../model/notification
 import {TimetableModel, TimetableDocument} from '../model/timetable';
 import {TagListModel} from '../model/tagList';
 import Util = require('../lib/util');
+import fcm = require('../lib/fcm');
 
 /*
  * 교양 영역을 한글로 번역.

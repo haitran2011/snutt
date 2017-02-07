@@ -15,7 +15,7 @@ router.use(function(req, res, next) {
 });
 
 router.post('/send_fcm', function(req, res, next) {
-  var p = libfcm.send_msg(req.body.user_id, req.body.message);
+  var p = libfcm.send_msg(req.body.user_id, req.body.message, req["user"]._id, "admin");
   p.then(function(result) {
     res.status(200).send(result);
   }).catch(function(err){

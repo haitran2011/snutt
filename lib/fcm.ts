@@ -1,4 +1,5 @@
 import {UserModel, UserDocument} from '../model/user';
+import {FcmLogModel} from '../model/fcmLog';
 import request = require('request-promise-native');
 import config = require('../config/config');
 
@@ -233,7 +234,7 @@ export function remove_device(user:UserDocument, registration_id:string) {
  * send_msg
  * If user_id is null, it's a global message
  */
-export function send_msg(user_id:string, message:string, cb?): Promise<string> {
+export function send_msg(user_id:string, message:string, author:string, cause:string, cb?): Promise<string> {
   var promise:Promise<any>;
   if (user_id && user_id.length > 0) {
     promise = UserModel.getFCMKey(user_id);
@@ -248,7 +249,14 @@ export function send_msg(user_id:string, message:string, cb?): Promise<string> {
 
   promise = promise.then(function(to) {
     return fcm_send_msg(to, "SNUTT", message).then(function(body){
-      return Promise.resolve("ok");
+      var log = new FcmLogModel({
+        author: author,
+        cause: cause,
+        to : user_id,
+        message: message,
+        response: body
+      });
+      return log.save();;
     });
   });
 
