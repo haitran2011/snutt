@@ -152,7 +152,7 @@ export function compareLecture(oldl, newl) {
     'credit',
     'instructor',
     'quota',
-    'enrollment',
+    //'enrollment',
     'remark',
     'category'
     ];
