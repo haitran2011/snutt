@@ -6,10 +6,10 @@ if (!module.parent) {
 
 const db = require('../db'); // Unused imports will be deleted
 import async = require('async');
-import {LectureModel} from '../model/lecture';
+import {LectureModel, LectureDocument} from '../model/lecture';
 import {CourseBookModel} from '../model/courseBook';
 import {NotificationModel, Type as NotificationType} from '../model/notification';
-import {TimetableModel} from '../model/timetable';
+import {TimetableModel, TimetableDocument} from '../model/timetable';
 import {TagListModel} from '../model/tagList';
 import Util = require('../lib/util');
 
@@ -41,11 +41,64 @@ var str_category = {
   "general_korean":"한국의 이해"
 };
 
-export function insert_course(lines:Array<String>, year:number, semesterIndex:number, next:()=>void)
-{
-  var semesterString = (['1', '여름', '2', '겨울'])[semesterIndex-1];
-  var saved_cnt = 0, err_cnt = 0;
-  var tags = {
+type TagStruct = {
+    classification : string[],
+    department : string[],
+    academic_year : string[],
+    credit : string[],
+    instructor : string[],
+    category : string[]
+  };
+
+type LectureIdent = {
+  course_number: string,
+  lecture_number: string,
+  course_title: string
+}
+
+type LectureIdentUpdated = {
+  course_number: string,
+  lecture_number: string,
+  course_title: string,
+  before: any,
+  after: any
+}
+
+class LectureDiff {
+  created: LectureIdent[];
+  removed: LectureIdent[];
+  updated: LectureIdentUpdated[];
+
+  constructor() {
+    this.created = [];
+    this.removed = [];
+    this.updated = [];
+  }
+
+  addLecture(array:LectureIdent[], lecture:LectureDocument) {
+    array.push({
+      course_number: lecture.course_number,
+      lecture_number: lecture.lecture_number,
+      course_title: lecture.course_title
+    });
+  };
+
+  addCreated(lecture:LectureDocument) { this.addLecture(this.created, lecture) };
+  addRemoved(lecture:LectureDocument) { this.addLecture(this.removed, lecture) };
+  addUpdated(updatedObj:any, lecture:LectureDocument) {
+    updatedObj.course_number = lecture.course_number;
+    updatedObj.lecture_number = lecture.lecture_number;
+    updatedObj.course_title = lecture.course_title;
+    this.updated.push(updatedObj);
+  };
+}
+
+function load_new_lectures(year:number, semesterIndex:number, lines:string[]) : {
+  new_lectures: LectureDocument[],
+  tags: TagStruct
+} {
+  var new_lectures:LectureDocument[] = new Array<LectureDocument>();
+  var tags:TagStruct = {
     classification : [],
     department : [],
     academic_year : [],
@@ -53,145 +106,252 @@ export function insert_course(lines:Array<String>, year:number, semesterIndex:nu
     instructor : [],
     category : []
   };
-  var old_lectures;
-  var new_lectures = [];
-  var diff = {
-    created : [],
-    removed : [],
-    updated : []
-  };
+  for (let i=0; i<lines.length; i++) {
+    var line = lines[i];
+    var components = line.split(";");
+    if (components.length == 1) continue;
+    if (components.length > 16) {
+      console.log("Parsing error detected : ");
+      console.log(line);
+    }
+
+    // 교양영역 번역
+    components[13] = str_category[components[13]];
+    if (components[13] === undefined) components[13] = "";
+    // null(과학교육계) 고침
+    components[1] = components[1].replace("null", "");
+
+    var new_tag = {
+      classification : components[0],
+      department : components[1],
+      academic_year : components[2],
+      credit : components[6]+'학점',
+      instructor : components[9],
+      category : components[13]
+    };
+
+    for (let key in tags) {
+      if (tags.hasOwnProperty(key)){
+        var existing_tag = null;
+        for (let j=0; j<tags[key].length; j++) {
+          if (tags[key][j] == new_tag[key]){
+            existing_tag = new_tag[key];
+            break;
+          }
+        }
+        if (existing_tag === null) {
+          if (new_tag[key] === undefined) {
+            console.log(key);
+            console.log(components);
+            console.log(line);
+          }
+          if (new_tag[key].length < 2) continue;
+          tags[key].push(new_tag[key]);
+        }
+      }
+    }
+
+    var timeJson = Util.timeAndPlaceToJson(components[7], components[8]);
+    if (timeJson === null) console.log(line);
+    // TimeMask limit is 15*2
+    for (let j=0; j<timeJson.length; j++) {
+      var t_end = timeJson[j].start+timeJson[j].len;
+      if (t_end > 15) {
+        console.log("Warning: ("+components[3]+", "+components[4]+", "+components[5]+
+          ") ends at "+t_end);
+      }
+    }
+
+    new_lectures.push(new LectureModel({
+      year: year,
+      semester: semesterIndex,
+      classification: components[0],
+      department: components[1],
+      academic_year: components[2],
+      course_number: components[3],
+      lecture_number: components[4],
+      course_title: components[5],
+      credit: Number(components[6]),
+      class_time: components[7],
+      class_time_json: timeJson,
+      class_time_mask: Util.timeJsonToMask(timeJson),
+      instructor: components[9],
+      quota: Number(components[10]),
+      enrollment: Number(components[11]),
+      remark: components[12],
+      category: components[13]
+    }));
+    process.stdout.write("Loading " + new_lectures.length + "th course\r");
+  }
+
+  return {
+    new_lectures: new_lectures,
+    tags: tags
+  }
+}
+
+function compare_lectures(old_lectures:LectureDocument[], new_lectures:LectureDocument[]): LectureDiff {
+  var diff = new LectureDiff();
+  var checked:boolean[] = [];
+  for (let i=0; i<new_lectures.length; i++) {
+    var exists = false;
+    for (let j=0; j<old_lectures.length; j++) {
+      if (checked[j]) continue;
+      if (old_lectures[j].course_number != new_lectures[i].course_number) continue;
+      if (old_lectures[j].lecture_number != new_lectures[i].lecture_number) continue;
+      var diff_update = Util.compareLecture(old_lectures[j], new_lectures[i]);
+      diff.addUpdated(diff_update, old_lectures[j]);
+      checked[j] = true;
+      exists = true;
+      break;
+    }
+    if (exists === false) {
+      diff.addCreated(new_lectures[i]);
+      //console.log(new_lectures[i].course_title+" created");
+    }
+  }
+  for (let i=0; i<old_lectures.length; i++) {
+    if (!checked[i]) {
+      diff.addRemoved(old_lectures[i]);
+      //console.log(old_lectures[i].course_title+" removed");
+    }
+  }
+
+  return diff;
+}
+
+function findTableWithLecture(year:number, semesterIndex:number, course_number:string,
+  lecture_number:string, cb?:(err, timetables:TimetableDocument[])=>any): Promise<TimetableDocument[]> {
+  return TimetableModel.find(
+      {
+        year: year,
+        semester: semesterIndex,
+        lecture_list: {
+          $elemMatch : {
+            course_number: course_number,
+            lecture_number: lecture_number
+          }
+        }
+      },
+      {
+        lecture_list: {
+          $elemMatch : {
+            course_number: course_number,
+            lecture_number: lecture_number
+          }
+        }
+  }, cb).exec();
+}
+
+function notifyUpdated(year:number, semesterIndex:number, diff:LectureDiff, callback) {
+  async.each(diff.updated, function(updated_lecture, callback) {
+    findTableWithLecture(year, semesterIndex, updated_lecture.course_number, updated_lecture.lecture_number,
+    function(err, timetables) {
+      async.each(timetables, function(timetable, callback) {
+          if (timetable.lecture_list.length != 1) {
+            return callback({
+              message: "Lecture update error",
+              timetable_id: timetable,
+              lecture: updated_lecture
+            });
+          }
+          var noti_detail = {
+            timetable_id : timetable._id,
+            lecture : updated_lecture
+          };
+          timetable.update_lecture(timetable.lecture_list[0]._id, updated_lecture.after,
+            function(err, timetable){
+              if (err) return callback(err);
+              NotificationModel.createNotification(
+                timetable.user_id,
+                "'"+timetable.title+"' 시간표의 '"+updated_lecture.course_title+"' 강의가 업데이트 되었습니다.",
+                NotificationType.LECTURE,
+                noti_detail,
+                "unused",
+                function(err) {
+                  callback(err);
+                });
+          });
+        }, function(err) {
+          callback(err);
+        });
+    });
+  }, function(err){
+    callback(err);
+  });
+}
+
+function notifyRemoved(year:number, semesterIndex:number, diff:LectureDiff, callback) {
+  async.each(diff.removed, function(removed_lecture, callback) {
+    findTableWithLecture(year, semesterIndex, removed_lecture.course_number, removed_lecture.lecture_number,
+    function(err, timetables) {
+        async.each(timetables, function(timetable, callback) {
+          if (timetable.lecture_list.length != 1) {
+            return callback({
+              message: "Lecture update error",
+              timetable_id: timetable,
+              lecture: removed_lecture
+            });
+          }
+          var noti_detail = {
+            timetable_id : timetable._id,
+            lecture : removed_lecture
+          };
+          timetable.delete_lecture(timetable.lecture_list[0]._id, function(err, timetable) {
+            if (err) return callback(err);
+            NotificationModel.createNotification(
+              timetable.user_id,
+              "'"+timetable.title+"' 시간표의 '"+removed_lecture.course_title+"' 강의가 폐강되었습니다.",
+              NotificationType.LECTURE,
+              noti_detail,
+              "unused",
+              function(err) {
+                callback(err);
+              });
+          });
+        }, function(err) {
+          callback(err);
+        });
+      });
+  }, function(err){
+    callback(err);
+  });
+}
+
+export function insert_course(lines:Array<string>, year:number, semesterIndex:number, next:()=>void)
+{
+  var semesterString = (['1', '여름', '2', '겨울'])[semesterIndex-1];
+  var saved_cnt = 0, err_cnt = 0;
+  var old_lectures: LectureDocument[];
+  var new_lectures: LectureDocument[];
+  var tags: TagStruct;
+  var diff: LectureDiff;
+
 
   // Do each function step by step
   async.series([
     function (callback) {
+      /* Load new lectures from txt */
       console.log ("Loading new lectures...");
-      for (let i=0; i<lines.length; i++) {
-        var line = lines[i];
-        var components = line.split(";");
-        if (components.length == 1) continue;
-        if (components.length > 16) {
-          console.log("Parsing error detected : ");
-          console.log(line);
-        }
-
-        // 교양영역 번역
-        components[13] = str_category[components[13]];
-        if (components[13] === undefined) components[13] = "";
-        // null(과학교육계) 고침
-        components[1] = components[1].replace("null", "");
-
-        var new_tag = {
-          classification : components[0],
-          department : components[1],
-          academic_year : components[2],
-          credit : components[6]+'학점',
-          instructor : components[9],
-          category : components[13]
-        };
-
-        for (let key in tags) {
-          if (tags.hasOwnProperty(key)){
-            var existing_tag = null;
-            for (let j=0; j<tags[key].length; j++) {
-              if (tags[key][j] == new_tag[key]){
-                existing_tag = new_tag[key];
-                break;
-              }
-            }
-            if (existing_tag === null) {
-              if (new_tag[key] === undefined) {
-                console.log(key);
-                console.log(components);
-                console.log(line);
-              }
-              if (new_tag[key].length < 2) continue;
-              tags[key].push(new_tag[key]);
-            }
-          }
-        }
-
-        var timeJson = Util.timeAndPlaceToJson(components[7], components[8]);
-        if (timeJson === null) console.log(line);
-        // TimeMask limit is 15*2
-        for (let j=0; j<timeJson.length; j++) {
-          var t_end = timeJson[j].start+timeJson[j].len;
-          if (t_end > 15) {
-            console.log("Warning: ("+components[3]+", "+components[4]+", "+components[5]+
-              ") ends at "+t_end);
-          }
-        }
-
-        new_lectures.push(new LectureModel({
-          year: year,
-          semester: semesterIndex,
-          classification: components[0],
-          department: components[1],
-          academic_year: components[2],
-          course_number: components[3],
-          lecture_number: components[4],
-          course_title: components[5],
-          credit: Number(components[6]),
-          class_time: components[7],
-          class_time_json: timeJson,
-          class_time_mask: Util.timeJsonToMask(timeJson),
-          instructor: components[9],
-          quota: Number(components[10]),
-          enrollment: Number(components[11]),
-          remark: components[12],
-          category: components[13]
-        }));
-        process.stdout.write("Loading " + new_lectures.length + "th course\r");
-      }
+      var result = load_new_lectures(year, semesterIndex, lines);
+      new_lectures = result.new_lectures;
+      tags = result.tags;
       console.log("\nLoad complete with "+new_lectures.length+" courses");
       callback();
     },
     function (callback) {
+      /* Load old lectures from db */
       console.log ("Pulling existing lectures...");
       LectureModel.find({year : year, semester : semesterIndex}).lean()
         .exec(function(err, docs) {
-          old_lectures = docs;
+          old_lectures = <LectureDocument[]>docs;
           callback(err);
         });
     },
     function (callback){
+      /* Compare new & old, save the difference */
       console.log("Comparing existing lectures and new lectures...");
-      for (let i=0; i<new_lectures.length; i++) {
-        var exists = false;
-        for (let j=0; j<old_lectures.length; j++) {
-          if (old_lectures[j].checked) continue;
-          if (old_lectures[j].course_number != new_lectures[i].course_number) continue;
-          if (old_lectures[j].lecture_number != new_lectures[i].lecture_number) continue;
-          var diff_update:any = Util.compareLecture(old_lectures[j], new_lectures[i]);
-          if (diff_update) {
-            diff_update.course_number = old_lectures[j].course_number;
-            diff_update.lecture_number = old_lectures[j].lecture_number;
-            diff_update.course_title = old_lectures[j].course_title;
-            diff.updated.push(diff_update);
-            //console.log(old_lectures[j].course_title+" updated");
-          }
-          old_lectures[j].checked = true;
-          exists = true;
-          break;
-        }
-        if (exists === false) {
-          diff.created.push({
-            course_number: new_lectures[i].course_number,
-            lecture_number: new_lectures[i].lecture_number,
-            course_title: new_lectures[i].course_title
-          });
-          //console.log(new_lectures[i].course_title+" created");
-        }
-      }
-      for (let i=0; i<old_lectures.length; i++) {
-        if (!old_lectures[i].checked) {
-          diff.removed.push({
-            course_number: old_lectures[i].course_number,
-            lecture_number: old_lectures[i].lecture_number,
-            course_title: old_lectures[i].course_title
-          });
-          //console.log(old_lectures[i].course_title+" removed");
-        }
-      }
+      diff = compare_lectures(old_lectures, new_lectures);
       if (diff.updated.length === 0 &&
           diff.created.length === 0 &&
           diff.removed.length === 0) {
@@ -204,116 +364,19 @@ export function insert_course(lines:Array<String>, year:number, semesterIndex:nu
       callback();
     },
     function (callback){
-      async.series([
+      async.parallel([
         function(callback){
-          async.each(diff.updated, function(updated_lecture, callback) {
-            TimetableModel.find(
-              {
-                year: year,
-                semester: semesterIndex,
-                lecture_list: {
-                  $elemMatch : {
-                    course_number: updated_lecture.course_number,
-                    lecture_number: updated_lecture.lecture_number
-                  }
-                }
-              },
-              {
-                lecture_list: {
-                  $elemMatch : {
-                    course_number: updated_lecture.course_number,
-                    lecture_number: updated_lecture.lecture_number
-                  }
-                }
-              }, function(err, timetables) {
-                async.each(timetables, function(timetable, callback) {
-                  if (timetable.lecture_list.length != 1) {
-                    return callback({
-                      message: "Lecture update error",
-                      timetable_id: timetable,
-                      lecture: updated_lecture
-                    });
-                  }
-                  var noti_detail = {
-                    timetable_id : timetable._id,
-                    lecture : updated_lecture
-                  };
-                  timetable.update_lecture(timetable.lecture_list[0]._id, updated_lecture.after,
-                    function(err, timetable){
-                      NotificationModel.createNotification(
-                        timetable.user_id,
-                        "'"+timetable.title+"' 시간표의 '"+updated_lecture.course_title+"' 강의가 업데이트 되었습니다.",
-                        NotificationType.LECTURE,
-                        noti_detail,
-                        function(err) {
-                          callback(err);
-                        });
-                  });
-                }, function(err) {
-                  callback(err);
-                });
-            });
-          }, function(err){
-            callback(err);
-          });
+          notifyUpdated(year, semesterIndex, diff, callback);
         },
         function(callback){
-          async.each(diff.removed, function(removed_lecture, callback) {
-            TimetableModel.find(
-              {
-                year: year,
-                semester: semesterIndex,
-                lecture_list: {
-                  $elemMatch : {
-                    course_number: removed_lecture.course_number,
-                    lecture_number: removed_lecture.lecture_number
-                  }
-                }
-              },
-              {
-                lecture_list: {
-                  $elemMatch : {
-                    course_number: removed_lecture.course_number,
-                    lecture_number: removed_lecture.lecture_number
-                  }
-                }
-              }, function(err, timetables) {
-                async.each(timetables, function(timetable, callback) {
-                  if (timetable.lecture_list.length != 1) {
-                    return callback({
-                      message: "Lecture update error",
-                      timetable_id: timetable,
-                      lecture: removed_lecture
-                    });
-                  }
-                  var noti_detail = {
-                    timetable_id : timetable._id,
-                    lecture : removed_lecture
-                  };
-                  timetable.delete_lecture(timetable.lecture_list[0]._id, function(err, timetable) {
-                    if (err) return callback(err);
-                    NotificationModel.createNotification(
-                      timetable.user_id,
-                      "'"+timetable.title+"' 시간표의 '"+removed_lecture.course_title+"' 강의가 폐강되었습니다.",
-                      NotificationType.LECTURE,
-                      noti_detail,
-                      function(err) {
-                        callback(err);
-                      });
-                  });
-                }, function(err) {
-                  callback(err);
-                });
-              });
-          }, function(err){
-            callback(err);
-          });
+          notifyRemoved(year, semesterIndex, diff, callback);
         }
       ], function(err, results){
         callback(err);
       });
     },
     function (callback){
+      /* Remove old lectures */
       LectureModel.remove({ year: year, semester: semesterIndex}, function(err) {
         if (err) {
           console.log(err);
@@ -325,6 +388,7 @@ export function insert_course(lines:Array<String>, year:number, semesterIndex:nu
       });
     },
     function (callback){
+      /* Insert new lectures */
       console.log("Inserting new lectures...");
       LectureModel.insertMany(new_lectures, function(err, docs) {
         console.log("\nInsert complete with " + docs.length + " success and "+ (new_lectures.length - docs.length) + " errors");
@@ -370,7 +434,7 @@ export function insert_course(lines:Array<String>, year:number, semesterIndex:nu
         .exec(function(err, doc) {
           if (!doc) {
             var msg = year+"년도 "+semesterString+"학기 수강 편람이 업데이트 되었습니다.";
-            NotificationModel.createNotification(null, msg, NotificationType.COURSEBOOK, null,
+            NotificationModel.createNotification(null, msg, NotificationType.COURSEBOOK, null, "unused",
               function(err) {
                 if (!err) console.log("Notification inserted");
                 callback(err);

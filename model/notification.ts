@@ -20,7 +20,7 @@ interface _NotificationModel extends mongoose.Model<NotificationDocument>{
       cb?:(err, docs:mongoose.Types.DocumentArray<NotificationDocument>)=>void)
       :Promise<mongoose.Types.DocumentArray<NotificationDocument>>;
   countUnread(user:UserDocument, cb?:(err, count:number)=>void):Promise<number>;
-  createNotification(user_id:string, message:string, type:Number, detail:any,
+  createNotification(user_id:string, message:string, type:Number, detail:any, fcm_status:string,
       cb?:(err, doc:NotificationDocument)=>void):Promise<NotificationDocument>;
 }
 
@@ -64,7 +64,7 @@ export let Type = {
 };
 
 // if user_id_array is null or not array, create it as global
-NotificationSchema.statics.createNotification = function (user_id, message, type, detail, callback) {
+NotificationSchema.statics.createNotification = function (user_id, message, type, detail, fcm_status, callback) {
   if (!type) type = 0;
   var Notification = <_NotificationModel>mongoose.model('Notification');
   var notification = new Notification({
@@ -72,20 +72,11 @@ NotificationSchema.statics.createNotification = function (user_id, message, type
     message : message,
     created_at : Date.now(),
     type : type,
-    detail : detail
+    detail : detail,
+    fcm_status : fcm_status
   });
 
-  var promise:Promise<any> = fcm.send_msg(user_id, message);
-
-  promise = promise.then(function(result){
-    notification.fcm_status = result;
-    return notification.save(callback);
-  }).catch(function(err){
-    notification.fcm_status = "err";
-    return notification.save(callback);
-  });
-
-  return promise;
+  return notification.save(callback);
 };
 
 export let NotificationModel = <_NotificationModel>mongoose.model<NotificationDocument>('Notification', NotificationSchema);
