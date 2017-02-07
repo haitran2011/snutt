@@ -21,6 +21,32 @@ router.get('/', function(req, res, next) { //timetable list
   });
 });
 
+router.get('/official_url', function(req, res, next) {
+  var year = req.query.year;
+  var semester = req.query.semester;
+  var lecture_number = req.query.lecture_number;
+  var course_number = req.query.course_number;
+
+  var openShtmFg = "", openDetaShtmFg = ""
+  switch (semester) {
+  case 1:
+      openShtmFg = "U000200001";
+      openDetaShtmFg = "U000300001";
+  case 2:
+      openShtmFg = "U000200001";
+      openDetaShtmFg = "U000300002";
+  case 3:
+      openShtmFg = "U000200002";
+      openDetaShtmFg = "U000300001";
+  case 4:
+      openShtmFg = "U000200002";
+      openDetaShtmFg = "U000300002";
+  }
+
+  res.json({url: "http://sugang.snu.ac.kr/sugang/cc/cc103.action?openSchyy="+year+
+    "&openShtmFg="+openShtmFg+"&openDetaShtmFg="+openDetaShtmFg+"&sbjtCd="+course_number+"&ltNo="+lecture_number+"&sbjtSubhCd=000"});
+});
+
 router.get('/recent', function(req, res, next) {
   var user:UserDocument = <UserDocument>req["user"];
   TimetableModel.getRecent(user._id, {lean:true}, function(err, timetable) {
@@ -306,32 +332,6 @@ router.put('/:id', function(req, res, next) {
         });
       });
     });
-});
-
-router.get('/official_url', function(req, res, next) {
-  var year = req.body.year;
-  var semester = req.body.semester;
-  var lecture_number = req.body.lecture_number;
-  var course_number = req.body.course_number;
-
-  var openShtmFg = "", openDetaShtmFg = ""
-  switch (semester) {
-  case 1:
-      openShtmFg = "U000200001";
-      openDetaShtmFg = "U000300001";
-  case 2:
-      openShtmFg = "U000200001";
-      openDetaShtmFg = "U000300002";
-  case 3:
-      openShtmFg = "U000200002";
-      openDetaShtmFg = "U000300001";
-  case 4:
-      openShtmFg = "U000200002";
-      openDetaShtmFg = "U000300002";
-  }
-
-  res.json({url: "http://sugang.snu.ac.kr/sugang/cc/cc103.action?openSchyy="+year+
-    "&openShtmFg="+openShtmFg+"&openDetaShtmFg="+openDetaShtmFg+"&sbjtCd="+course_number+"&ltNo="+lecture_number+"&sbjtSubhCd=000"});
 });
 
 export = router;
