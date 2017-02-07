@@ -201,7 +201,7 @@ function compare_lectures(old_lectures:LectureDocument[], new_lectures:LectureDo
       if (old_lectures[j].course_number != new_lectures[i].course_number) continue;
       if (old_lectures[j].lecture_number != new_lectures[i].lecture_number) continue;
       var diff_update = Util.compareLecture(old_lectures[j], new_lectures[i]);
-      diff.addUpdated(diff_update, old_lectures[j]);
+      if (diff_update) diff.addUpdated(diff_update, old_lectures[j]);
       checked[j] = true;
       exists = true;
       break;
