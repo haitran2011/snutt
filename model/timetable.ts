@@ -23,13 +23,14 @@ export interface TimetableDocument extends mongoose.Document {
 
   checkDuplicate(cb?:(err)=>void):void;
   copy(new_title:string, cb?:(err, doc:TimetableDocument)=>void):void;
-  add_lecture(lecture:UserLectureDocument, cb?:(err, doc:TimetableDocument)=>void):void;
+  add_lecture(lecture:UserLectureDocument, cb?:(err, doc:TimetableDocument)=>void):Promise<TimetableDocument>;
   update_lecture(lecture_id:string, lecture_raw, cb?:(err, doc:TimetableDocument)=>void):Promise<TimetableDocument>;
-  delete_lecture(lecture_id:string, cb?:(err, doc:TimetableDocument)=>void):void;
+  delete_lecture(lecture_id:string, cb?:(err, doc:TimetableDocument)=>void):Promise<TimetableDocument>;
   get_lecture(lecture_id:string):UserLectureDocument;
   reset_lecture(lecture_id, cb?: (err:any, doc?:UserLectureDocument)=>void): Promise<UserLectureDocument>;
   available_color(): {fg:string, bg:string}[];
   get_new_color(): {fg:string, bg:string};
+  validateLectureTime(lecture_id:string, lecture:UserLectureDocument): boolean;
 }
 
 export interface _TimetableModel extends mongoose.Model<TimetableDocument> {
@@ -161,18 +162,23 @@ TimetableSchema.methods.copy = function(new_title, next) {
  *            If a same lecture already exist, error.
  * callback : callback for timetable.save()
  */
-TimetableSchema.methods.add_lecture = function(lecture, next) {
+TimetableSchema.methods.add_lecture = function(lecture:UserLectureDocument, next):Promise<TimetableDocument> {
   for (var i = 0; i<this.lecture_list.length; i++){
     if (lecture.is_equal(this.lecture_list[i])) {
-      var err = errcode.DUPLICATE_LECTURE;
+      var err = {errcode: errcode.DUPLICATE_LECTURE, message: "duplicate lecture"};
       next(err);
-      return;
+      return Promise.reject(err);
     }
   }
-  lecture.created_at = Date.now();
-  lecture.updated_at = Date.now();
+  if (!this.validateLectureTime(lecture._id, lecture)) {
+    var err = {errcode: errcode.LECTURE_TIME_OVERLAP, message: "lecture time overlap"};;
+    next(err);
+    return Promise.reject(err);
+  }
+  lecture.created_at = new Date();
+  lecture.updated_at = new Date();
   this.lecture_list.push(lecture);
-  this.save(next);
+  return this.save(next);
 };
 
 /**
@@ -199,8 +205,39 @@ TimetableSchema.methods.add_lectures = function(lectures, next) {
 */
 
 TimetableSchema.statics.update_lecture = function(timetable_id, lecture_id, lecture_raw, cb):Promise<TimetableDocument> {
+  return TimetableModel.findOne({'_id': timetable_id}).exec().then(function(timetable){
+    if (timetable) return timetable.update_lecture(lecture_id, lecture_raw, cb);
+    else {
+      var err = { errcode: errcode.TIMETABLE_NOT_FOUND, message: "timetable not found" };
+      if(cb) cb(err);
+      return Promise.reject(err);
+    }
+  }).catch(function(err){
+    if(cb) cb(err);
+    return Promise.reject(err);
+  });
+};
+
+/**
+ * Timetable.update_lecture(lecture_raw, callback)
+ * param =======================================
+ * lecture : a partial update for lecture.
+ *            If a same lecture doesn't exist, error.
+ * callback : callback (err) when finished
+ */
+TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, cb): Promise<TimetableDocument> {
   if (lecture_raw.course_number || lecture_raw.lecture_number) {
     var err = {errcode: errcode.ATTEMPT_TO_MODIFY_IDENTITY, message: "modifying identities forbidden"};
+    if(cb) cb(err);
+    return Promise.reject(err);
+  }
+
+  if (lecture_raw['class_time_json']) {
+    lecture_raw['class_time_mask'] = Util.timeJsonToMask(lecture_raw['class_time_json']);
+  }
+
+  if (lecture_raw['class_time_mask'] && !this.validateLectureTime(lecture_id, lecture_raw)) {
+    var err = {errcode: errcode.LECTURE_TIME_OVERLAP, message: "lecture time overlap"};
     if(cb) cb(err);
     return Promise.reject(err);
   }
@@ -213,7 +250,7 @@ TimetableSchema.statics.update_lecture = function(timetable_id, lecture_id, lect
     update_set['lecture_list.$.' + field] = lecture_raw[field];
   }
 
-  var promise = TimetableModel.findOneAndUpdate({ "_id" : timetable_id, "lecture_list._id" : lecture_id},
+  var promise = TimetableModel.findOneAndUpdate({ "_id" : this._id, "lecture_list._id" : lecture_id},
     {$set : update_set}, {new: true}).exec().then(function(doc){
       if (!doc) return Promise.reject({errcode: errcode.TIMETABLE_NOT_FOUND, message: "timetable not found"});
       else if (!doc.lecture_list.id(lecture_id)) return Promise.reject({errcode: errcode.LECTURE_NOT_FOUND, message: "lecture not found"})
@@ -227,17 +264,6 @@ TimetableSchema.statics.update_lecture = function(timetable_id, lecture_id, lect
       if(cb) cb(err);
       return Promise.reject(err);
     });
-};
-
-/**
- * Timetable.update_lecture(lecture_raw, callback)
- * param =======================================
- * lecture : a partial update for lecture.
- *            If a same lecture doesn't exist, error.
- * callback : callback (err) when finished
- */
-TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, next): Promise<TimetableDocument> {
-  return TimetableModel.update_lecture(this._id, lecture_id, lecture_raw, next);
 };
 
 TimetableSchema.methods.get_lecture = function(lecture_id): UserLectureDocument {
@@ -302,10 +328,19 @@ TimetableSchema.methods.get_new_color = function(): {fg:string, bg:string} {
   else return available_colors[Math.floor(Math.random() * available_colors.length)]
 }
 
+TimetableSchema.methods.validateLectureTime = function(lecture_id:string, lecture:UserLectureDocument): boolean {
+  var tablemask = [0,0,0,0,0,0,0];
+  for (var i=0; i<this.lecture_list.length; i++) {
+    var tableLecture:LectureDocument = this.lecture_list[i];
+    if (lecture_id == tableLecture._id) continue;
+    for (var j=0; j<tableLecture.class_time_mask.length; j++)
+      if ((tableLecture.class_time_mask[j] & lecture.class_time_mask[j]) != 0) return false;
+  }
+  return true;
+}
 
-
-TimetableSchema.methods.delete_lecture = function(lecture_id, callback) {
-  return mongoose.model("Timetable").findOneAndUpdate(
+TimetableSchema.methods.delete_lecture = function(lecture_id, callback): Promise<TimetableDocument> {
+  return TimetableModel.findOneAndUpdate(
     {'_id' : this._id},
     { $pull: {lecture_list : {_id: lecture_id} } }, {new: true})
     .exec(callback);

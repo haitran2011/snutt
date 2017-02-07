@@ -70,7 +70,7 @@ export function equalTimeJson(t1:Array<TimePlace>, t2:Array<TimePlace>) {
   return true;
 }
 
-export function timeJsonToMask(timeJson) {
+export function timeJsonToMask(timeJson:Array<TimePlace>): number[] {
   var i,j;
   var bitTable2D = [];
   for (i = 0; i < 7; i++)
@@ -78,7 +78,9 @@ export function timeJsonToMask(timeJson) {
 
   timeJson.forEach(function(lecture, lectureIdx) {
     var dayIdx = lecture.day;
-    for (var i = lecture.start * 2; i < (lecture.start + lecture.len)*2; i++)
+    var end = lecture.start + lecture.len;
+    if (lecture.start >= 15) console.log("timeJsonToMask: lecture start bigger than 15");
+    for (var i = lecture.start * 2; i < end*2; i++)
       bitTable2D[dayIdx][i] = 1;
   });
 

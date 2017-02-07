@@ -13,6 +13,7 @@ import {TimetableModel, TimetableDocument} from '../model/timetable';
 import {TagListModel} from '../model/tagList';
 import Util = require('../lib/util');
 import fcm = require('../lib/fcm');
+import errcode = require('../lib/errcode');
 
 /*
  * 교양 영역을 한글로 번역.
@@ -246,88 +247,131 @@ function findTableWithLecture(year:number, semesterIndex:number, course_number:s
 
 function notifyUpdated(year:number, semesterIndex:number, diff:LectureDiff, callback) {
   var num_updated_per_user: {[key: string]: number} = {}
-  async.each(diff.updated, function(updated_lecture, callback) {
-    findTableWithLecture(year, semesterIndex, updated_lecture.course_number, updated_lecture.lecture_number,
-    function(err, timetables) {
-      async.each(timetables, function(timetable, callback) {
-          if (timetable.lecture_list.length != 1) {
-            return callback({
-              message: "Lecture update error",
-              timetable_id: timetable,
-              lecture: updated_lecture
-            });
-          }
-          var noti_detail = {
-            timetable_id : timetable._id,
-            lecture : updated_lecture
-          };
-          timetable.update_lecture(timetable.lecture_list[0]._id, updated_lecture.after,
-            function(err, timetable){
-              if (err) return callback(err);
-              NotificationModel.createNotification(
-                timetable.user_id,
-                "'"+timetable.title+"' 시간표의 '"+updated_lecture.course_title+"' 강의가 업데이트 되었습니다.",
-                NotificationType.LECTURE_UPDATE,
-                noti_detail,
-                "unused",
-                function(err) {
-                  callback(err);
-                });
-              if (num_updated_per_user[timetable.user_id]) num_updated_per_user[timetable.user_id]++;
-              else num_updated_per_user[timetable.user_id] = 1; 
-          });
-        }, function(err) {
-          callback(err);
-        });
-    });
-  }, function(err){
-    for (var user_id in Object.keys(num_updated_per_user)) {
-      var num = num_updated_per_user[user_id];
-      fcm.send_msg(user_id, "수강편람이 업데이트되어 "+num+"개 강의가 변경되었습니다.", "update_lectures.ts", "lecture updated");
-    }
-    callback(err);
-  });
-}
-
-function notifyRemoved(year:number, semesterIndex:number, diff:LectureDiff, callback) {
   var num_removed_per_user: {[key: string]: number} = {}
-  async.each(diff.removed, function(removed_lecture, callback) {
-    findTableWithLecture(year, semesterIndex, removed_lecture.course_number, removed_lecture.lecture_number,
-    function(err, timetables) {
-        async.each(timetables, function(timetable, callback) {
-          if (timetable.lecture_list.length != 1) {
-            return callback({
-              message: "Lecture update error",
-              timetable_id: timetable,
-              lecture: removed_lecture
-            });
-          }
-          var noti_detail = {
-            timetable_id : timetable._id,
-            lecture : removed_lecture
-          };
-          timetable.delete_lecture(timetable.lecture_list[0]._id, function(err, timetable) {
-            if (err) return callback(err);
-            NotificationModel.createNotification(
-              timetable.user_id,
-              "'"+timetable.title+"' 시간표의 '"+removed_lecture.course_title+"' 강의가 폐강되었습니다.",
-              NotificationType.LECTURE_REMOVE,
-              noti_detail,
-              "unused",
-              function(err) {
-                callback(err);
+
+  async.series([
+    function (callback) {
+      async.each(diff.updated, function(updated_lecture, callback) {
+        findTableWithLecture(year, semesterIndex, updated_lecture.course_number, updated_lecture.lecture_number,
+        function(err, timetables) {
+          async.each(timetables, function(timetable, callback) {
+              if (timetable.lecture_list.length != 1) {
+                return callback({
+                  message: "Lecture update error",
+                  timetable_id: timetable,
+                  lecture: updated_lecture
+                });
+              }
+              var noti_detail = {
+                timetable_id : timetable._id,
+                lecture : updated_lecture
+              };
+
+              timetable.update_lecture(timetable.lecture_list[0]._id, updated_lecture.after,
+                function(err, timetable){
+                  if (err) {
+                    if (err.errcode == errcode.LECTURE_TIME_OVERLAP) {
+                      timetable.delete_lecture(timetable.lecture_list[0]._id, function(err, timetable) {
+                        if (err) return callback(err);
+                        if (num_removed_per_user[timetable.user_id]) num_removed_per_user[timetable.user_id]++;
+                        else num_removed_per_user[timetable.user_id] = 1; 
+                        NotificationModel.createNotification(
+                          timetable.user_id,
+                          "'"+timetable.title+"' 시간표의 '"+updated_lecture.course_title+"' 강의가 업데이트되었으나, 시간표가 겹쳐 삭제되었습니다.",
+                          NotificationType.LECTURE_REMOVE,
+                          noti_detail,
+                          "unused",
+                          function(err) {
+                            callback(err);
+                          });
+                      });
+                      return callback();
+                    } else return callback(err);
+                  }
+                  if (num_updated_per_user[timetable.user_id]) num_updated_per_user[timetable.user_id]++;
+                  else num_updated_per_user[timetable.user_id] = 1; 
+                  NotificationModel.createNotification(
+                    timetable.user_id,
+                    "'"+timetable.title+"' 시간표의 '"+updated_lecture.course_title+"' 강의가 업데이트 되었습니다.",
+                    NotificationType.LECTURE_UPDATE,
+                    noti_detail,
+                    "unused",
+                    function(err) {
+                      callback(err);
+                    });
               });
-            if (num_removed_per_user[timetable.user_id]) num_removed_per_user[timetable.user_id]++;
-            else num_removed_per_user[timetable.user_id] = 1; 
-          });
-        }, function(err) {
-          callback(err);
+            }, function(err) {
+              callback(err);
+            });
         });
+      }, function(err){
+        callback(err);
       });
-  }, function(err){
+    },
+
+    function (callback) {
+      async.each(diff.removed, function(removed_lecture, callback) {
+        findTableWithLecture(year, semesterIndex, removed_lecture.course_number, removed_lecture.lecture_number,
+        function(err, timetables) {
+            async.each(timetables, function(timetable, callback) {
+              if (timetable.lecture_list.length != 1) {
+                return callback({
+                  message: "Lecture update error",
+                  timetable_id: timetable,
+                  lecture: removed_lecture
+                });
+              }
+              var noti_detail = {
+                timetable_id : timetable._id,
+                lecture : removed_lecture
+              };
+              timetable.delete_lecture(timetable.lecture_list[0]._id, function(err, timetable) {
+                if (err) return callback(err);
+                if (num_removed_per_user[timetable.user_id]) num_removed_per_user[timetable.user_id]++;
+                else num_removed_per_user[timetable.user_id] = 1; 
+                NotificationModel.createNotification(
+                  timetable.user_id,
+                  "'"+timetable.title+"' 시간표의 '"+removed_lecture.course_title+"' 강의가 폐강되어 삭제되었습니다.",
+                  NotificationType.LECTURE_REMOVE,
+                  noti_detail,
+                  "unused",
+                  function(err) {
+                    callback(err);
+                  });
+              });
+            }, function(err) {
+              callback(err);
+            });
+          });
+      }, function(err){
+        callback(err);
+      });
+    }
+    
+  ], function(err) {
+    var users = [];
+    for (var user_id in Object.keys(num_updated_per_user)) {
+      users.push(user_id);
+    }
+
     for (var user_id in Object.keys(num_removed_per_user)) {
-      var num = num_removed_per_user[user_id];
-      fcm.send_msg(user_id, "수강편람이 업데이트되어 "+num+"개 강의가 폐강, 시간표에서 삭제되었습니다.", "update_lectures.ts", "lecture removed");
+      if (user_id in num_updated_per_user) continue;
+      users.push(user_id);
+    }
+
+    for (var i=0; i<users.length; i++) {
+      var updated_num = num_updated_per_user[user_id];
+      var removed_num = num_removed_per_user[user_id];
+      var msg;
+      if (updated_num & removed_num)
+        msg = "수강편람이 업데이트되어 "+updated_num+"개 강의가 변경되고 "+removed_num+"개 강의가 삭제되었습니다.";
+      else if (updated_num)
+        msg = "수강편람이 업데이트되어 "+updated_num+"개 강의가 변경되었습니다.";
+      else if (removed_num)
+        msg = "수강편람이 업데이트되어 "+removed_num+"개 강의가 삭제되었습니다.";
+      else
+        continue;
+      fcm.send_msg(users[i], msg, "update_lectures.ts", "lecture updated");
     }
     callback(err);
   });
@@ -376,19 +420,8 @@ export function insert_course(lines:Array<string>, year:number, semesterIndex:nu
       console.log(diff.updated.length + " updated, "+
           diff.created.length + " created, "+
           diff.removed.length + " removed.");
-      callback();
-    },
-    function (callback){
-      async.parallel([
-        function(callback){
-          notifyUpdated(year, semesterIndex, diff, callback);
-        },
-        function(callback){
-          notifyRemoved(year, semesterIndex, diff, callback);
-        }
-      ], function(err, results){
-        callback(err);
-      });
+      
+      notifyUpdated(year, semesterIndex, diff, callback);
     },
     function (callback){
       /* Remove old lectures */

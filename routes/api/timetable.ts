@@ -94,8 +94,10 @@ router.post('/:timetable_id/lecture/:lecture_id', function(req, res, next) {
           lecture.color = timetable.get_new_color();
           timetable.add_lecture(lecture, function(err, timetable){
             if(err) {
-              if (err === errcode.DUPLICATE_LECTURE)
-                return res.status(403).json({errcode:err, message:"duplicate lecture"});
+              if (err.errcode === errcode.DUPLICATE_LECTURE)
+                return res.status(403).json({errcode:err.errcode, message:"duplicate lecture"});
+              else if (err.errcode == errcode.LECTURE_TIME_OVERLAP)
+                return res.status(403).json({errcode:err.errcode, message:"lecture time overlap"});
               else
                 return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"insert lecture failed"});
             }
@@ -121,8 +123,21 @@ router.post('/:id/lecture', function(req, res, next) {
       if(err) return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"find table failed"});
       if(!timetable) return res.status(404).json({errcode: errcode.TIMETABLE_NOT_FOUND, message:"timetable not found"});
       var json = req.body;
-      if (json.class_time_json) json.class_time_mask = timeJsonToMask(json.class_time_json);
-      else if (json.class_time_mask) delete json.class_time_mask;
+
+      /* If no time json is found, mask is invalid */
+      if (json.class_time_json) {
+        if (!json.class_time_mask) {
+          json.class_time_mask = timeJsonToMask(json.class_time_json);
+        } else {
+          var timemask = timeJsonToMask(json.class_time_json);
+          for (var i=0; i<timemask.length; i++) {
+            if (timemask[i] != json.class_time_mask[i])
+              return res.status(400).json({errcode: errcode.INVALID_TIMEMASK, message:"invalid timemask"});
+          }
+        }
+      } else if (json.class_time_mask) {
+        return res.status(400).json({errcode: errcode.INVALID_TIMEMASK, message:"invalid timemask"});
+      }
 
       if (json.course_number || json.lecture_number)
         return res.status(403).json({errcode: errcode.NOT_CUSTOM_LECTURE, message:"only custom lectures allowed"});
@@ -142,8 +157,10 @@ router.post('/:id/lecture', function(req, res, next) {
       if (!lecture.color) lecture.color = timetable.get_new_color();
       timetable.add_lecture(lecture, function(err, timetable){
         if(err) {
-          if (err === errcode.DUPLICATE_LECTURE)
+          if (err.errcode === errcode.DUPLICATE_LECTURE)
             return res.status(403).json({errcode:err, message:"duplicate lecture"});
+          else if (err.errcode == errcode.LECTURE_TIME_OVERLAP)
+            return res.status(403).json({errcode:err.errcode, message:"lecture time overlap"});
           else
             return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"insert lecture failed"});
         }
