@@ -47,6 +47,36 @@ router.get('/course_books/recent', function(req, res, next) {
   });
 });
 
+router.get('/course_books/official', function(req, res, next) {
+  var year = req.query.year;
+  var semester = Number(req.query.semester);
+  var lecture_number = req.query.lecture_number;
+  var course_number = req.query.course_number;
+
+  var openShtmFg = "", openDetaShtmFg = ""
+  switch (semester) {
+  case 1:
+      openShtmFg = "U000200001";
+      openDetaShtmFg = "U000300001";
+      break;
+  case 2:
+      openShtmFg = "U000200001";
+      openDetaShtmFg = "U000300002";
+      break;
+  case 3:
+      openShtmFg = "U000200002";
+      openDetaShtmFg = "U000300001";
+      break;
+  case 4:
+      openShtmFg = "U000200002";
+      openDetaShtmFg = "U000300002";
+      break;
+  }
+
+  res.json({url: "http://sugang.snu.ac.kr/sugang/cc/cc103.action?openSchyy="+year+
+    "&openShtmFg="+openShtmFg+"&openDetaShtmFg="+openDetaShtmFg+"&sbjtCd="+course_number+"&ltNo="+lecture_number+"&sbjtSubhCd=000"});
+});
+
 router.use('/search_query', searchQueryRouter);
 
 router.use('/tags', tagsRouter);
