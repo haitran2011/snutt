@@ -103,7 +103,7 @@ export function object_del_id(object) {
   if (object && typeof(object) != 'string' &&
     typeof(object) != 'number' && typeof(object) != 'boolean') {
     //for array length is defined however for objects length is undefined
-    if (typeof(object.length) == 'undefined') {
+    if (typeof(object.length) == 'undefined' && '_id' in object) {
       delete object._id;
       for (var key in object) {
         if (object.hasOwnProperty(key)) object_del_id(object[key]); //recursive del calls on object elements
