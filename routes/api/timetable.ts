@@ -32,15 +32,19 @@ router.get('/official_url', function(req, res, next) {
   case 1:
       openShtmFg = "U000200001";
       openDetaShtmFg = "U000300001";
+      break;
   case 2:
       openShtmFg = "U000200001";
       openDetaShtmFg = "U000300002";
+      break;
   case 3:
       openShtmFg = "U000200002";
       openDetaShtmFg = "U000300001";
+      break;
   case 4:
       openShtmFg = "U000200002";
       openDetaShtmFg = "U000300002";
+      break;
   }
 
   res.json({url: "http://sugang.snu.ac.kr/sugang/cc/cc103.action?openSchyy="+year+
