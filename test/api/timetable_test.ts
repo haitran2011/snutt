@@ -408,8 +408,8 @@ export = function(app, db, request) {
         "class_time_json": [
           {
             "day": 1,
-            "start": 9,
-            "len": 5,
+            "start": 13.5,
+            "len": 1.5,
             "place": "302-308"
           },
           {
@@ -459,18 +459,10 @@ export = function(app, db, request) {
         "_id": "56fcd83c041742971bd20a86",
         "class_time_json": [
           {
-            "day": 1,
-            "start": 11,
-            "len": 1,
-            "place": "302-308",
-            "_id": "56fcd83c041742971bd20a88"
-          },
-          {
-            "day": 3,
-            "start": 11,
-            "len": 1,
-            "place": "302-308",
-            "_id": "56fcd83c041742971bd20a87"
+            "day": 2,
+            "start": 1.5,
+            "len": 3,
+            "place": "302-308"
           }
         ],
         "__v": 0
@@ -483,31 +475,46 @@ export = function(app, db, request) {
       });
   });
 
+  it ('Modifying custom lecture with invalid timemask should fail', function(done) {
+    request.put('/api/tables/'+table_id+'/lecture/'+lecture._id)
+      .set('x-access-token', token)
+      .send({"class_time_mask": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],"class_time_json": [
+          {
+            "day": 1,
+            "start": 1.5,
+            "len": 1.5,
+            "place": "302-308"
+          }]})
+      .expect(400)
+      .end(function(err, res) {
+        done(err);
+      });
+  });
+
   it ('Modifying custom lecture so that time is overlapped should fail', function(done) {
-    request.put('/api/tables/'+table_id+'/lecture/'+lecture_id)
+    request.put('/api/tables/'+table_id+'/lecture/'+lecture._id)
       .set('x-access-token', token)
       .send({"class_time_json": [
           {
-            "day": 1,
-            "start": 13,
-            "len": 1,
-            "place": "302-308",
-            "_id": "56fcd83c041742971bd20a88"
-          },
-          {
-            "day": 3,
-            "start": 13,
-            "len": 1,
-            "place": "302-308",
-            "_id": "56fcd83c041742971bd20a87"
-        }]})
+            "day": 2,
+            "start": 1.5,
+            "len": 2,
+            "place": "302-308"
+          }]})
       .expect(403)
       .end(function(err, res) {
         assert.equal(res.body.errcode, errcode.LECTURE_TIME_OVERLAP);
         done(err);
       });
   });
-
 
   it ('Create a custom user lecture with identity will fail', function(done) {
     request.post('/api/tables/'+table_id+'/lecture/')
@@ -532,25 +539,16 @@ export = function(app, db, request) {
          * See to it that the server removes _id fields correctly
          */
         "_id": "56fcd83c041742971bd20a86",
-        "class_time_mask": [
-          0,
-          12,
-          0,
-          12,
-          0,
-          0,
-          0
-        ],
         "class_time_json": [
           {
-            "day": 1,
+            "day": 2,
             "start": 13,
             "len": 1,
             "place": "302-308",
             "_id": "56fcd83c041742971bd20a88"
           },
           {
-            "day": 3,
+            "day": 4,
             "start": 13,
             "len": 1,
             "place": "302-308",
@@ -561,8 +559,7 @@ export = function(app, db, request) {
       })
       .expect(403)
       .end(function(err, res) {
-        if (err) return done(err);
-        done();
+        done(err);
       });
   });
 };
