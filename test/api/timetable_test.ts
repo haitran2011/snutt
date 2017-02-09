@@ -516,6 +516,23 @@ export = function(app, db, request) {
       });
   });
 
+  it ('Server handles string class time json', function(done) {
+    request.put('/api/tables/'+table_id+'/lecture/'+lecture._id)
+      .set('x-access-token', token)
+      .send({"class_time_json": [
+          {
+            "day": 2,
+            "start": 1.5,
+            "len": "2",
+            "place": "302-308"
+          }]})
+      .expect(403)
+      .end(function(err, res) {
+        assert.equal(res.body.errcode, errcode.LECTURE_TIME_OVERLAP);
+        done(err);
+      });
+  });
+
   it ('Create a custom user lecture with identity will fail', function(done) {
     request.post('/api/tables/'+table_id+'/lecture/')
       .set('x-access-token', token)

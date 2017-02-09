@@ -77,8 +77,8 @@ export function timeJsonToMask(timeJson:Array<TimePlace>): number[] {
     bitTable2D.push(_.fill(new Array(30), 0));
 
   timeJson.forEach(function(lecture, lectureIdx) {
-    var dayIdx = lecture.day;
-    var end = lecture.start + lecture.len;
+    var dayIdx = Number(lecture.day);
+    var end = Number(lecture.start) + Number(lecture.len);
     if (lecture.start >= 15) console.log("timeJsonToMask: lecture start bigger than 15");
     for (var i = lecture.start * 2; i < end*2; i++)
       bitTable2D[dayIdx][i] = 1;
