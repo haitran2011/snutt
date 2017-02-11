@@ -29,6 +29,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 
 app.use('/', routes);
+app.engine('.html', require('ejs').renderFile);
+app.set('views', './views')
 // catch 404 and forward to error handler
 /*
 app.use(function(req, res, next) {

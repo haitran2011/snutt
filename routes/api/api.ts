@@ -1,6 +1,7 @@
 "use strict";
 
 import express = require('express');
+
 var router = express.Router();
 
 import {CourseBookModel} from '../../model/courseBook';
@@ -19,6 +20,14 @@ import {FeedbackModel, FeedbackDocument} from '../../model/feedback';
 import errcode = require('../../lib/errcode');
 
 var api_info;
+
+router.get('/terms_of_service', function(req, res, next) {
+  res.render('terms_of_service.html');
+});
+
+router.get('/privacy_policy', function(req, res, next) {
+  res.render('privacy_policy.html');
+});
 
 /**
  * Check API Key
