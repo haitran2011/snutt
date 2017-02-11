@@ -263,6 +263,7 @@ export = function(app, db, request) {
         if (err) {
           console.log(res.body);
         }
+        assert.equal(res.body.lecture_list[0].course_title, old_title, "Timetable applied");
         assert(!res.body.errcode, "No Errcode");
         assert.equal(lecture.course_title, old_title, "Lecture title reset");
         request.get('/api/tables/'+table_id)
@@ -272,7 +273,7 @@ export = function(app, db, request) {
             if (err) {
               console.log(res.body);
             }
-            assert.equal(res.body.lecture_list[0].course_title, old_title, "Timetable applied");
+            assert.equal(res.body.lecture_list[0].course_title, old_title, "Timetable double-check");
             done(err);
           });
       });

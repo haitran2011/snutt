@@ -257,13 +257,15 @@ TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, cb): 
       return Promise.resolve(doc);
     });
 
-  promise = promise.then(function(lecture) {
-      if(cb) cb(null, lecture);
-      return Promise.resolve(lecture);
+  promise = promise.then(function(timetable) {
+      if(cb) cb(null, timetable);
+      return Promise.resolve(timetable);
     }).catch(function(err) {
       if(cb) cb(err);
       return Promise.reject(err);
     });
+
+  return promise;
 };
 
 TimetableSchema.methods.get_lecture = function(lecture_id): UserLectureDocument {
@@ -289,9 +291,9 @@ TimetableSchema.methods.reset_lecture = function(lecture_id,
         return timetable.update_lecture(lecture_id, ref_lecture);
       });
 
-    promise = promise.then(function(lecture) {
-      if(cb) cb(null, lecture);
-      return Promise.resolve(lecture);
+    promise = promise.then(function(timetable) {
+      if(cb) cb(null, timetable);
+      return Promise.resolve(timetable);
     }).catch(function(err) {
       if(cb) cb(err);
       return Promise.reject(err);
