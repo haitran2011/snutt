@@ -184,7 +184,7 @@ router.post('/:id/lecture', function(req, res, next) {
 router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
   var user:UserDocument = <UserDocument>req["user"];
   var lecture_raw = req.body;
-  if(!lecture_raw || Object.keys(lecture_raw).length < 1) return res.status(400).json({errcode: errcode.NO_LECTURE_INPUT, message:"empty body"});
+  if(!lecture_raw) return res.status(400).json({errcode: errcode.NO_LECTURE_INPUT, message:"empty body"});
 
   if (!req.params.lecture_id)
     return res.status(400).json({errcode: errcode.NO_LECTURE_ID, message:"need lecture_id"});
