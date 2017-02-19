@@ -484,20 +484,21 @@ export function insert_course(lines:Array<string>, year:number, semesterIndex:nu
         })
         .exec(function(err, doc) {
           if (!doc) {
-            NotificationModel.createNotification(null, noti_msg, NotificationType.COURSEBOOK, null, "unused",
+            fcm.send_msg(null, noti_msg, "update_lectures.ts", "new coursebook", function(err, log) {
+              if (err) {
+                console.log("fcm msg error - ", err);
+                return callback(err);
+              }
+              NotificationModel.createNotification(null, noti_msg, NotificationType.COURSEBOOK, null, "unused",
               function(err) {
                 if (!err) console.log("Notification inserted");
                 callback(err);
               });
+            });
+            
           } else {
             callback(err);
           }
-      });
-    },
-    function (callback) {
-      fcm.send_msg(null, noti_msg, "update_lectures.ts", "new coursebook", function(err, log) {
-        if (err) console.log("fcm msg error - ", err);
-        callback(err);
       });
     }
   ], function (err, results){
