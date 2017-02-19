@@ -386,6 +386,8 @@ export function insert_course(lines:Array<string>, year:number, semesterIndex:nu
   var tags: TagStruct;
   var diff: LectureDiff;
 
+  var noti_msg = year+"년도 "+semesterString+"학기 수강편람이 추가되었습니다.";
+
 
   // Do each function step by step
   async.series([
@@ -482,9 +484,7 @@ export function insert_course(lines:Array<string>, year:number, semesterIndex:nu
         })
         .exec(function(err, doc) {
           if (!doc) {
-            var msg = year+"년도 "+semesterString+"학기 수강편람이 추가되었습니다.";
-            fcm.send_msg(null, msg, "update_lectures.ts", "new coursebook");
-            NotificationModel.createNotification(null, msg, NotificationType.COURSEBOOK, null, "unused",
+            NotificationModel.createNotification(null, noti_msg, NotificationType.COURSEBOOK, null, "unused",
               function(err) {
                 if (!err) console.log("Notification inserted");
                 callback(err);
@@ -492,6 +492,12 @@ export function insert_course(lines:Array<string>, year:number, semesterIndex:nu
           } else {
             callback(err);
           }
+      });
+    },
+    function (callback) {
+      fcm.send_msg(null, noti_msg, "update_lectures.ts", "new coursebook", function(err, log) {
+        if (err) console.log("fcm msg error - ", err);
+        callback(err);
       });
     }
   ], function (err, results){
