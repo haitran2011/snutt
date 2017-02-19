@@ -125,7 +125,7 @@ describe('API Test', function() {
 
   // Register test user
   before(function(done) {
-    request.post('/api/auth/register_local')
+    request.post('/auth/register_local')
       .send({id:"snutt", password:"abc1234"})
       .expect(200)
       .end(function(err, res){
@@ -146,7 +146,7 @@ describe('API Test', function() {
   });
 
   it('Recent Coursebook', function(done) {
-    request.get('/api/course_books/recent')
+    request.get('/course_books/recent')
       .expect(200)
       .end(function(err, res){
         assert.equal(res.body.semester, 3);
@@ -155,7 +155,7 @@ describe('API Test', function() {
   });
 
   it('Send Feedback', function(done) {
-    request.post('/api/feedback')
+    request.post('/feedback')
       .send({
         "email": "abcd@gmail.com",
         "message": "What is this?"

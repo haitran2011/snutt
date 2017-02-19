@@ -22,7 +22,7 @@ export = function(app, db, request) {
   var old_title;
 
   before(function(done) {
-    request.post('/api/auth/login_local')
+    request.post('/auth/login_local')
       .send({id:"snutt", password:"abc1234"})
       .expect(200)
       .end(function(err, res){
@@ -32,7 +32,7 @@ export = function(app, db, request) {
   });
 
   before(function(done) {
-    request.post('/api/tables/')
+    request.post('/tables/')
       .set('x-access-token', token)
       .send({year:2016, semester:3, title:"MyTimeTable"})
       .expect(200)
@@ -45,7 +45,7 @@ export = function(app, db, request) {
   });
 
   it ('Get timetable list succeeds', function(done){
-    request.get('/api/tables/')
+    request.get('/tables/')
       .set('x-access-token', token)
       .expect(200)
       .end(function(err, res) {
@@ -56,7 +56,7 @@ export = function(app, db, request) {
   });
 
   it ('Get timetable succeeds', function(done){
-    request.get('/api/tables/'+table_id)
+    request.get('/tables/'+table_id)
       .set('x-access-token', token)
       .expect(200)
       .end(function(err, res) {
@@ -69,7 +69,7 @@ export = function(app, db, request) {
   });
 
   it ('Create timetable succeeds', function(done){
-    request.post('/api/tables/')
+    request.post('/tables/')
       .set('x-access-token', token)
       .send({year:2016, semester:3, title:"MyTimeTable2"})
       .expect(200)
@@ -82,7 +82,7 @@ export = function(app, db, request) {
   });
 
   it ('Get timetable by semester succeeds', function(done){
-    request.get('/api/tables/2016/3')
+    request.get('/tables/2016/3')
       .set('x-access-token', token)
       .expect(200)
       .end(function(err, res) {
@@ -93,7 +93,7 @@ export = function(app, db, request) {
   });
 
   it ('New timetable is the most recent table', function(done) {
-    request.get('/api/tables/recent')
+    request.get('/tables/recent')
       .set('x-access-token', token)
       .expect(200)
       .end(function(err, res) {
@@ -104,7 +104,7 @@ export = function(app, db, request) {
   });
 
   it ('Create timetable with the same title should fail', function(done){
-    request.post('/api/tables/')
+    request.post('/tables/')
       .set('x-access-token', token)
       .send({year:2016, semester:3, title:"MyTimeTable"})
       .expect(403)
@@ -115,7 +115,7 @@ export = function(app, db, request) {
   });
 
   it ('Create timetable with the same title but differen semester will succeed', function(done){
-    request.post('/api/tables/')
+    request.post('/tables/')
       .set('x-access-token', token)
       .send({year:2016, semester:1, title:"MyTimeTable"})
       .expect(200)
@@ -128,13 +128,13 @@ export = function(app, db, request) {
   });
 
   it ('Update timetable title succeeds', function(done){
-    request.put('/api/tables/'+table_id)
+    request.put('/tables/'+table_id)
       .set('x-access-token', token)
       .send({title:"MyTimeTable3"})
       .expect(200)
       .end(function(err, res) {
         if(err) done(err);
-        request.get('/api/tables/'+table_id)
+        request.get('/tables/'+table_id)
           .set('x-access-token', token)
           .expect(200)
           .end(function(err, res) {
@@ -145,7 +145,7 @@ export = function(app, db, request) {
   });
 
   it ('Updated timetable is the most recent table', function(done) {
-    request.get('/api/tables/recent')
+    request.get('/tables/recent')
       .set('x-access-token', token)
       .expect(200)
       .end(function(err, res) {
@@ -156,7 +156,7 @@ export = function(app, db, request) {
   });
 
   it ('Table updated_at updated correctly', function(done) {
-    request.get('/api/tables/'+table_id)
+    request.get('/tables/'+table_id)
       .set('x-access-token', token)
       .expect(200)
       .end(function(err, res) {
@@ -168,7 +168,7 @@ export = function(app, db, request) {
   });
 
   it ('Updating timetable with the same title should fail', function(done){
-    request.put('/api/tables/'+table_id)
+    request.put('/tables/'+table_id)
       .set('x-access-token', token)
       .send({title:"MyTimeTable2"})
       .expect(403)
@@ -179,7 +179,7 @@ export = function(app, db, request) {
   });
 
   it ('Search Lecture', function(done) {
-    request.post('/api/search_query/')
+    request.post('/search_query/')
       .set('x-access-token', token)
       .send({title:"공실1", year:2016, semester:3})
       .expect(200)
@@ -192,7 +192,7 @@ export = function(app, db, request) {
   });
 
   it ('Create a user lecture', function(done) {
-    request.post('/api/tables/'+table_id+'/lecture/'+ref_lecture._id)
+    request.post('/tables/'+table_id+'/lecture/'+ref_lecture._id)
       .set('x-access-token', token)
       .expect(200)
       .end(function(err, res) {
@@ -210,7 +210,7 @@ export = function(app, db, request) {
   });
 
   it ('Create a user lecture with wrong semester will fail', function(done) {
-    request.post('/api/tables/'+table_ws_id+'/lecture/'+ref_lecture._id)
+    request.post('/tables/'+table_ws_id+'/lecture/'+ref_lecture._id)
       .set('x-access-token', token)
       .expect(403)
       .end(function(err, res) {
@@ -223,11 +223,11 @@ export = function(app, db, request) {
   });
 
   it ('Copy timetable', function(done) {
-    request.post('/api/tables/'+table_id+'/copy/')
+    request.post('/tables/'+table_id+'/copy/')
       .set('x-access-token', token)
       .expect(200)
       .end(function(err, res) {
-        request.get('/api/tables/'+table_id)
+        request.get('/tables/'+table_id)
           .set('x-access-token', token)
           .expect(200)
           .end(function(err, res) {
@@ -239,12 +239,12 @@ export = function(app, db, request) {
   });
 
   it ('Modify a lecture', function(done) {
-    request.put('/api/tables/'+table_id+'/lecture/'+lecture_id)
+    request.put('/tables/'+table_id+'/lecture/'+lecture_id)
       .set('x-access-token', token)
       .send({course_title:"abcd"})
       .expect(200)
       .end(function(err, res) {
-        request.get('/api/tables/'+table_id)
+        request.get('/tables/'+table_id)
           .set('x-access-token', token)
           .expect(200)
           .end(function(err, res) {
@@ -256,7 +256,7 @@ export = function(app, db, request) {
   });
 
   it ('Reset a lecture', function(done) {
-    request.put('/api/tables/'+table_id+'/lecture/'+lecture_id+'/reset')
+    request.put('/tables/'+table_id+'/lecture/'+lecture_id+'/reset')
       .set('x-access-token', token)
       .expect(200)
       .end(function(err, res) {
@@ -266,7 +266,7 @@ export = function(app, db, request) {
         assert.equal(res.body.lecture_list[0].course_title, old_title, "Timetable applied");
         assert(!res.body.errcode, "No Errcode");
         assert.equal(lecture.course_title, old_title, "Lecture title reset");
-        request.get('/api/tables/'+table_id)
+        request.get('/tables/'+table_id)
           .set('x-access-token', token)
           .expect(200)
           .end(function(err, res) {
@@ -280,7 +280,7 @@ export = function(app, db, request) {
   });
 
   it ('Modifying course/lecture number should fail', function(done) {
-    request.put('/api/tables/'+table_id+'/lecture/'+lecture_id)
+    request.put('/tables/'+table_id+'/lecture/'+lecture_id)
       .set('x-access-token', token)
       .send({course_number: "400.333", title:"abcd"})
       .expect(403)
@@ -288,7 +288,7 @@ export = function(app, db, request) {
         if (err) {
           done(err);
         } else {
-          request.put('/api/tables/' + table_id + '/lecture/' + lecture_id)
+          request.put('/tables/' + table_id + '/lecture/' + lecture_id)
             .set('x-access-token', token)
             .send({lecture_number: "010", title: "abcd"})
             .expect(403)
@@ -301,7 +301,7 @@ export = function(app, db, request) {
   });
 
   it ('Creating a same lecture should fail', function(done) {
-    request.post('/api/tables/'+table_id+'/lecture/'+ref_lecture._id)
+    request.post('/tables/'+table_id+'/lecture/'+ref_lecture._id)
       .set('x-access-token', token)
       .expect(403)
       .end(function(err, res) {
@@ -311,7 +311,7 @@ export = function(app, db, request) {
   });
 
   it ('Delete a lecture', function(done) {
-    request.delete('/api/tables/'+table_id+'/lecture/'+lecture_id)
+    request.delete('/tables/'+table_id+'/lecture/'+lecture_id)
       .set('x-access-token', token)
       .expect(200)
       .end(function(err, res) {
@@ -328,7 +328,7 @@ export = function(app, db, request) {
   });
 
   it ('Create a custom user lecture', function(done) {
-    request.post('/api/tables/'+table_id+'/lecture/')
+    request.post('/tables/'+table_id+'/lecture/')
       .set('x-access-token', token)
       .send({
         "classification": "전선",
@@ -386,7 +386,7 @@ export = function(app, db, request) {
   });
 
   it ('Create a custom user lecture with overlapped time should fail', function(done) {
-    request.post('/api/tables/'+table_id+'/lecture/')
+    request.post('/tables/'+table_id+'/lecture/')
       .set('x-access-token', token)
       .send({
         "classification": "전선",
@@ -428,7 +428,7 @@ export = function(app, db, request) {
   });
 
   it ('Reset a custom lecture should fail', function(done) {
-    request.put('/api/tables/'+table_id+'/lecture/'+lecture._id+'/reset')
+    request.put('/tables/'+table_id+'/lecture/'+lecture._id+'/reset')
       .set('x-access-token', token)
       .expect(403)
       .end(function(err, res) {
@@ -438,7 +438,7 @@ export = function(app, db, request) {
   });
 
   it ('Create a custom user lecture again', function(done) {
-    request.post('/api/tables/'+table_id+'/lecture/')
+    request.post('/tables/'+table_id+'/lecture/')
       .set('x-access-token', token)
       .send({
         "classification": "전선",
@@ -477,7 +477,7 @@ export = function(app, db, request) {
   });
 
   it ('Modifying custom lecture with invalid timemask should fail', function(done) {
-    request.put('/api/tables/'+table_id+'/lecture/'+lecture._id)
+    request.put('/tables/'+table_id+'/lecture/'+lecture._id)
       .set('x-access-token', token)
       .send({"class_time_mask": [
           0,
@@ -501,7 +501,7 @@ export = function(app, db, request) {
   });
 
   it ('Modifying custom lecture so that time is overlapped should fail', function(done) {
-    request.put('/api/tables/'+table_id+'/lecture/'+lecture._id)
+    request.put('/tables/'+table_id+'/lecture/'+lecture._id)
       .set('x-access-token', token)
       .send({"class_time_json": [
           {
@@ -518,7 +518,7 @@ export = function(app, db, request) {
   });
 
   it ('Server handles string class time json', function(done) {
-    request.put('/api/tables/'+table_id+'/lecture/'+lecture._id)
+    request.put('/tables/'+table_id+'/lecture/'+lecture._id)
       .set('x-access-token', token)
       .send({"class_time_json": [
           {
@@ -535,7 +535,7 @@ export = function(app, db, request) {
   });
 
   it ('Create a custom user lecture with identity will fail', function(done) {
-    request.post('/api/tables/'+table_id+'/lecture/')
+    request.post('/tables/'+table_id+'/lecture/')
       .set('x-access-token', token)
       .send({
         "course_number": "0000",

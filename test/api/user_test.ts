@@ -13,7 +13,7 @@ export = function(app, db, request) {
   var token_temp;
 
   it('Log-in succeeds', function(done) {
-    request.post('/api/auth/login_local')
+    request.post('/auth/login_local')
       .send({id:"snutt", password:"abc1234"})
       .expect(200)
       .end(function(err, res){
@@ -24,7 +24,7 @@ export = function(app, db, request) {
   });
 
   it('Token transaction works', function(done) {
-    request.get('/api/user/info')
+    request.get('/user/info')
       .set('x-access-token', token)
       .expect(200)
       .end(function(err, res){
@@ -34,7 +34,7 @@ export = function(app, db, request) {
   });
 
   it('Token transaction fails when no token', function(done) {
-    request.get('/api/user/info')
+    request.get('/user/info')
       .expect(401)
       .end(function(err, res){
         if (err) console.log(res);
@@ -44,7 +44,7 @@ export = function(app, db, request) {
   });
 
   it('Token transaction fails when incorrect token', function(done) {
-    request.get('/api/user/info')
+    request.get('/user/info')
       .set('x-access-token', "abcd")
       .expect(403)
       .end(function(err, res){
@@ -56,7 +56,7 @@ export = function(app, db, request) {
 
   describe('Log-in fails when', function() {
     it('user does not exist', function(done) {
-      request.post('/api/auth/login_local')
+      request.post('/auth/login_local')
         .send({id:"FakeSnutt", password:"abc1234"})
         .expect(403)
         .end(function(err, res){
@@ -65,7 +65,7 @@ export = function(app, db, request) {
         });
     });
     it('wrong password', function(done) {
-      request.post('/api/auth/login_local')
+      request.post('/auth/login_local')
         .send({id:"snutt", password:"abc12345"})
         .expect(403)
         .end(function(err, res){
@@ -76,7 +76,7 @@ export = function(app, db, request) {
   });
 
   it('Register succeeds', function(done) {
-    request.post('/api/auth/register_local')
+    request.post('/auth/register_local')
       .send({id:"snutt2", password:"abc1234f"})
       .expect(200)
       .end(function(err, res){
@@ -86,7 +86,7 @@ export = function(app, db, request) {
   });
 
   it('Log-in registered account', function(done) {
-    request.post('/api/auth/login_local')
+    request.post('/auth/login_local')
       .send({id:"snutt2", password:"abc1234f"})
       .expect(200)
       .end(function(err, res){
@@ -98,7 +98,7 @@ export = function(app, db, request) {
 
   describe('password change', function(){
     it('succeeds', function(done) {
-      request.put('/api/user/password')
+      request.put('/user/password')
         .set('x-access-token', token2)
         .send({new_password:"abc1234*", old_password:"abc1234f"})
         .expect(200)
@@ -110,7 +110,7 @@ export = function(app, db, request) {
     });
 
     it('fails when no old password', function(done) {
-      request.put('/api/user/password')
+      request.put('/user/password')
         .set('x-access-token', token2)
         .send({new_password:"abc1234*"})
         .expect(403)
@@ -121,7 +121,7 @@ export = function(app, db, request) {
     });
 
     it('fails when wrong old password', function(done) {
-      request.put('/api/user/password')
+      request.put('/user/password')
         .set('x-access-token', token2)
         .send({new_password:"abc1234!"})
         .expect(403)
@@ -132,7 +132,7 @@ export = function(app, db, request) {
     });
 
     it('fails when no password', function(done) {
-      request.put('/api/user/password')
+      request.put('/user/password')
         .set('x-access-token', token2)
         .send({old_password:"abc1234*"})
         .expect(403)
@@ -143,7 +143,7 @@ export = function(app, db, request) {
     });
 
     it('fails when password too short', function(done) {
-      request.put('/api/user/password')
+      request.put('/user/password')
         .set('x-access-token', token2)
         .send({new_password:"a1111", old_password:"abc1234*"})
         .expect(403)
@@ -154,7 +154,7 @@ export = function(app, db, request) {
     });
 
     it('fails when password too long', function(done) {
-      request.put('/api/user/password')
+      request.put('/user/password')
         .set('x-access-token', token2)
         .send({new_password:"abcdefghijklmnopqrst1", old_password:"abc1234*"})
         .expect(403)
@@ -165,7 +165,7 @@ export = function(app, db, request) {
     });
 
     it('fails when no password only digits', function(done) {
-      request.put('/api/user/password')
+      request.put('/user/password')
         .set('x-access-token', token2)
         .send({new_password:"111111", old_password:"abc1234*"})
         .expect(403)
@@ -176,7 +176,7 @@ export = function(app, db, request) {
     });
 
     it('fails when no password only letters', function(done) {
-     request.put('/api/user/password')
+     request.put('/user/password')
         .set('x-access-token', token2)
         .send({new_password:"abcdef", old_password:"abc1234*"})
         .expect(403)
@@ -187,7 +187,7 @@ export = function(app, db, request) {
     });
 
     it('fails when no password with whitespace', function(done) {
-      request.put('/api/user/password')
+      request.put('/user/password')
         .set('x-access-token', token2)
         .send({new_password:"sql injection", old_password:"abc1234*"})
         .expect(403)
@@ -199,7 +199,7 @@ export = function(app, db, request) {
   });
 
   it('Auto-generated default timetable', function(done) {
-    request.get('/api/tables/')
+    request.get('/tables/')
       .set('x-access-token', token2)
       .expect(200)
       .end(function(err, res) {
@@ -213,7 +213,7 @@ export = function(app, db, request) {
 
   describe('Register fails when', function() {
     it('No ID', function(done) {
-      request.post('/api/auth/register_local')
+      request.post('/auth/register_local')
         .send({password:"IDontNeedID"})
         .expect(403)
         .end(function(err, res){
@@ -223,7 +223,7 @@ export = function(app, db, request) {
     });
 
     it('Duplicate ID', function(done) {
-      request.post('/api/auth/register_local')
+      request.post('/auth/register_local')
         .send({id:"snutt", password:"abc1234"})
         .expect(403)
         .end(function(err, res){
@@ -233,7 +233,7 @@ export = function(app, db, request) {
     });
 
     it('Weird ID', function(done) {
-      request.post('/api/auth/register_local')
+      request.post('/auth/register_local')
         .send({id:"snutt##*", password:"abc1234"})
         .expect(403)
         .end(function(err, res){
@@ -243,7 +243,7 @@ export = function(app, db, request) {
     });
 
     it('Too short ID', function(done) {
-      request.post('/api/auth/register_local')
+      request.post('/auth/register_local')
         .send({id:"tt", password:"abc1234"})
         .expect(403)
         .end(function(err, res){
@@ -253,7 +253,7 @@ export = function(app, db, request) {
     });
 
     it('Too long ID', function(done) {
-      request.post('/api/auth/register_local')
+      request.post('/auth/register_local')
         .send({id:"ThisIsVeryLongIdYouKnowThatThisIsFreakingLongManVeryLong", password:"abc1234"})
         .expect(403)
         .end(function(err, res){
@@ -263,7 +263,7 @@ export = function(app, db, request) {
     });
 
     it('No password', function(done) {
-      request.post('/api/auth/register_local')
+      request.post('/auth/register_local')
         .send({id:"IDontNeedPw"})
         .expect(403)
         .end(function(err, res){
@@ -273,7 +273,7 @@ export = function(app, db, request) {
     });
 
     it('Password too short', function(done) {
-      request.post('/api/auth/register_local')
+      request.post('/auth/register_local')
         .send({id:"idiot", password:"a1111"})
         .expect(403)
         .end(function(err, res){
@@ -283,7 +283,7 @@ export = function(app, db, request) {
     });
 
     it('Password too long', function(done) {
-      request.post('/api/auth/register_local')
+      request.post('/auth/register_local')
         .send({id:"dumb", password:"abcdefghijklmnopqrst1"})
         .expect(403)
         .end(function(err, res){
@@ -293,7 +293,7 @@ export = function(app, db, request) {
     });
 
     it('Password only digits', function(done) {
-      request.post('/api/auth/register_local')
+      request.post('/auth/register_local')
         .send({id:"numb", password:"111111"})
         .expect(403)
         .end(function(err, res){
@@ -303,7 +303,7 @@ export = function(app, db, request) {
     });
 
     it('Password only letters', function(done) {
-      request.post('/api/auth/register_local')
+      request.post('/auth/register_local')
         .send({id:"numbnumb", password:"abcdef"})
         .expect(403)
         .end(function(err, res){
@@ -313,7 +313,7 @@ export = function(app, db, request) {
     });
 
     it('Password with whitespace', function(done) {
-      request.post('/api/auth/register_local')
+      request.post('/auth/register_local')
         .send({id:"hacker", password:"sql injection"})
         .expect(403)
         .end(function(err, res){
@@ -329,7 +329,7 @@ export = function(app, db, request) {
     var fb_token = "correct";
     var fb_token2 = "correct2";
     before(function(done) {
-      request.post('/api/auth/login_local')
+      request.post('/auth/login_local')
       .send({id:"snutt", password:"abc1234"})
       .expect(200)
       .end(function(err, res){
@@ -340,7 +340,7 @@ export = function(app, db, request) {
     });
 
     before(function(done) {
-      request.post('/api/auth/login_local')
+      request.post('/auth/login_local')
       .send({id:"snutt2", password:"abc1234*"})
       .expect(200)
       .end(function(err, res){
@@ -351,7 +351,7 @@ export = function(app, db, request) {
     });
 
     it('Log-in with facebook fails when no fb_id', function(done) {
-      request.post('/api/auth/login_fb')
+      request.post('/auth/login_fb')
         .expect(400)
         .end(function(err, res){
           if (err) console.log(err);
@@ -360,7 +360,7 @@ export = function(app, db, request) {
     });
 
     it('Attach fails when no fb_id', function(done) {
-      request.post('/api/user/facebook')
+      request.post('/user/facebook')
         .set('x-access-token', token)
         .expect(400)
         .end(function(err, res){
@@ -370,7 +370,7 @@ export = function(app, db, request) {
     });
 
     it('Attach Facebook ID', function(done) {
-      request.post('/api/user/facebook')
+      request.post('/user/facebook')
         .set('x-access-token', token)
         .send({fb_id:"1234", fb_token: fb_token})
         .expect(200)
@@ -382,7 +382,7 @@ export = function(app, db, request) {
     });
 
     it('Attach fails when already attached', function(done) {
-      request.post('/api/user/facebook')
+      request.post('/user/facebook')
         .set('x-access-token', token)
         .send({fb_id:"1234", fb_token: fb_token})
         .expect(403)
@@ -394,7 +394,7 @@ export = function(app, db, request) {
     });
 
     it('Attach fails when already attached fb_id', function(done) {
-      request.post('/api/user/facebook')
+      request.post('/user/facebook')
         .set('x-access-token', token2)
         .send({fb_id:"1234", fb_token: fb_token})
         .expect(403)
@@ -406,7 +406,7 @@ export = function(app, db, request) {
     });
 
     it('Facebook status holds true', function(done) {
-      request.get('/api/user/facebook')
+      request.get('/user/facebook')
         .set('x-access-token', token)
         .expect(200)
         .end(function(err, res){
@@ -418,7 +418,7 @@ export = function(app, db, request) {
     });
 
     it('Log-in with facebook succeeds', function(done) {
-      request.post('/api/auth/login_fb')
+      request.post('/auth/login_fb')
         .send({fb_id:"1234", fb_token: fb_token})
         .expect(200)
         .end(function(err, res){
@@ -429,7 +429,7 @@ export = function(app, db, request) {
     });
 
     it('Detach Facebook ID', function(done) {
-      request.delete('/api/user/facebook')
+      request.delete('/user/facebook')
         .set('x-access-token', token)
         .expect(200)
         .end(function(err, res){
@@ -440,7 +440,7 @@ export = function(app, db, request) {
     });
 
     it('Facebook status holds false', function(done) {
-      request.get('/api/user/facebook')
+      request.get('/user/facebook')
         .set('x-access-token', token)
         .expect(200)
         .end(function(err, res){
@@ -451,7 +451,7 @@ export = function(app, db, request) {
     });
 
     it('Detach fails when already detached', function(done) {
-      request.delete('/api/user/facebook')
+      request.delete('/user/facebook')
         .set('x-access-token', token)
         .expect(403)
         .end(function(err, res){
@@ -462,7 +462,7 @@ export = function(app, db, request) {
     });
 
     it('Auto-register when log-in with not attached fb_id', function(done){
-      request.post('/api/auth/login_fb')
+      request.post('/auth/login_fb')
         .send({fb_id:"12345", fb_token: fb_token2})
         .expect(200)
         .end(function(err, res){
@@ -473,7 +473,7 @@ export = function(app, db, request) {
     });
 
     it('Auto-generated default timetable', function(done) {
-      request.get('/api/tables/')
+      request.get('/tables/')
         .set('x-access-token', token)
         .expect(200)
         .end(function(err, res) {
@@ -486,7 +486,7 @@ export = function(app, db, request) {
     });
 
     it('Accounts with only facebook credential cannot detach FB ID', function(done){
-      request.delete('/api/user/facebook')
+      request.delete('/user/facebook')
         .set('x-access-token', token)
         .expect(403)
         .end(function(err, res){
@@ -497,7 +497,7 @@ export = function(app, db, request) {
     });
 
     it('Log-in fails with incorrect access token', function(done){
-      request.post('/api/auth/login_fb')
+      request.post('/auth/login_fb')
         .send({fb_id:"12345", fb_token: "incorrect"})
         .expect(403)
         .end(function(err, res){
@@ -507,7 +507,7 @@ export = function(app, db, request) {
     });
 
     it('Log-in fails with incorrect fb_id', function(done){
-      request.post('/api/auth/login_fb')
+      request.post('/auth/login_fb')
         .send({fb_id:"123456", fb_token: fb_token2})
         .expect(403)
         .end(function(err, res){
@@ -517,7 +517,7 @@ export = function(app, db, request) {
     });
 
     it('attach local id', function(done){
-      request.post('/api/user/password')
+      request.post('/user/password')
         .set('x-access-token', token)
         .send({id:"snuttfb", password:"abc1234"})
         .expect(200)
@@ -529,7 +529,7 @@ export = function(app, db, request) {
     });
 
     it('log-in with password succeeds', function(done) {
-      request.post('/api/auth/login_local')
+      request.post('/auth/login_local')
         .send({id:"snuttfb", password:"abc1234"})
         .expect(200)
         .end(function(err, res){
@@ -540,7 +540,7 @@ export = function(app, db, request) {
     });
 
     it('log-in with facebook still succeeds', function(done){
-      request.post('/api/auth/login_fb')
+      request.post('/auth/login_fb')
         .send({fb_id:"12345", fb_token: fb_token2})
         .expect(200)
         .end(function(err, res){
@@ -551,7 +551,7 @@ export = function(app, db, request) {
     });
 
     it('attach local id again fails', function(done){
-      request.post('/api/user/password')
+      request.post('/user/password')
         .set('x-access-token', token)
         .send({id:"snuttfb", password:"abc1234"})
         .expect(403)
@@ -566,7 +566,7 @@ export = function(app, db, request) {
   describe('Account Removal', function() {
     var token;
     before(function(done) {
-      request.post('/api/auth/register_local')
+      request.post('/auth/register_local')
         .send({id:"snuttar", password:"abc1234*"})
         .expect(200)
         .end(function(err, res){
@@ -576,7 +576,7 @@ export = function(app, db, request) {
     });
 
     before(function(done) {
-      request.post('/api/auth/login_local')
+      request.post('/auth/login_local')
         .send({id:"snuttar", password:"abc1234*"})
         .expect(200)
         .end(function(err, res){
@@ -587,7 +587,7 @@ export = function(app, db, request) {
     });
 
     it('account remove succeed', function(done) {
-      request.delete('/api/user/account')
+      request.delete('/user/account')
         .set('x-access-token', token)
         .expect(200)
         .end(function(err, res){
@@ -597,7 +597,7 @@ export = function(app, db, request) {
     });
 
     it('token transaction fails with removed account', function(done) {
-      request.get('/api/user/info')
+      request.get('/user/info')
         .set('x-access-token', token)
         .expect(403)
         .end(function(err, res){
@@ -608,7 +608,7 @@ export = function(app, db, request) {
     });
 
     it('log-in with removed account fails', function(done) {
-      request.post('/api/auth/login_local')
+      request.post('/auth/login_local')
         .send({id:"snuttar", password:"abc1234*"})
         .expect(403)
         .end(function(err, res){
@@ -618,7 +618,7 @@ export = function(app, db, request) {
     });
 
     it('re-register with same id succeeds', function(done) {
-      request.post('/api/auth/register_local')
+      request.post('/auth/register_local')
         .send({id:"snuttar", password:"abc1234*"})
         .expect(200)
         .end(function(err, res){
@@ -630,7 +630,7 @@ export = function(app, db, request) {
 
 
   it('Request temporary account', function(done) {
-    request.post('/api/auth/request_temp')
+    request.post('/auth/request_temp')
       .expect(200)
       .end(function(err, res) {
         if (err) console.log(res.body);
@@ -640,7 +640,7 @@ export = function(app, db, request) {
   });
 
   it('Request temporary account again', function(done) {
-    request.post('/api/auth/request_temp')
+    request.post('/auth/request_temp')
       .expect(200)
       .end(function(err, res) {
         if (err) console.log(res.body);
@@ -651,7 +651,7 @@ export = function(app, db, request) {
   });
 
   it ('Temporary account works OK', function(done){
-    request.get('/api/tables/')
+    request.get('/tables/')
       .set('x-access-token', token_temp)
       .expect(200)
       .end(function(err, res) {
@@ -662,7 +662,7 @@ export = function(app, db, request) {
   });
 
   it('attach local id into temp account', function(done){
-    request.post('/api/user/password')
+    request.post('/user/password')
       .set('x-access-token', token_temp)
       .send({id:"snutttemp", password:"abc1234"})
       .expect(200)
@@ -674,7 +674,7 @@ export = function(app, db, request) {
   });
 
   it('Log-in succeeds after attaching local_id into temp account', function(done) {
-    request.post('/api/auth/login_local')
+    request.post('/auth/login_local')
       .send({id:"snutttemp", password:"abc1234"})
       .expect(200)
       .end(function(err, res){
