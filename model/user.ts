@@ -244,11 +244,12 @@ UserSchema.statics.get_fb_or_create = function(name, id, callback) {
           }
         });
         CourseBookModel.getRecent({lean:true}).then(function(coursebook){
-            return TimetableModel.createTimetable({
-              user_id : user._id,
-              year : coursebook.year,
-              semester : coursebook.semester,
-              title : "나의 시간표"});
+          if (coursebook == null) return;
+          return TimetableModel.createTimetable({
+            user_id : user._id,
+            year : coursebook.year,
+            semester : coursebook.semester,
+            title : "나의 시간표"});
         });
         return user.signCredential(callback);
       } else {
