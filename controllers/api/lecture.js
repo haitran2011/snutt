@@ -25,7 +25,7 @@ module.exports = function(params, renderer, request) {
 	} else if (params.type == 'course_number') {
 		var time_query = params.query_text.split(" ");
 		query.course_number = time_query[0];
-		if (time_query.length > 0)
+		if (time_query.length > 1)
 			query.lecture_number = time_query[1];
 	}
 
