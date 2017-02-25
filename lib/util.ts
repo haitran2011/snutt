@@ -173,3 +173,10 @@ export function compareLecture(oldl, newl) {
   if (Object.keys(updated.after).length === 0) updated = null;
   return updated;
 };
+
+var re = /#[0-9A-Fa-f]{6}/g;
+export function isColor(colorString:string):boolean {
+  var result = re.test(colorString);
+  re.lastIndex = 0;
+  return result;
+}

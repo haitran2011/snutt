@@ -354,6 +354,7 @@ export = function(app, db, request) {
       request.post('/auth/login_fb')
         .expect(400)
         .end(function(err, res){
+          assert.equal(res.body.errcode, errcode.NO_FB_ID_OR_TOKEN);
           if (err) console.log(err);
           done(err);
         });
@@ -364,6 +365,7 @@ export = function(app, db, request) {
         .set('x-access-token', token)
         .expect(400)
         .end(function(err, res){
+          assert.equal(res.body.errcode, errcode.NO_FB_ID_OR_TOKEN);
           if (err) console.log(err);
           done(err);
         });
@@ -501,6 +503,7 @@ export = function(app, db, request) {
         .send({fb_id:"12345", fb_token: "incorrect"})
         .expect(403)
         .end(function(err, res){
+          assert.equal(res.body.errcode, errcode.WRONG_FB_TOKEN);
           if (err) console.log(res.body);
           done(err);
         });
@@ -511,6 +514,7 @@ export = function(app, db, request) {
         .send({fb_id:"123456", fb_token: fb_token2})
         .expect(403)
         .end(function(err, res){
+          assert.equal(res.body.errcode, errcode.WRONG_FB_TOKEN);
           if (err) console.log(res.body);
           done(err);
         });

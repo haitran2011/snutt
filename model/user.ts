@@ -94,7 +94,7 @@ UserSchema.methods.updateNotificationCheckDate = function (callback) {
 UserSchema.methods.changeLocalPassword = function(password, callback) {
   if (!password ||
         !password.match(/^(?=.*\d)(?=.*[a-z])\S{6,20}$/i))
-    return callback({errcode: errcode.INVALID_PASSWORD, message: "incorrect password"});
+    return callback(errcode.INVALID_PASSWORD);
 
   var user = this;
   user.credential.local_pw = password;
@@ -108,8 +108,9 @@ UserSchema.methods.changeLocalPassword = function(password, callback) {
 
 UserSchema.methods.attachFBId = function(fb_name, fb_id, callback) {
   if (!fb_id) {
-    callback("null fb_id");
-    return Promise.reject("null fb_id");
+    var err = errcode.NO_FB_ID_OR_TOKEN;
+    if(callback) callback(err);
+    return Promise.reject(err);
   }
   this.credential.fb_name = fb_name;
   this.credential.fb_id = fb_id;
@@ -118,31 +119,18 @@ UserSchema.methods.attachFBId = function(fb_name, fb_id, callback) {
 
 UserSchema.methods.detachFBId = function(callback) {
   if (!this.credential.local_id) {
-    callback("no local ID");
-    return Promise.reject("no local ID");
+    var err = errcode.NOT_LOCAL_ACCOUNT;
+    if(callback) callback(err);
+    return Promise.reject(err);
   }
   this.credential.fb_name = null;
   this.credential.fb_id = null;
   return this.signCredential(callback);
 };
 
-/* Deprecated
-UserSchema.statics.getUserFromCredential = function (credential) {
-  if (!credential) {
-    return new Promise (function(resolve, reject) { reject('Wrong Credential') });
-  }
-  return mongoose.model('User').findOne(
-    {
-      'credential.local_id' : credential.local_id,
-      'credential.local_pw' : credential.local_pw,
-      'credential.fb_id' : credential.fb_id,
-    }).exec();
-};
-*/
-
 UserSchema.statics.getUserFromCredentialHash = function (hash:string) : Promise<UserDocument> {
   if (!hash) {
-    return Promise.reject('Wrong Hash');
+    return Promise.reject(errcode.SERVER_FAULT);
   } else {
     return mongoose.model('User').findOne({
       'credentialHash' : hash,
@@ -155,12 +143,14 @@ UserSchema.statics.getFCMKey = function(id, callback) {
   return mongoose.model('User').findOne({'_id' : id, 'active' : true }, "fcm_key").lean()
     .exec().then(function(user: UserDocument){
       if (!user) {
-        if (callback) callback("no user");
-        return Promise.reject("no user");
+        var err = errcode.USER_NOT_FOUND;
+        if (callback) callback(err);
+        return Promise.reject(err);
       }
       if (!user.fcm_key) {
-        if (callback) callback("no fcmkey");
-        return Promise.reject("no fcmkey");
+        var err = errcode.USER_HAS_NO_FCM_KEY;
+        if (callback) callback(err);
+        return Promise.reject(err);
       }
       if (callback) callback(null, user.fcm_key);
       return Promise.resolve(user.fcm_key);
@@ -171,27 +161,24 @@ UserSchema.statics.getFCMKey = function(id, callback) {
 };
 
 UserSchema.statics.get_local = function(id, callback) {
-  return mongoose.model('User').findOne({'credential.local_id' : id, 'active' : true })
+  return UserModel.findOne({'credential.local_id' : id, 'active' : true })
     .exec(callback);
 };
 
 UserSchema.statics.create_local = function(old_user, id, password, callback) {
-  var User = <_UserModel>mongoose.model('User');
-  var err;
-
   if (!id || !id.match(/^[a-z0-9]{4,32}$/i)) {
-      err = { errcode:errcode.INVALID_ID, message: "incorrect id"};
+      var err = errcode.INVALID_ID;
       if (callback) callback(err);
       return Promise.reject(err);
     }
   if (!password || !password.match(/^(?=.*\d)(?=.*[a-z])\S{6,20}$/i)) {
-      err = { errcode:errcode.INVALID_PASSWORD, message: "incorrect password"};
+      var err = errcode.INVALID_PASSWORD;
       if (callback) callback(err);
       return Promise.reject(err);
     }
 
   if (!old_user) {
-    old_user = new User({
+    old_user = new UserModel({
       credential : {
         local_id : id,
         local_pw : password
@@ -202,18 +189,18 @@ UserSchema.statics.create_local = function(old_user, id, password, callback) {
     old_user.credential.local_pw = password;
   }
 
-  return User.get_local(id, null)
+  return UserModel.get_local(id, null)
     .then(function(user){
       return new Promise(function (resolve, reject) {
         if (user) {
-          err = { errcode:errcode.DUPLICATE_ID, message: "same id already exists" };
+          var err = errcode.DUPLICATE_ID;
           return reject(err);
         }
 
         user = old_user;
 
         bcrypt.hash(user.credential.local_pw, 4, function (err, hash) {
-          if (err) return reject({ errcode:errcode.SERVER_FAULT, message: "server fault"});
+          if (err) return reject(errcode.SERVER_FAULT);
           user.credential.local_pw = hash;
           user.signCredential(callback).then(function(user) {
             resolve(user);
@@ -228,16 +215,15 @@ UserSchema.statics.create_local = function(old_user, id, password, callback) {
 };
 
 UserSchema.statics.get_fb = function(name, id, callback) {
-  return mongoose.model('User').findOne({'credential.fb_id' : id, 'active' : true })
+  return UserModel.findOne({'credential.fb_id' : id, 'active' : true })
     .exec(callback);
 };
 
 UserSchema.statics.get_fb_or_create = function(name, id, callback) {
-  var User = <_UserModel>mongoose.model('User');
-  return User.get_fb(name, id, null)
+  return UserModel.get_fb(name, id, null)
     .then(function(user){
       if (!user) {
-        user = new User({
+        user = new UserModel({
           credential : {
             fb_name: name,
             fb_id: id
@@ -264,8 +250,7 @@ UserSchema.statics.get_fb_or_create = function(name, id, callback) {
 };
 
 UserSchema.statics.create_temp = function(callback?: (err:any, doc:UserDocument)=>void) : Promise<UserDocument> {
-  var User = <_UserModel>mongoose.model('User');
-  var user = new User({
+  var user = new UserModel({
     credential : {
       temp_date: new Date(),
       temp_seed: Math.floor(Math.random() * 1000)

@@ -36,7 +36,7 @@ var NotificationSchema = new mongoose.Schema({
 NotificationSchema.index({user_id: 1, created_at: -1});
 
 NotificationSchema.statics.getNewest = function (user, offset, limit, callback) {
-  return mongoose.model('Notification').where('user_id').in([null, user._id])
+  return NotificationModel.where('user_id').in([null, user._id])
     .sort('-created_at')
     .skip(offset)
     .limit(limit)
@@ -45,7 +45,7 @@ NotificationSchema.statics.getNewest = function (user, offset, limit, callback) 
 };
 
 NotificationSchema.statics.countUnread = function (user, callback) {
-  return mongoose.model('Notification').where('user_id').in([null, user._id])
+  return NotificationModel.where('user_id').in([null, user._id])
     .count({created_at : {$gt : user.notificationCheckedAt}})
     .exec(callback);
 };
@@ -67,8 +67,7 @@ export let Type = {
 // if user_id_array is null or not array, create it as global
 NotificationSchema.statics.createNotification = function (user_id, message, type, detail, fcm_status, callback) {
   if (!type) type = 0;
-  var Notification = <_NotificationModel>mongoose.model('Notification');
-  var notification = new Notification({
+  var notification = new NotificationModel({
     user_id : user_id,
     message : message,
     created_at : Date.now(),

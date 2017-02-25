@@ -270,7 +270,7 @@ function notifyUpdated(year:number, semesterIndex:number, diff:LectureDiff, call
               timetable.update_lecture(timetable.lecture_list[0]._id, updated_lecture.after,
                 function(err, timetable){
                   if (err) {
-                    if (err.errcode == errcode.LECTURE_TIME_OVERLAP) {
+                    if (err == errcode.LECTURE_TIME_OVERLAP) {
                       timetable.delete_lecture(timetable.lecture_list[0]._id, function(err, timetable) {
                         if (err) return callback(err);
                         if (num_removed_per_user[timetable.user_id]) num_removed_per_user[timetable.user_id]++;

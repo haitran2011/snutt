@@ -36,7 +36,12 @@ router.post('/password', function (req, res, next) {
   var user:UserDocument = req["user"];
   if (user.credential.local_id) return res.status(403).json({errcode: errcode.ALREADY_LOCAL_ACCOUNT, message: "already have local id"});
   UserModel.create_local(user, req.body.id, req.body.password, function(err, user){
-    if (err) return res.status(403).json({errcode: err.errcode, message:err.message});
+    if (err) {
+      if (err == errcode.INVALID_PASSWORD)
+        return res.status(403).json({errcode: err, message:"invalid password"});
+      console.log(err);
+      return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"server fault"});
+    }
     res.json({token: user.getCredentialHash()});
   });
 });
@@ -48,9 +53,9 @@ router.put('/password', function (req, res, next) {
     if (err || !isMatch) return res.status(403).json({errcode: errcode.WRONG_PASSWORD, message:"wrong old password"});
     user.changeLocalPassword(req.body.new_password, function(err, user){
         if (err) {
-          if (err.errcode)
-            return res.status(403).json({errcode:err.errcode, message:err.message});
-          else
+            if (err == errcode.INVALID_PASSWORD)
+              return res.status(403).json({errcode: err, message:"invalid password"});
+            console.log(err);
             return res.status(500).json({errcode:errcode.SERVER_FAULT, message:"server fault"});
         }
         res.json({token: user.getCredentialHash()});

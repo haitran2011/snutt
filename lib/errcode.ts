@@ -12,6 +12,7 @@ class ErrorCode {
   static NO_TIMETABLE_TITLE= 0x1007;
   static NO_REGISTRATION_ID = 0x1008;
   static INVALID_TIMEMASK = 0x1009;
+  static INVALID_COLOR = 0x100A;
 
   /* 401, 403 - Authorization-related */
   static WRONG_API_KEY = 0x2000;
@@ -38,12 +39,14 @@ class ErrorCode {
   static NOT_CUSTOM_LECTURE = 0x300B;
   static LECTURE_TIME_OVERLAP = 0x300C;
   static IS_CUSTOM_LECTURE = 0x300D;
+  static USER_HAS_NO_FCM_KEY = 0x300E;
 
   /* 404 - Not found */
   static TAG_NOT_FOUND = 0x4000;
   static TIMETABLE_NOT_FOUND = 0x4001;
   static LECTURE_NOT_FOUND = 0x4002;
   static REF_LECTURE_NOT_FOUND = 0x4003;
+  static USER_NOT_FOUND = 0x4004;
 }
 
 export = ErrorCode;

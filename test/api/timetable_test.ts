@@ -109,7 +109,7 @@ export = function(app, db, request) {
       .send({year:2016, semester:3, title:"MyTimeTable"})
       .expect(403)
       .end(function(err, res) {
-        assert.equal(res.body.message, 'duplicate title');
+        assert.equal(res.body.errcode, errcode.DUPLICATE_TIMETABLE_TITLE);
         done(err);
       });
   });
@@ -214,6 +214,7 @@ export = function(app, db, request) {
       .set('x-access-token', token)
       .expect(403)
       .end(function(err, res) {
+        assert.equal(res.body.errcode, errcode.WRONG_SEMESTER);
         if (err) {
           console.log(res.body);
           done(err);
@@ -285,6 +286,7 @@ export = function(app, db, request) {
       .send({course_number: "400.333", title:"abcd"})
       .expect(403)
       .end(function(err, res) {
+        assert.equal(res.body.errcode, errcode.ATTEMPT_TO_MODIFY_IDENTITY);
         if (err) {
           done(err);
         } else {
@@ -305,6 +307,7 @@ export = function(app, db, request) {
       .set('x-access-token', token)
       .expect(403)
       .end(function(err, res) {
+        assert.equal(res.body.errcode, errcode.DUPLICATE_LECTURE);
         if (err) console.log(res.body);
         done(err);
       });
@@ -348,6 +351,10 @@ export = function(app, db, request) {
          * See to it that the server removes _id fields correctly
          */
         "_id": "56fcd83c041742971bd20a86",
+        "color": {
+          "fg": "#FFFFFF",
+          "bg": "#555555"
+        },
         "class_time_mask": [
           0,
           12,
@@ -423,6 +430,49 @@ export = function(app, db, request) {
       })
       .expect(403)
       .end(function(err, res) {
+        assert.equal(res.body.errcode, errcode.LECTURE_TIME_OVERLAP);
+        done(err);
+      });
+  });
+
+  it ('Create a custom user lecture with invalid color should fail', function(done) {
+    request.post('/tables/'+table_id+'/lecture/')
+      .set('x-access-token', token)
+      .send({
+        "classification": "전선",
+        "department": "컴퓨터공학부",
+        "academic_year": "3학년",
+        "course_title": "My Custom Lecture2",
+        "credit": 1,
+        "class_time": "화(13-1)/목(13-1)",
+        "instructor": "이제희",
+        "quota": 15,
+        "enrollment": 0,
+        "remark": "컴퓨터공학부 및 제2전공생만 수강가능",
+        "category": "",
+        "created_at": "2016-03-31T07:56:44.137Z",
+        "updated_at": "2016-03-31T07:56:44.137Z",
+        "color": {
+          "fg": "rgb(255, 255, 255)",
+          "bg": "#555555"
+        },
+        /*
+         * See to it that the server removes _id fields correctly
+         */
+        "_id": "56fcd83c041742971bd20a86",
+        "class_time_json": [
+          {
+            "day": 2,
+            "start": 1.5,
+            "len": 3,
+            "place": "302-308"
+          }
+        ],
+        "__v": 0
+      })
+      .expect(400)
+      .end(function(err, res) {
+        assert.equal(res.body.errcode, errcode.INVALID_COLOR);
         done(err);
       });
   });
@@ -496,6 +546,21 @@ export = function(app, db, request) {
           }]})
       .expect(400)
       .end(function(err, res) {
+        assert.equal(res.body.errcode, errcode.INVALID_TIMEMASK);
+        done(err);
+      });
+  });
+
+  it ('Modifying custom lecture with invalid color should fail', function(done) {
+    request.put('/tables/'+table_id+'/lecture/'+lecture._id)
+      .set('x-access-token', token)
+      .send({'color': {
+        'fg':'rgb(255, 255, 255)',
+        'bg':'#555555'
+      }})
+      .expect(400)
+      .end(function(err, res) {
+        assert.equal(res.body.errcode, errcode.INVALID_COLOR);
         done(err);
       });
   });
@@ -577,6 +642,7 @@ export = function(app, db, request) {
       })
       .expect(403)
       .end(function(err, res) {
+        assert.equal(res.body.errcode, errcode.NOT_CUSTOM_LECTURE);
         done(err);
       });
   });

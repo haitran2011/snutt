@@ -48,7 +48,14 @@ router.post('/login_local', function(req, res, next) {
 router.post('/register_local', function (req, res, next) {
   UserModel.create_local(null, req.body.id, req.body.password, function(err, user) {
     if (err) {
-      return res.status(403).json({errcode:err.errcode, message:err.message});
+      if (err == errcode.INVALID_ID)
+        return res.status(403).json({errcode:err, message:"invalid id"});
+      if (err == errcode.DUPLICATE_ID)
+        return res.status(403).json({errcode:err, message:"duplicate id"});
+      if (err == errcode.INVALID_PASSWORD)
+        return res.status(403).json({errcode:err, message:"invalid password"});
+      console.log(err);
+      return res.status(500).json({errcode:errcode.SERVER_FAULT, message:"server fault"});
     }
     CourseBookModel.getRecent({lean:true}).then(function(coursebook){
       return TimetableModel.createTimetable({

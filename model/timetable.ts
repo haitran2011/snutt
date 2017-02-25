@@ -51,7 +51,7 @@ TimetableSchema.pre('save', function(next) {
 
 TimetableSchema.methods.checkDuplicate = function(next) {
   (function (timetable) {
-    mongoose.model('Timetable').findOne(
+    TimetableModel.findOne(
       {
         user_id : timetable.user_id,
         year : timetable.year,
@@ -60,7 +60,7 @@ TimetableSchema.methods.checkDuplicate = function(next) {
       }, function (err, doc) {
         if (err) return next(err);
         if (doc && !doc._id.equals(timetable._id)) {
-          var new_err = new Error('A timetable with the same title already exists');
+          var new_err = errcode.DUPLICATE_TIMETABLE_TITLE;
           return next(new_err);
         }
         return next(null);
@@ -74,39 +74,38 @@ TimetableSchema.methods.checkDuplicate = function(next) {
  * @flags {lean}
  */
 TimetableSchema.statics.getTimetables = function(user_id, flags, callback) {
-  var query = mongoose.model("Timetable").where('user_id', user_id).select('year semester title _id updated_at');
+  var query = TimetableModel.where('user_id', user_id).select('year semester title _id updated_at');
   if (flags && flags.lean === true) query = query.lean();
   return query.exec(callback);
 };
 
 TimetableSchema.statics.getTimetablesBySemester = function(user_id, year, semester, flags, callback) {
-  var query = mongoose.model("Timetable").find({'user_id': user_id, 'year': year, 'semester': semester});
+  var query = TimetableModel.find({'user_id': user_id, 'year': year, 'semester': semester});
   if (flags && flags.lean === true) query = query.lean();
   return query.exec(callback);
 };
 
 TimetableSchema.statics.getTimetable = function(user_id, timetable_id, flags, callback) {
-  var query = mongoose.model("Timetable").findOne({'user_id': user_id, '_id' : timetable_id});
+  var query = TimetableModel.findOne({'user_id': user_id, '_id' : timetable_id});
   if (flags && flags.lean === true) query = query.lean();
   return query.exec(callback);
 };
 
 TimetableSchema.statics.getRecent = function(user_id, flags, callback) {
-  var query = mongoose.model("Timetable").findOne({'user_id': user_id}).sort({updated_at : -1});
+  var query = TimetableModel.findOne({'user_id': user_id}).sort({updated_at : -1});
   if (flags && flags.lean === true) query = query.lean();
   return query.exec(callback);
 };
 
 TimetableSchema.statics.createTimetable = function(params, callback) {
-  var Timetable = <_TimetableModel>mongoose.model("Timetable");
   if (!callback) callback = function(){};
   return new Promise(function(resolve, reject) {
     if (!params || !params.user_id || !params.year || !params.semester || !params.title) {
-      let err = "not enough parameter";
+      let err = errcode.NOT_ENOUGH_TO_CREATE_TIMETABLE;
       callback(err);
       return reject(err);
     }
-    var timetable = new Timetable({
+    var timetable = new TimetableModel({
       user_id : params.user_id,
       year : params.year,
       semester : params.semester,
@@ -115,13 +114,17 @@ TimetableSchema.statics.createTimetable = function(params, callback) {
     });
     timetable.checkDuplicate(function (err) {
       if (err) {
-        let err = "duplicate title";
+        let err = errcode.DUPLICATE_TIMETABLE_TITLE;
         callback(err);
         return reject(err);
       }
       timetable.save(function(err, doc) {
-        if(err || !doc) {
-          let err = "insert timetable failed";
+        if(err) {
+          callback(err);
+          return reject(err);
+        }
+        if(!doc) {
+          let err = errcode.SERVER_FAULT;
           callback(err);
           return reject(err);
         }
@@ -140,7 +143,7 @@ TimetableSchema.statics.createTimetable = function(params, callback) {
  */
 TimetableSchema.methods.copy = function(new_title, next) {
   if (new_title == this.title) {
-    var new_err = new Error('A timetable with the same title already exists');
+    var new_err = errcode.DUPLICATE_TIMETABLE_TITLE;
     next(new_err);
   } else {
     /**
@@ -165,50 +168,34 @@ TimetableSchema.methods.copy = function(new_title, next) {
 TimetableSchema.methods.add_lecture = function(lecture:UserLectureDocument, next):Promise<TimetableDocument> {
   for (var i = 0; i<this.lecture_list.length; i++){
     if (lecture.is_equal(this.lecture_list[i])) {
-      var err = {errcode: errcode.DUPLICATE_LECTURE, message: "duplicate lecture"};
-      next(err);
+      var err = errcode.DUPLICATE_LECTURE;
+      if(next) next(err);
       return Promise.reject(err);
     }
   }
   if (!this.validateLectureTime(lecture._id, lecture)) {
-    var err = {errcode: errcode.LECTURE_TIME_OVERLAP, message: "lecture time overlap"};;
-    next(err);
+    var err = errcode.LECTURE_TIME_OVERLAP;
+    if(next) next(err);
     return Promise.reject(err);
   }
+
+  if (!UserLectureModel.validate_color(lecture)) {
+    var err = errcode.INVALID_COLOR;
+    if(next) next(err);
+    return Promise.reject(err);
+  }
+
   lecture.created_at = new Date();
   lecture.updated_at = new Date();
   this.lecture_list.push(lecture);
   return this.save(next);
 };
 
-/**
- * Timetable.add_lectures(lectures, callback)
- * param =======================================
- * lectures : an array of lectures to merge.
- *            If a same lecture already exist, skip it.
- * callback : callback for timetable.save()
- */
-/*
-TimetableSchema.methods.add_lectures = function(lectures, next) {
-  for (var i = 0; i<lectures.length; i++){
-    var is_exist = false;
-    for (var j = 0; j<this.lecture_list.length; j++){
-      if (lectures[i].is_equal(this.lecture_list[j])) {
-        is_exist = true;
-        break;
-      }
-    }
-    if (!is_exist) this.lecture_list.push(lectures);
-  }
-  this.save(next);
-};
-*/
-
 TimetableSchema.statics.update_lecture = function(timetable_id, lecture_id, lecture_raw, cb):Promise<TimetableDocument> {
   return TimetableModel.findOne({'_id': timetable_id}).exec().then(function(timetable){
     if (timetable) return timetable.update_lecture(lecture_id, lecture_raw, cb);
     else {
-      var err = { errcode: errcode.TIMETABLE_NOT_FOUND, message: "timetable not found" };
+      var err = errcode.TIMETABLE_NOT_FOUND;
       if(cb) cb(err);
       return Promise.reject(err);
     }
@@ -227,7 +214,7 @@ TimetableSchema.statics.update_lecture = function(timetable_id, lecture_id, lect
  */
 TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, cb): Promise<TimetableDocument> {
   if (lecture_raw.course_number || lecture_raw.lecture_number) {
-    var err = {errcode: errcode.ATTEMPT_TO_MODIFY_IDENTITY, message: "modifying identities forbidden"};
+    var err = errcode.ATTEMPT_TO_MODIFY_IDENTITY;
     if(cb) cb(err);
     return Promise.reject(err);
   }
@@ -237,7 +224,13 @@ TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, cb): 
   }
 
   if (lecture_raw['class_time_mask'] && !this.validateLectureTime(lecture_id, lecture_raw)) {
-    var err = {errcode: errcode.LECTURE_TIME_OVERLAP, message: "lecture time overlap"};
+    var err = errcode.LECTURE_TIME_OVERLAP;
+    if(cb) cb(err);
+    return Promise.reject(err);
+  }
+
+  if (lecture_raw['color'] && !UserLectureModel.validate_color(lecture_raw)) {
+    var err = errcode.INVALID_COLOR;
     if(cb) cb(err);
     return Promise.reject(err);
   }
@@ -252,8 +245,8 @@ TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, cb): 
 
   var promise = TimetableModel.findOneAndUpdate({ "_id" : this._id, "lecture_list._id" : lecture_id},
     {$set : update_set}, {new: true}).exec().then(function(doc){
-      if (!doc) return Promise.reject({errcode: errcode.TIMETABLE_NOT_FOUND, message: "timetable not found"});
-      else if (!doc.lecture_list.id(lecture_id)) return Promise.reject({errcode: errcode.LECTURE_NOT_FOUND, message: "lecture not found"})
+      if (!doc) return Promise.reject(errcode.TIMETABLE_NOT_FOUND);
+      else if (!doc.lecture_list.id(lecture_id)) return Promise.reject(errcode.LECTURE_NOT_FOUND)
       return Promise.resolve(doc);
     });
 

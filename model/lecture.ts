@@ -43,6 +43,10 @@ export interface UserLectureDocument extends BaseLectureDocument {
   color: {fg : string, bg : string}
 }
 
+export interface _UserLectureModel extends mongoose.Model<UserLectureDocument> {
+  validate_color(lecture:any):boolean;
+}
+
 function BaseSchema(add){
   var schema = new mongoose.Schema({
     classification: String,                           // 교과 구분
@@ -90,6 +94,13 @@ function BaseSchema(add){
     return lecture1.is_equal(lecture2);
   };
 
+  schema.statics.validate_color = function(lecture:any):boolean {
+    if (!lecture.color) return true;
+    var resultFg = !lecture.color.fg || Util.isColor(lecture.color.fg);
+    var resultBg = !lecture.color.bg || Util.isColor(lecture.color.bg);
+    return resultFg && resultBg;
+  }
+
   schema.index({ year: 1, semester: 1, course_number: 1, lecture_number: 1});
 
   if (add) {
@@ -106,7 +117,7 @@ export let LectureModel = mongoose.model<LectureDocument>('Lecture', BaseSchema(
   lecture_number: { type: String, required: true},  // 강좌 번호
 }));
 
-export let UserLectureModel = mongoose.model<UserLectureDocument>('UserLecture', BaseSchema({
+export let UserLectureModel = <_UserLectureModel>mongoose.model<UserLectureDocument>('UserLecture', BaseSchema({
   course_number: String,
   lecture_number: String,
   created_at: Date,
