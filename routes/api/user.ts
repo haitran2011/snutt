@@ -118,10 +118,34 @@ router.post('/device', function (req, res, next) {
   });
 });
 
+router.post('/device/:registration_id', function (req, res, next) {
+  var user:UserDocument = req["user"];
+  var promise = fcm.create_device(user, req.params.registration_id);
+
+  promise.then(function(status){
+    return res.json({message:"ok"});
+  }).catch(function(err){
+    console.log(err);
+    res.status(500).json({errcode: errcode.SERVER_FAULT, message:err});
+  });
+});
+
 router.delete('/device', function (req, res, next) {
   var user:UserDocument = req["user"];
   if (!req.body.registration_id) return res.status(400).json({errcode: errcode.NO_REGISTRATION_ID, message: "no registration_id"});
   var promise = fcm.remove_device(user, req.body.registration_id);
+
+  promise.then(function(status){
+    return res.json({message:"ok"});
+  }).catch(function(err){
+    console.log(err);
+    res.status(500).json({errcode: errcode.SERVER_FAULT, message:err});
+  });
+});
+
+router.delete('/device/:registration_id', function (req, res, next) {
+  var user:UserDocument = req["user"];
+  var promise = fcm.remove_device(user, req.params.registration_id);
 
   promise.then(function(status){
     return res.json({message:"ok"});
