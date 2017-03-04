@@ -9,9 +9,9 @@ export interface CourseBookDocument extends mongoose.Document{
 }
 
 interface _CourseBookModel extends mongoose.Model<CourseBookDocument>{
-  getAll(flags, cb?:(err, docs:mongoose.Types.DocumentArray<CourseBookDocument>)=>void)
+  getAll(flags?, cb?:(err, docs:mongoose.Types.DocumentArray<CourseBookDocument>)=>void)
       :Promise<mongoose.Types.DocumentArray<CourseBookDocument>>;
-  getRecent(flags, cb?:(err, doc:CourseBookDocument)=>void):Promise<CourseBookDocument>;
+  getRecent(flags?, cb?:(err, doc:CourseBookDocument)=>void):Promise<CourseBookDocument>;
 }
 
 var CourseBookSchema = new mongoose.Schema({
