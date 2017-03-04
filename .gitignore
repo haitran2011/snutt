@@ -5,5 +5,7 @@ node_modules
 .idea
 *.log
 data/xls/*
+data/txt/*
+data/data.zip
 *.db
 dashboard/src/samples/
