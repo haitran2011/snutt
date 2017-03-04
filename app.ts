@@ -24,10 +24,10 @@ if (app.get('env') !== 'mocha')
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
 // only for development server
 app.use(cors());
 
+app.use('/asset', express.static('asset'));
 app.use('/', routes);
 app.engine('.html', require('ejs').renderFile);
 app.set('views', './views')
