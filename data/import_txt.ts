@@ -7,7 +7,7 @@ export function import_txt(year, semester):Promise<void> {
 		fs.readFile(datapath, function (err, data) {
 			if (err) {
 				console.log('DATA LOAD FAILED: ' + year + '_' + semester);
-				reject(err);
+				return reject(err);
 			}
 			console.log("Importing " + year + " " + semester);
 
@@ -36,5 +36,9 @@ if (!module.parent) {
 	}
 	var year = Number(process.argv[2]);
 	var semester = process.argv[3];
-	import_txt(year, semester);
+	import_txt(year, semester).then(function(){
+		process.exit();
+	}).catch(function(){
+		process.exit(1);
+	});
 }

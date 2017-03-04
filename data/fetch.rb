@@ -6,6 +6,7 @@ require 'net/http'
 require 'roo'
 require 'json'
 require 'roo-xls'
+require 'matrix'
 
 if ARGV.length != 2 then
   puts "Argument error !"
@@ -72,11 +73,12 @@ when 'W'
 end
 data = "srchCond=1&pageNo=1&workType=EX&sortKey=&sortOrder=&srchOpenSchyy=#{year}&currSchyy=#{year}&srchOpenShtm=#{shtm}&srchCptnCorsFg=&srchOpenShyr=&srchSbjtCd=&srchSbjtNm=&srchOpenUpSbjtFldCd=&srchOpenSbjtFldCd=&srchOpenUpDeptCd=&srchOpenDeptCd=&srchOpenMjCd=&srchOpenSubmattFgCd=&srchOpenPntMin=&srchOpenPntMax=&srchCamp=&srchBdNo=&srchProfNm=&srchTlsnAplyCapaCntMin=&srchTlsnAplyCapaCntMax=&srchTlsnRcntMin=&srchTlsnRcntMax=&srchOpenSbjtTmNm=&srchOpenSbjtTm=&srchOpenSbjtTmVal=&srchLsnProgType=&srchMrksGvMthd="
 res, data = http.post(path, data)
-
-open(xls_filename,"w") do |file|
-  file.print(res.body)
+if res.code == '200'
+  open(xls_filename,"w") do |file|
+    file.print(res.body)
+  end
+  puts "download complete : #{year}_#{semester}.xls"
 end
-puts "download complete : #{year}_#{semester}.xls"
 
 #download coursebook for each type of general courses
 general_types_to_code.keys.each do |type|
@@ -84,10 +86,12 @@ general_types_to_code.keys.each do |type|
   data = "srchCond=1&pageNo=1&workType=EX&sortKey=&sortOrder=&srchOpenSchyy=#{year}&currSchyy=#{year}&srchOpenShtm=#{shtm}&srchCptnCorsFg=&srchOpenShyr=&srchSbjtCd=&srchSbjtNm=&srchOpenUpSbjtFldCd=&srchOpenSbjtFldCd=#{general_types_to_code[type]}&srchOpenUpDeptCd=&srchOpenDeptCd=&srchOpenMjCd=&srchOpenSubmattFgCd=&srchOpenPntMin=&srchOpenPntMax=&srchCamp=&srchBdNo=&srchProfNm=&srchTlsnAplyCapaCntMin=&srchTlsnAplyCapaCntMax=&srchTlsnRcntMin=&srchTlsnRcntMax=&srchOpenSbjtTmNm=&srchOpenSbjtTm=&srchOpenSbjtTmVal=&srchLsnProgType=&srchMrksGvMthd="
 
   res, data = http.post(path, data)
-  open(xls_filename_typed,"w") do |file|
-    file.print(res.body)
+  if res.code == '200'
+    open(xls_filename_typed,"w") do |file|
+      file.print(res.body)
+    end
+    puts "download complete : #{year}_#{semester}_#{type}.xls"
   end
-  puts "download complete : #{year}_#{semester}_#{type}.xls"
 end
 
 
@@ -156,8 +160,13 @@ end
 
 #convert
 puts "start converting from xls to txt"
-excel = Roo::Excel.new(xls_filename);
-m = excel.to_matrix
+begin
+  excel = Roo::Excel.new(xls_filename);
+  m = excel.to_matrix
+rescue IOError
+  puts "main xls not found"
+  m = Matrix.empty
+end
 
 open("#{txt_filename}.tmp", "w") do |file|
   file.puts "#{year}/#{semester}"
@@ -178,7 +187,7 @@ open("#{txt_filename}.tmp", "w") do |file|
       excel = Roo::Excel.new(xls_filename_typed);
       m = excel.to_matrix
     # during summer/winter semester, some types of general courses are not provided
-    rescue RuntimeError
+    rescue RuntimeError, IOError
       next
     end
     puts "putting #{type}"

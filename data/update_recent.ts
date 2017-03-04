@@ -1,7 +1,7 @@
 const db = require('../db');
-import {CourseBookModel, CourseBookDocument} from '../model/courseBook';
+import {CourseBookModel} from '../model/courseBook';
 import {import_txt} from './import_txt';
-import cp = require('child_process');
+import * as cp from "child_process";
 
 function semesterToString(semester:number):string {
   switch(semester) {
@@ -18,14 +18,14 @@ function semesterToString(semester:number):string {
   }
 }
 
-async function getUpdateCandidate():Promise<any[]> {
+async function getUpdateCandidate():Promise<[[number, string]]> {
   try {
-    var recentCoursebook = await CourseBookModel.getRecent();
-    var year = recentCoursebook.year;
-    var semester = recentCoursebook.semester;
+    let recentCoursebook = await CourseBookModel.getRecent();
+    let year = recentCoursebook.year;
+    let semester = recentCoursebook.semester;
 
-    var nextYear = year;
-    var nextSemester = semester + 1;
+    let nextYear = year;
+    let nextSemester = semester + 1;
     if (nextSemester > 4) {
       nextYear++;
       nextSemester = 0;
@@ -41,7 +41,9 @@ async function getUpdateCandidate():Promise<any[]> {
 
 function fetch_sugang_snu(year:number, semester:string):Promise<void> {
   return new Promise<void>(function(resolve, reject) {
-    let child = cp.spawn('ruby', ['fetch.rb', year.toString(), semester]);
+    let child = cp.spawn('ruby', ['fetch.rb', year.toString(), semester], {
+      cwd: __dirname
+    });
 
     child.stdout.on('data', (data) => {
       process.stdout.write(`${data}`);
@@ -61,11 +63,13 @@ function fetch_sugang_snu(year:number, semester:string):Promise<void> {
 }
 
 async function main() {
-  var cands = await getUpdateCandidate();
+  let cands = await getUpdateCandidate();
   for (let i=0; i<cands.length; i++) {
+    let year = cands[i][0];
+    let semester = cands[i][1];
     try {
-      await fetch_sugang_snu(cands[i][0], cands[i][1]);
-      await import_txt(cands[i][0], cands[i][1]);
+      await fetch_sugang_snu(year, semester);
+      await import_txt(year, semester);
     } catch (err) {
       console.error(err);
       console.log("Failed");

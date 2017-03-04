@@ -245,65 +245,56 @@ function findTableWithLecture(year:number, semesterIndex:number, course_number:s
   }, cb).exec();
 }
 
-function notifyUpdated(year:number, semesterIndex:number, diff:LectureDiff, callback?):Promise<void> {
+async function notifyUpdated(year:number, semesterIndex:number, diff:LectureDiff):Promise<void> {
   var num_updated_per_user: {[key: string]: number} = {}
   var num_removed_per_user: {[key: string]: number} = {}
 
   var promise = new Promise<void>(function(resolve, reject) {
     async.series([
       function (callback) {
-        async.each(diff.updated, function(updated_lecture, callback) {
-          findTableWithLecture(year, semesterIndex, updated_lecture.course_number, updated_lecture.lecture_number,
-          function(err, timetables) {
-            async.each(timetables, function(timetable, callback) {
-                if (timetable.lecture_list.length != 1) {
-                  return callback({
-                    message: "Lecture update error",
-                    timetable_id: timetable,
-                    lecture: updated_lecture
-                  });
-                }
-                var noti_detail = {
-                  timetable_id : timetable._id,
-                  lecture : updated_lecture
-                };
-
-                timetable.update_lecture(timetable.lecture_list[0]._id, updated_lecture.after,
-                  function(err, timetable){
-                    if (err) {
-                      if (err == errcode.LECTURE_TIME_OVERLAP) {
-                        timetable.delete_lecture(timetable.lecture_list[0]._id, function(err, timetable) {
-                          if (err) return callback(err);
-                          if (num_removed_per_user[timetable.user_id]) num_removed_per_user[timetable.user_id]++;
-                          else num_removed_per_user[timetable.user_id] = 1; 
-                          NotificationModel.createNotification(
-                            timetable.user_id,
-                            "'"+timetable.title+"' 시간표의 '"+updated_lecture.course_title+"' 강의가 업데이트되었으나, 시간표가 겹쳐 삭제되었습니다.",
-                            NotificationType.LECTURE_REMOVE,
-                            noti_detail,
-                            "unused",
-                            function(err) {
-                              callback(err);
-                            });
-                        });
-                        return callback();
-                      } else return callback(err);
-                    }
-                    if (num_updated_per_user[timetable.user_id]) num_updated_per_user[timetable.user_id]++;
-                    else num_updated_per_user[timetable.user_id] = 1; 
-                    NotificationModel.createNotification(
-                      timetable.user_id,
-                      "'"+timetable.title+"' 시간표의 '"+updated_lecture.course_title+"' 강의가 업데이트 되었습니다.",
-                      NotificationType.LECTURE_UPDATE,
-                      noti_detail,
-                      "unused",
-                      function(err) {
-                        callback(err);
-                      });
-                });
-              }, function(err) {
-                callback(err);
+        async.each(diff.updated, async function(updated_lecture, callback) {
+          let timetables = await findTableWithLecture(
+            year, semesterIndex, updated_lecture.course_number, updated_lecture.lecture_number);
+          async.each(timetables, async function(timetable, callback) {
+            if (timetable.lecture_list.length != 1) {
+              return callback({
+                message: "Lecture update error",
+                timetable_id: timetable,
+                lecture: updated_lecture
               });
+            }
+            var noti_detail = {
+              timetable_id : timetable._id,
+              lecture : updated_lecture
+            };
+
+            try {
+              await timetable.update_lecture(timetable.lecture_list[0]._id, updated_lecture.after);
+              if (num_updated_per_user[timetable.user_id]) num_updated_per_user[timetable.user_id]++;
+              else num_updated_per_user[timetable.user_id] = 1; 
+              await NotificationModel.createNotification(
+                timetable.user_id,
+                "'"+timetable.title+"' 시간표의 '"+updated_lecture.course_title+"' 강의가 업데이트 되었습니다.",
+                NotificationType.LECTURE_UPDATE,
+                noti_detail,
+                "unused");
+            } catch (err) {
+              if (err == errcode.LECTURE_TIME_OVERLAP) {
+                await timetable.delete_lecture(timetable.lecture_list[0]._id);
+                if (num_removed_per_user[timetable.user_id]) num_removed_per_user[timetable.user_id]++;
+                else num_removed_per_user[timetable.user_id] = 1; 
+                await NotificationModel.createNotification(
+                  timetable.user_id,
+                  "'"+timetable.title+"' 시간표의 '"+updated_lecture.course_title+
+                    "' 강의가 업데이트되었으나, 시간표가 겹쳐 삭제되었습니다.",
+                  NotificationType.LECTURE_REMOVE,
+                  noti_detail,
+                  "unused");
+              } else throw err;
+            }
+            callback();
+          }, function(err) {
+            callback(err);
           });
         }, function(err){
           callback(err);
@@ -311,39 +302,36 @@ function notifyUpdated(year:number, semesterIndex:number, diff:LectureDiff, call
       },
 
       function (callback) {
-        async.each(diff.removed, function(removed_lecture, callback) {
-          findTableWithLecture(year, semesterIndex, removed_lecture.course_number, removed_lecture.lecture_number,
-          function(err, timetables) {
-              async.each(timetables, function(timetable, callback) {
-                if (timetable.lecture_list.length != 1) {
-                  return callback({
-                    message: "Lecture update error",
-                    timetable_id: timetable,
-                    lecture: removed_lecture
-                  });
-                }
-                var noti_detail = {
-                  timetable_id : timetable._id,
-                  lecture : removed_lecture
-                };
-                timetable.delete_lecture(timetable.lecture_list[0]._id, function(err, timetable) {
-                  if (err) return callback(err);
-                  if (num_removed_per_user[timetable.user_id]) num_removed_per_user[timetable.user_id]++;
-                  else num_removed_per_user[timetable.user_id] = 1; 
-                  NotificationModel.createNotification(
-                    timetable.user_id,
-                    "'"+timetable.title+"' 시간표의 '"+removed_lecture.course_title+"' 강의가 폐강되어 삭제되었습니다.",
-                    NotificationType.LECTURE_REMOVE,
-                    noti_detail,
-                    "unused",
-                    function(err) {
-                      callback(err);
-                    });
-                });
-              }, function(err) {
-                callback(err);
+        async.each(diff.removed, async function(removed_lecture, callback) {
+          let timetables = await findTableWithLecture(
+            year, semesterIndex, removed_lecture.course_number, removed_lecture.lecture_number);
+          
+          async.each(timetables, async function(timetable, callback) {
+            if (timetable.lecture_list.length != 1) {
+              return callback({
+                message: "Lecture update error",
+                timetable_id: timetable,
+                lecture: removed_lecture
               });
-            });
+            }
+            var noti_detail = {
+              timetable_id : timetable._id,
+              lecture : removed_lecture
+            };
+            
+            await timetable.delete_lecture(timetable.lecture_list[0]._id);
+            if (num_removed_per_user[timetable.user_id]) num_removed_per_user[timetable.user_id]++;
+            else num_removed_per_user[timetable.user_id] = 1; 
+            await NotificationModel.createNotification(
+              timetable.user_id,
+              "'"+timetable.title+"' 시간표의 '"+removed_lecture.course_title+"' 강의가 폐강되어 삭제되었습니다.",
+              NotificationType.LECTURE_REMOVE,
+              noti_detail,
+              "unused");
+            callback();
+          }, function(err) {
+            callback(err);
+          });
         }, function(err){
           callback(err);
         });
@@ -374,7 +362,6 @@ function notifyUpdated(year:number, semesterIndex:number, diff:LectureDiff, call
           continue;
         fcm.send_msg(users[i], msg, "update_lectures.ts", "lecture updated");
       }
-      if (callback) callback(err);
       if (err) return reject(err);
       return resolve();
     });
@@ -398,6 +385,12 @@ export async function insert_course(lines:Array<string>, year:number, semesterIn
   new_lectures = result.new_lectures;
   tags = result.tags;
   console.log("\nLoad complete with "+new_lectures.length+" courses");
+
+  if (new_lectures.length == 0) {
+    console.log("No lectures.");
+    next();
+    return;
+  }
 
   console.log ("Pulling existing lectures...");
   old_lectures = <LectureDocument[]>await LectureModel.find({year : year, semester : semesterIndex}).lean().exec();
