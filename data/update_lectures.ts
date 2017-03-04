@@ -408,6 +408,7 @@ export async function insert_course(lines:Array<string>, year:number, semesterIn
       diff.created.length === 0 &&
       diff.removed.length === 0) {
     console.log("Nothing updated.");
+    next();
     return;
   }
 

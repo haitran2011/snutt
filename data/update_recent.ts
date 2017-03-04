@@ -44,11 +44,11 @@ function fetch_sugang_snu(year:number, semester:string):Promise<void> {
     let child = cp.spawn('ruby', ['fetch.rb', year.toString(), semester]);
 
     child.stdout.on('data', (data) => {
-      console.log(`${data}`);
+      process.stdout.write(`${data}`);
     });
 
     child.stderr.on('data', (data) => {
-      console.error(`${data}`);
+      process.stderr.write(`${data}`);
     });
 
     child.on('close', (code) => {
@@ -64,9 +64,7 @@ async function main() {
   var cands = await getUpdateCandidate();
   for (let i=0; i<cands.length; i++) {
     try {
-      console.log("Fetching", cands[i][0], cands[i][1])
       await fetch_sugang_snu(cands[i][0], cands[i][1]);
-      console.log("Importing", cands[i][0], cands[i][1])
       await import_txt(cands[i][0], cands[i][1]);
     } catch (err) {
       console.error(err);

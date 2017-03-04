@@ -23,6 +23,9 @@ elsif !["1", "2", "S", "W"].include?(semester) then
   exit!
 end
 
+$stdout.sync = true
+$stderr.sync = true
+
 general_types_to_code =
 {
 # 학문의 기초
