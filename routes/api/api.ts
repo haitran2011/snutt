@@ -26,6 +26,7 @@ var api_info;
  */
 router.use(function(req, res, next) {
   var token = req.headers['x-access-apikey'];
+  res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
   apiKey.validateKey(token).then(function(value){
     api_info = value;
     next();
@@ -119,6 +120,7 @@ router.use(function(req, res, next) {
   UserModel.getUserFromCredentialHash(token).then(function(user){
     if (!user)
       return res.status(403).json({ errcode: errcode.WRONG_USER_TOKEN, message: 'Failed to authenticate token.' });
+    res.setHeader('Cache-Control', 'private, max-age=0, must-revalidate');
     req["user"] = user;
     next();
   }, function (err) {

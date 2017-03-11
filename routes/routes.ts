@@ -3,7 +3,10 @@ var router = express.Router();
 
 import apiRouter = require('./api/api');
 
-//router.use('/api', apiRouter);
+router.use(function(req, res, next) {
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  next();
+});
 
 router.get('/terms_of_service', function(req, res, next) {
   res.render('terms_of_service.html');
