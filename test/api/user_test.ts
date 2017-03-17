@@ -77,7 +77,7 @@ export = function(app, db, request) {
 
   it('Register succeeds', function(done) {
     request.post('/auth/register_local')
-      .send({id:"snutt2", password:"abc1234f"})
+      .send({id:"snutt2", password:"abc1234f", email:"abcd@snutt.com"})
       .expect(200)
       .end(function(err, res){
         assert.equal(res.body.message, 'ok');
@@ -95,6 +95,33 @@ export = function(app, db, request) {
         done(err);
       });
   });
+
+  it('Get user info', function(done) {
+    request.get('/user/info')
+      .set('x-access-token', token2)
+      .expect(200)
+      .end(function(err, res) {
+        assert.equal(res.body.email, "abcd@snutt.com");
+        done(err);
+      })
+  })
+
+  it('Put user info', function(done) {
+    request.put('/user/info')
+      .set('x-access-token', token2)
+      .send({email:"abcd2@snutt.com"})
+      .expect(200)
+      .end(function(err, res) {
+        if (err) return done(err);
+        request.get('/user/info')
+          .set('x-access-token', token2)
+          .expect(200)
+          .end(function(err, res) {
+            assert.equal(res.body.email, "abcd2@snutt.com");
+            done(err);
+          });
+      })
+  })
 
   describe('password change', function(){
     it('succeeds', function(done) {

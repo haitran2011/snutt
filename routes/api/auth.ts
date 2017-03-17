@@ -46,7 +46,7 @@ router.post('/login_local', function(req, res, next) {
  * it needs to be accessed without token
  */
 router.post('/register_local', function (req, res, next) {
-  UserModel.create_local(null, req.body.id, req.body.password, function(err, user) {
+  UserModel.create_local(null, req.body.id, req.body.password, async function(err, user) {
     if (err) {
       if (err == errcode.INVALID_ID)
         return res.status(403).json({errcode:err, message:"invalid id"});
@@ -56,6 +56,12 @@ router.post('/register_local', function (req, res, next) {
         return res.status(403).json({errcode:err, message:"invalid password"});
       console.log(err);
       return res.status(500).json({errcode:errcode.SERVER_FAULT, message:"server fault"});
+    }
+    if (req.body.email) user.email = req.body.email;
+    try {
+      await user.save();
+    } catch (err) {
+      console.error("/register_local : Failed to save user email\n", err);
     }
     CourseBookModel.getRecent({lean:true}).then(function(coursebook){
       return TimetableModel.createTimetable({
