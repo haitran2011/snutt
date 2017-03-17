@@ -85,7 +85,7 @@ router.use('/search_query', searchQueryRouter);
 router.use('/tags', tagsRouter);
 
 router.get('/colors', function(req, res, next) {
-  res.json({message: "ok", colors: libcolor.colors});
+  res.json({message: "ok", colors: libcolor.colors, names: libcolor.names});
 });
 
 router.get('/app_version', function(req, res, next) {

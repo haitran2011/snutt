@@ -11,6 +11,17 @@ class Color {
     { fg: "#E27B35", bg: "#FFDAB7"}
   ];
 
+  static names = [
+    "초록색",
+    "하늘색",
+    "파랑색",
+    "보라색",
+    "노랑색",
+    "빨강색",
+    "라임색",
+    "남색",
+    "오렌지색"];
+
   static get_random_color(): { fg:string, bg:string } {
     return this.colors[Math.floor(Math.random() * this.colors.length)]
   };
