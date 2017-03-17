@@ -18,6 +18,7 @@ import {UserModel, UserDocument} from '../../model/user';
 import {FeedbackModel, FeedbackDocument} from '../../model/feedback';
 
 import errcode = require('../../lib/errcode');
+import libcolor = require('../../lib/color');
 
 var api_info;
 
@@ -82,6 +83,10 @@ router.get('/course_books/official', function(req, res, next) {
 router.use('/search_query', searchQueryRouter);
 
 router.use('/tags', tagsRouter);
+
+router.get('/colors', function(req, res, next) {
+  res.json({message: "ok", colors: libcolor.colors});
+});
 
 router.get('/app_version', function(req, res, next) {
   var version = apiKey.getAppVersion(api_info.string);

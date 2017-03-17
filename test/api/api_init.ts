@@ -171,6 +171,10 @@ describe('API Test', function() {
       })
   })
 
+  describe('etc', function () {
+    require('./etc')(app, db, request);
+  });
+
   describe('User', function () {
     require('./user_test')(app, db, request);
   });
