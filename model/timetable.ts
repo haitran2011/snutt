@@ -220,7 +220,12 @@ TimetableSchema.methods.update_lecture = function(lecture_id, lecture_raw, cb): 
   }
 
   if (lecture_raw['class_time_json']) {
-    lecture_raw['class_time_mask'] = Util.timeJsonToMask(lecture_raw['class_time_json']);
+    try {
+      lecture_raw['class_time_mask'] = Util.timeJsonToMask(lecture_raw['class_time_json'], true);
+    } catch (err) {
+      if(cb) cb(err);
+      return Promise.reject(err);
+    }
   }
 
   if (lecture_raw['class_time_mask'] && !this.validateLectureTime(lecture_id, lecture_raw)) {

@@ -392,7 +392,50 @@ export = function(app, db, request) {
       });
   });
 
-  it ('Create a custom user lecture with overlapped time should fail', function(done) {
+  it ('Create a custom user lecture overlapped in itself should fail', function(done) {
+    request.post('/tables/'+table_id+'/lecture/')
+      .set('x-access-token', token)
+      .send({
+        "classification": "전선",
+        "department": "컴퓨터공학부",
+        "academic_year": "3학년",
+        "course_title": "My Custom Lecture",
+        "credit": 1,
+        "class_time": "화(13-1)/목(13-1)",
+        "instructor": "이제희",
+        "quota": 15,
+        "enrollment": 0,
+        "remark": "컴퓨터공학부 및 제2전공생만 수강가능",
+        "category": "",
+        "created_at": "2016-03-31T07:56:44.137Z",
+        "updated_at": "2016-03-31T07:56:44.137Z",
+        /*
+         * See to it that the server removes _id fields correctly
+         */
+        "_id": "56fcd83c041742971bd20a86",
+        "class_time_json": [
+          {
+            "day": 5,
+            "start": 13.5,
+            "len": 1.5,
+            "place": "302-308"
+          },
+          {
+            "day": 5,
+            "start": 13,
+            "len": 1,
+            "place": "302-308"
+          }
+        ]
+      })
+      .expect(403)
+      .end(function(err, res) {
+        assert.equal(res.body.errcode, errcode.LECTURE_TIME_OVERLAP);
+        done(err);
+      });
+  });
+
+  it ('Create a custom user lecture overlapped wtih other lecture should fail', function(done) {
     request.post('/tables/'+table_id+'/lecture/')
       .set('x-access-token', token)
       .send({
@@ -565,7 +608,29 @@ export = function(app, db, request) {
       });
   });
 
-  it ('Modifying custom lecture so that time is overlapped should fail', function(done) {
+  it ('Modifying custom lecture so that time is overlapped in itself should fail', function(done) {
+    request.put('/tables/'+table_id+'/lecture/'+lecture._id)
+      .set('x-access-token', token)
+      .send({"class_time_json": [
+          {
+            "day": 5,
+            "start": 1.5,
+            "len": 2,
+            "place": "302-308"
+          },{
+            "day": 5,
+            "start": 1,
+            "len": 2,
+            "place": "302-308"
+          }]})
+      .expect(403)
+      .end(function(err, res) {
+        assert.equal(res.body.errcode, errcode.LECTURE_TIME_OVERLAP);
+        done(err);
+      });
+  });
+
+  it ('Modifying custom lecture so that time is overlapped with other lecture should fail', function(done) {
     request.put('/tables/'+table_id+'/lecture/'+lecture._id)
       .set('x-access-token', token)
       .send({"class_time_json": [

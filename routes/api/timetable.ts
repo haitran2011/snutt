@@ -113,7 +113,7 @@ router.post('/:timetable_id/lecture/:lecture_id', function(req, res, next) {
 function set_timemask(lecture_raw) {
   if (lecture_raw.class_time_json) {
     if (!lecture_raw.class_time_mask) {
-      lecture_raw.class_time_mask = timeJsonToMask(lecture_raw.class_time_json);
+      lecture_raw.class_time_mask = timeJsonToMask(lecture_raw.class_time_json, true);
     } else {
       var timemask = timeJsonToMask(lecture_raw.class_time_json);
       for (var i=0; i<timemask.length; i++) {
@@ -142,8 +142,18 @@ router.post('/:id/lecture', function(req, res, next) {
       var json = req.body;
 
       /* If no time json is found, mask is invalid */
-      if (!set_timemask(json)) return res.status(400).json({errcode: errcode.INVALID_TIMEMASK, message:"invalid timemask"});
-
+      try {
+        if (!set_timemask(json))
+          return res.status(400).json({errcode: errcode.INVALID_TIMEMASK, message:"invalid timemask"});
+      } catch (err) {
+        if (err == errcode.LECTURE_TIME_OVERLAP)
+          return res.status(403).json({errcode: err, message:"lecture time overlapped"});
+        else {
+          console.error("/:id/lecture", err);
+          return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"server fault"});
+        }
+      }
+      
       if (json.course_number || json.lecture_number)
         return res.status(403).json({errcode: errcode.NOT_CUSTOM_LECTURE, message:"only custom lectures allowed"});
 
@@ -196,7 +206,17 @@ router.put('/:table_id/lecture/:lecture_id', function(req, res, next) {
       if(err) return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"find table failed"});
       if(!timetable) return res.status(404).json({errcode: errcode.TIMETABLE_NOT_FOUND, message:"timetable not found"});
       /* If no time json is found, mask is invalid */
-      if (!set_timemask(lecture_raw)) return res.status(400).json({errcode: errcode.INVALID_TIMEMASK, message:"invalid timemask"});
+      try {
+        if (!set_timemask(lecture_raw))
+          return res.status(400).json({errcode: errcode.INVALID_TIMEMASK, message:"invalid timemask"});
+      } catch (err) {
+        if (err == errcode.LECTURE_TIME_OVERLAP)
+          return res.status(403).json({errcode: err, message:"lecture time overlapped"});
+        else {
+          console.error("/:id/lecture", err);
+          return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"server fault"});
+        }
+      }
       timetable.update_lecture(req.params.lecture_id, lecture_raw, function(err, doc) {
         if(err) {
           if (err == errcode.ATTEMPT_TO_MODIFY_IDENTITY)
