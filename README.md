@@ -14,6 +14,8 @@ export SNUTT_PROTOCOL=http
 export SNUTT_PORT=12000
 export SNUTT_EMAIL=snutt@wafflestudio.com
 export SNUTT_SECRET=PleaseChangeThisSecret
+export SNUTT_FCM_API_KEY=PleaseChangeThisKey
+export SNUTT_FCM_PROJECT_ID=PleaseChangeThisID
 ```
 
 ```sh
