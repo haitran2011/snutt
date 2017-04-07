@@ -37,6 +37,12 @@ $ sudo npm install pm2 -g
 $ pm2 start app.js --name snuttapi
 ```
 
+## API Keys
+Make sure you have entered your secret.
+```sh
+$ node config/apiKey list
+```
+
 ## cron job (daily recommended)
 ```sh
 $ node ~/snutt/data/update_recent
