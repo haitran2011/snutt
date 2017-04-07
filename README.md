@@ -4,6 +4,7 @@ SNU Timetable
 ## Requirements
 * mongodb >= 2.6
 * node >= 4.2
+* ruby >= 2.1.0
 
 ## Deploying
 
