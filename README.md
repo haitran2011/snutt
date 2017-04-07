@@ -23,7 +23,7 @@ You can use nginx proxy in front of pm2. In this way you can easily set up https
 
 Install dependencies and fetch 2017-1 course book, start pm2 watchdog.
 ```sh
-$ sudo apt-get install mongodb nodejs nodejs-legacy libkrb5-dev ruby ruby-dev gem
+$ sudo apt-get install mongodb nodejs nodejs-legacy libkrb5-dev ruby ruby-dev gem zip
 $ sudo gem install roo roo-xls
 $ git clone https://github.com/wafflestudio/snutt.git && cd snutt
 $ git checkout express
