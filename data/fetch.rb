@@ -56,8 +56,14 @@ general_types_to_code =
 #download whole coursebook
 puts "Start fetching...#{year}/#{semester}"
 
-xls_filename="#{Dir.getwd()}/xls/#{year}_#{semester}.xls"
-txt_filename="#{Dir.getwd()}/txt/#{year}_#{semester}.txt"
+xls_directory = "#{Dir.getwd()}/xls"
+txt_directory = "#{Dir.getwd()}/txt"
+
+Dir.mkdir(xls_directory) unless File.exists?(xls_directory)
+Dir.mkdir(txt_directory) unless File.exists?(txt_directory)
+
+xls_filename="#{xls_directory}/#{year}_#{semester}.xls"
+txt_filename="#{txt_directory}/#{year}_#{semester}.txt"
 
 http = Net::HTTP.new('sugang.snu.ac.kr', 80)
 path="/sugang/cc/cc100excel.action"
