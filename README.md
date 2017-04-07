@@ -7,7 +7,7 @@ SNU Timetable
 
 ## Deploying
 
-See to it that following variables are set. I recommend you to create a `.snuttrc` file and source it from your `.*shrc` file.
+See to it that following variables are set for pm2. I recommend you to create a `.snuttrc` file and source it from your `.*shrc` file. **PLEASE SET PERMISSION OF YOUR `.snuttrc` OR ANY METHOD OF VARIABLE STORAGE AS 600**.
 ```
 export SNUTT_HOST=localhost
 export SNUTT_PROTOCOL=http
@@ -18,7 +18,7 @@ export SNUTT_FCM_API_KEY=PleaseChangeThisKey
 export SNUTT_FCM_PROJECT_ID=PleaseChangeThisID
 ```
 
-Rather than pm2 directly serving http, using nginx proxy is recommended. In this way you can easily set up https using nginx ssl configurations securely.
+You can use nginx proxy in front of pm2. In this way you can easily set up https using nginx configurations. Also you can prevent unknown buffer overflow vulnerability of nodejs.
 
 Install dependencies and fetch 2017-1 course book, start pm2 watchdog.
 ```sh
