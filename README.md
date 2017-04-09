@@ -25,16 +25,15 @@ Install dependencies and fetch 2017-1 course book, start pm2 watchdog.
 ```sh
 $ sudo apt-get install mongodb nodejs nodejs-legacy libkrb5-dev ruby ruby-dev gem zip
 $ sudo gem install roo roo-xls
+$ sudo npm install pm2 -g
 $ git clone https://github.com/wafflestudio/snutt.git && cd snutt
 $ git checkout express
 $ npm install
-$ npm test
+$ npm run build && npm test
 $ cd data
-$ mkdir xls
 $ ruby fetch.rb 2017 1
 $ node import_txt 2017 1
 $ cd ..
-$ sudo npm install pm2 -g
 $ pm2 start app.js --name snuttapi
 ```
 
