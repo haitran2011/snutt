@@ -236,6 +236,8 @@ function findTableWithLecture(year:number, semesterIndex:number, course_number:s
         }
       },
       {
+        user_id : 1,
+        title: 1,
         lecture_list: {
           $elemMatch : {
             course_number: course_number,
@@ -272,7 +274,7 @@ async function notifyUpdated(year:number, semesterIndex:number, diff:LectureDiff
             try {
               await timetable.update_lecture(timetable.lecture_list[0]._id, updated_lecture.after);
               if (num_updated_per_user[timetable.user_id]) num_updated_per_user[timetable.user_id]++;
-              else num_updated_per_user[timetable.user_id] = 1; 
+              else num_updated_per_user[timetable.user_id] = 1;
               await NotificationModel.createNotification(
                 timetable.user_id,
                 "'"+timetable.title+"' 시간표의 '"+updated_lecture.course_title+"' 강의가 업데이트 되었습니다.",

@@ -58,6 +58,7 @@ function searchWriting(request, token):Promise<LectureDocument> {
 export = function(app, db, request) {
   var token:String;
   var table_id:String;
+  var reflecture_id:String;
   
   before(function(done) {
     importFromStringCb(import_txt1, done);
@@ -108,25 +109,82 @@ export = function(app, db, request) {
 
   it ("search imported lectures", async function(done){
     try {
-      var lecture = await searchWriting(request, token);
+      let lecture = await searchWriting(request, token);
       if (lecture.course_title != "글쓰기의 기초") {
-        done("Lecture title differs");
+        return done("Lecture title differs");
       }
+      reflecture_id = lecture._id;
       done();
     } catch(err) {
       done(err);
     }
   });
 
-  /*
+  it ('insert an imported lecture', function(done) {
+    request.post('/tables/'+table_id+'/lecture/'+reflecture_id)
+      .set('x-access-token', token)
+      .expect(200)
+      .end(function(err, res) {
+        if (err) {
+          console.log(res.body);
+          done(err);
+        }
+        let lecture = res.body.lecture_list[0];
+        assert.equal(lecture.course_number, "031.001");
+        done();
+      });
+  });
+
   it ("coursebook not updated when only enrollment changes", async function(done) {
+    await importFromString(import_txt2, YEAR, SEMESTER, false);
     request.get('/notification/')
       .set('x-access-token', token)
       .expect(200)
       .end(function(err, res) {
         if (err) done(err);
+        assert.equal(res.body[0].user_id, null);
         assert.equal(res.body[0].type, Type.COURSEBOOK);
         done();
       });
-  });*/
+  });
+
+
+  describe("coursebook updated when place changes", function() {
+    before(async function(done) {
+      await importFromString(import_txt3, YEAR, SEMESTER, false);
+      done();
+    });
+
+    it ("coursebook", async function(done) {
+      try {
+        let lecture = await searchWriting(request, token);
+        if (lecture.class_time_json[0].place != "009-105") {
+          return done("lecture place not updated");
+        }
+        done();
+      } catch(err) {
+        done(err);
+      }
+    });
+
+    /*
+    it ("timetable", function(done) {
+      done();
+    });
+    */
+
+    it ("notification", function(done) {
+      request.get('/notification/')
+        .set('x-access-token', token)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) done(err);
+          console.log(res.body[0].message);
+          assert.notEqual(res.body[0].user_id, null);
+          assert.equal(res.body[0].type, Type.LECTURE_UPDATE);
+          assert.equal(res.body[0].detail.timetable_id, table_id);
+          done();
+        });
+    });
+  })
 }
