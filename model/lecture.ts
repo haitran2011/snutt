@@ -6,6 +6,7 @@
 import mongoose = require('mongoose');
 import errcode = require('../lib/errcode');
 import Util = require('../lib/util');
+import libcolor = require('../lib/color');
 
 interface BaseLectureDocument extends mongoose.Document {
   classification: string,                           // 교과 구분
@@ -40,7 +41,8 @@ export interface UserLectureDocument extends BaseLectureDocument {
   lecture_number: string,
   created_at: Date,
   updated_at: Date,
-  color: {fg : string, bg : string}
+  color: {fg : string, bg : string},
+  colorIndex: number
 }
 
 export interface _UserLectureModel extends mongoose.Model<UserLectureDocument> {
@@ -95,10 +97,12 @@ function BaseSchema(add){
   };
 
   schema.statics.validate_color = function(lecture:any):boolean {
-    if (!lecture.color) return true;
-    var resultFg = !lecture.color.fg || Util.isColor(lecture.color.fg);
-    var resultBg = !lecture.color.bg || Util.isColor(lecture.color.bg);
-    return resultFg && resultBg;
+    if (lecture.colorIndex > libcolor.numColor) return false;
+    if (lecture.color) {
+      if (lecture.color.fg && !Util.isColor(lecture.color.fg)) return false;
+      if (lecture.color.bg && !Util.isColor(lecture.color.bg)) return false;
+    }
+    return true;
   }
 
   schema.index({ year: 1, semester: 1, course_number: 1, lecture_number: 1});

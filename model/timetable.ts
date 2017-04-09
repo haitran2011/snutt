@@ -28,8 +28,10 @@ export interface TimetableDocument extends mongoose.Document {
   delete_lecture(lecture_id:string, cb?:(err, doc:TimetableDocument)=>void):Promise<TimetableDocument>;
   get_lecture(lecture_id:string):UserLectureDocument;
   reset_lecture(lecture_id, cb?: (err:any, doc?:UserLectureDocument)=>void): Promise<UserLectureDocument>;
-  available_color(): {fg:string, bg:string}[];
-  get_new_color(): {fg:string, bg:string};
+  available_color_legacy(): {fg:string, bg:string}[];
+  available_color(): number[];
+  get_new_color_legacy(): {fg:string, bg:string};
+  get_new_color(): number;
   validateLectureTime(lecture_id:string, lecture:UserLectureDocument): boolean;
 }
 
@@ -300,10 +302,26 @@ TimetableSchema.methods.reset_lecture = function(lecture_id,
     return promise;
   }
 
-TimetableSchema.methods.available_color = function(): {fg:string, bg:string}[] {
+TimetableSchema.methods.available_color = function(): number[] {
+  var checked:boolean[] = [];
+  var timetable:TimetableDocument = this;
+  for (var i=0; i<timetable.lecture_list.length; i++) {
+    var lecture_color = timetable.lecture_list[i].colorIndex;
+    checked[lecture_color] = true;
+  }
+
+  var ret:number[] = [];
+  // colorIndex = 0 is custom color!
+  for (var i=1; i<Color.numColor; i++) {
+    if (!checked[i]) ret.push(i);
+  }
+  return ret;
+}
+
+TimetableSchema.methods.available_color_legacy = function(): {fg:string, bg:string}[] {
   var checked = [];
   var timetable:TimetableDocument = this;
-  var colors = Color.colors;
+  var colors = Color.legacy_colors;
   for (var i=0; i<timetable.lecture_list.length; i++) {
     var lecture_color = timetable.lecture_list[i].color;
     for (var j=0; j<colors.length; j++) {
@@ -321,10 +339,18 @@ TimetableSchema.methods.available_color = function(): {fg:string, bg:string}[] {
   return ret;
 }
 
-TimetableSchema.methods.get_new_color = function(): {fg:string, bg:string} {
+TimetableSchema.methods.get_new_color = function(): number {
   var timetable:TimetableDocument = this;
   var available_colors = timetable.available_color();
-  if (available_colors.length == 0) return Color.get_random_color();
+  // colorIndex = 0 is custom color!
+  if (available_colors.length == 0) return Math.floor(Math.random() * Color.numColor) + 1;
+  else return available_colors[Math.floor(Math.random() * available_colors.length)]
+}
+
+TimetableSchema.methods.get_new_color_legacy = function(): {fg:string, bg:string} {
+  var timetable:TimetableDocument = this;
+  var available_colors = timetable.available_color_legacy();
+  if (available_colors.length == 0) return Color.get_random_color_legacy();
   else return available_colors[Math.floor(Math.random() * available_colors.length)]
 }
 
