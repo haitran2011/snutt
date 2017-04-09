@@ -245,7 +245,8 @@ function findTableWithLecture(year:number, semesterIndex:number, course_number:s
   }, cb).exec();
 }
 
-async function notifyUpdated(year:number, semesterIndex:number, diff:LectureDiff):Promise<void> {
+async function notifyUpdated(year:number, semesterIndex:number, diff:LectureDiff,
+    fcm_enabled:boolean):Promise<void> {
   var num_updated_per_user: {[key: string]: number} = {}
   var num_removed_per_user: {[key: string]: number} = {}
 
@@ -338,29 +339,32 @@ async function notifyUpdated(year:number, semesterIndex:number, diff:LectureDiff
       }
       
     ], function(err) {
-      var users = [];
-      for (var user_id in Object.keys(num_updated_per_user)) {
-        users.push(user_id);
-      }
+      if(fcm_enabled) {
+        var users = [];
+        for (var user_id in Object.keys(num_updated_per_user)) {
+          users.push(user_id);
+        }
 
-      for (var user_id in Object.keys(num_removed_per_user)) {
-        if (user_id in num_updated_per_user) continue;
-        users.push(user_id);
-      }
+        for (var user_id in Object.keys(num_removed_per_user)) {
+          if (user_id in num_updated_per_user) continue;
+          users.push(user_id);
+        }
 
-      for (var i=0; i<users.length; i++) {
-        var updated_num = num_updated_per_user[user_id];
-        var removed_num = num_removed_per_user[user_id];
-        var msg;
-        if (updated_num & removed_num)
-          msg = "수강편람이 업데이트되어 "+updated_num+"개 강의가 변경되고 "+removed_num+"개 강의가 삭제되었습니다.";
-        else if (updated_num)
-          msg = "수강편람이 업데이트되어 "+updated_num+"개 강의가 변경되었습니다.";
-        else if (removed_num)
-          msg = "수강편람이 업데이트되어 "+removed_num+"개 강의가 삭제되었습니다.";
-        else
-          continue;
-        fcm.send_msg(users[i], msg, "update_lectures.ts", "lecture updated");
+        for (var i=0; i<users.length; i++) {
+          var updated_num = num_updated_per_user[user_id];
+          var removed_num = num_removed_per_user[user_id];
+          var msg;
+          if (updated_num & removed_num)
+            msg = "수강편람이 업데이트되어 "+updated_num+"개 강의가 변경되고 "+removed_num+"개 강의가 삭제되었습니다.";
+          else if (updated_num)
+            msg = "수강편람이 업데이트되어 "+updated_num+"개 강의가 변경되었습니다.";
+          else if (removed_num)
+            msg = "수강편람이 업데이트되어 "+removed_num+"개 강의가 삭제되었습니다.";
+          else
+            continue;
+          /* It takes too long to await each requests */
+          fcm.send_msg(users[i], msg, "update_lectures.ts", "lecture updated");
+        }
       }
       if (err) return reject(err);
       return resolve();
@@ -369,7 +373,8 @@ async function notifyUpdated(year:number, semesterIndex:number, diff:LectureDiff
   return promise;
 }
 
-export async function insert_course(lines:Array<string>, year:number, semesterIndex:number, next:()=>void)
+export async function insert_course(lines:Array<string>, year:number,
+    semesterIndex:number, fcm_enabled:boolean): Promise<void>
 {
   var semesterString = (['1', '여름', '2', '겨울'])[semesterIndex-1];
   var saved_cnt = 0, err_cnt = 0;
@@ -388,7 +393,6 @@ export async function insert_course(lines:Array<string>, year:number, semesterIn
 
   if (new_lectures.length == 0) {
     console.log("No lectures.");
-    next();
     return;
   }
 
@@ -401,7 +405,6 @@ export async function insert_course(lines:Array<string>, year:number, semesterIn
       diff.created.length === 0 &&
       diff.removed.length === 0) {
     console.log("Nothing updated.");
-    next();
     return;
   }
 
@@ -409,7 +412,7 @@ export async function insert_course(lines:Array<string>, year:number, semesterIn
       diff.created.length + " created, "+
       diff.removed.length + " removed.");
   
-  await notifyUpdated(year, semesterIndex, diff);
+  await notifyUpdated(year, semesterIndex, diff, fcm_enabled);
 
   await LectureModel.remove({ year: year, semester: semesterIndex}).exec();
   console.log("Removed existing lecture for this semester");
@@ -447,10 +450,10 @@ export async function insert_course(lines:Array<string>, year:number, semesterIn
     .exec();
 
   if (!doc) {
-    await fcm.send_msg(null, noti_msg, "update_lectures.ts", "new coursebook");
+    if (fcm_enabled) await fcm.send_msg(null, noti_msg, "update_lectures.ts", "new coursebook");
     await NotificationModel.createNotification(null, noti_msg, NotificationType.COURSEBOOK, null, "unused");
     console.log("Notification inserted");
   }
 
-  next();
+  return;
 }

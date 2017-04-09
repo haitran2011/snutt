@@ -1,6 +1,6 @@
 const db = require('../db');
 import {CourseBookModel} from '../model/courseBook';
-import {import_txt} from './import_txt';
+import {importFromFile} from './import_txt';
 import * as cp from "child_process";
 
 function semesterToString(semester:number):string {
@@ -69,7 +69,7 @@ async function main() {
     let semester = cands[i][1];
     try {
       await fetch_sugang_snu(year, semester);
-      await import_txt(year, semester);
+      await importFromFile(year, semester, true);
     } catch (err) {
       console.error(err);
       console.log("Failed");
