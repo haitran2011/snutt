@@ -12,7 +12,8 @@ const TEXT_HEADER = YEAR + "/" + SEMESTER + "\n"+
 "2017-04-09 11:00:22\n"+
 "classification;department;academic_year;course_number;lecture_number;"+
 "course_title;credit;class_time;location;instructor;quota;enrollment;"+
-"remark;category;snuev_lec_id;snuev_eval_score\n";
+"remark;category;snuev_lec_id;snuev_eval_score\n"+
+"교양;물리·천문학부(물리학전공);0;034.011;009;물리학실험;1;금(6-2);019-108;전헌수;18;12;;foundation_science;;\n";
 
 const import_txt1 = TEXT_HEADER+
 "교양;국어국문학과;1학년;031.001;048;글쓰기의 기초;"+
@@ -167,11 +168,19 @@ export = function(app, db, request) {
       }
     });
 
-    /*
     it ("timetable", function(done) {
-      done();
+      request.get('/tables/'+table_id)
+      .set('x-access-token', token)
+      .expect(200)
+      .end(function(err, res) {
+        if (err) return done(err);
+        let lecture = res.body.lecture_list[0];
+        if (lecture.class_time_json[0].place != "009-105") {
+          return done("lecture place not updated");
+        }
+        done(err);
+      });
     });
-    */
 
     it ("notification", function(done) {
       request.get('/notification/')
@@ -179,9 +188,48 @@ export = function(app, db, request) {
         .expect(200)
         .end(function(err, res) {
           if (err) done(err);
-          console.log(res.body[0].message);
           assert.notEqual(res.body[0].user_id, null);
           assert.equal(res.body[0].type, Type.LECTURE_UPDATE);
+          assert.equal(res.body[0].detail.timetable_id, table_id);
+          done();
+        });
+    });
+  })
+
+  describe("coursebook remove", function() {
+    before(async function(done) {
+      await importFromString(import_txt4, YEAR, SEMESTER, false);
+      done();
+    });
+
+    it ("coursebook", async function(done) {
+      try {
+        let lecture = await searchWriting(request, token);
+        done("Lecture not removed");
+      } catch(err) {
+        done();
+      }
+    });
+
+    it ("timetable", function(done) {
+      request.get('/tables/'+table_id)
+      .set('x-access-token', token)
+      .expect(200)
+      .end(function(err, res) {
+        if (err) return done(err);
+        assert.equal(res.body.lecture_list.length, 0);
+        done(err);
+      });
+    });
+
+    it ("notification", function(done) {
+      request.get('/notification/')
+        .set('x-access-token', token)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) done(err);
+          assert.notEqual(res.body[0].user_id, null);
+          assert.equal(res.body[0].type, Type.LECTURE_REMOVE);
           assert.equal(res.body[0].detail.timetable_id, table_id);
           done();
         });
