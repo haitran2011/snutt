@@ -23,7 +23,11 @@ export function importFromFile(year:number, semester:string, fcm_enabled:boolean
 			if (err) {
 				return reject(err);
 			}
-			return importFromString(data.toString(), year, semester, fcm_enabled);
+			return importFromString(data.toString(), year, semester, fcm_enabled).then(function(result) {
+				resolve(result);
+			}).catch(function(reason) {
+				reject(reason);
+			});
 		});
 	});
 }
