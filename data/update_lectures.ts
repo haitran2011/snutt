@@ -395,7 +395,7 @@ export async function insert_course(lines:Array<string>, year:number,
 
   if (new_lectures.length == 0) {
     console.log("No lectures.");
-    return Promise.resolve();
+    return;
   }
 
   console.log ("Pulling existing lectures...");
@@ -407,7 +407,7 @@ export async function insert_course(lines:Array<string>, year:number,
       diff.created.length === 0 &&
       diff.removed.length === 0) {
     console.log("Nothing updated.");
-    return Promise.resolve();
+    return;
   }
 
   console.log(diff.updated.length + " updated, "+
@@ -457,5 +457,5 @@ export async function insert_course(lines:Array<string>, year:number,
     console.log("Notification inserted");
   }
 
-  return Promise.resolve();
+  return;
 }
