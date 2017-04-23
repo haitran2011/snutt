@@ -2,7 +2,7 @@ import express = require('express');
 var router = express.Router();
 import Util = require('../../lib/util');
 import errcode = require('../../lib/errcode');
-import {LectureQuery, search} from '../../model/query';
+import {LectureQuery, extendedSearch} from '../../model/query';
 
 // deprecated
 /*
@@ -20,13 +20,14 @@ router.post('/', async function(req, res, next) {
 
   var query:LectureQuery = req.body;
   try {
-    var lectures = await search(query);
+    var lectures = await extendedSearch(query);
     return res.json(lectures);
   } catch (err) {
     switch(err) {
     case errcode.INVALID_TIMEMASK:
       return res.status(400).json({errcode:errcode.INVALID_TIMEMASK, message: "invalid timemask"});
     default:
+      console.error(err);
       return res.status(500).json({errcode:errcode.SERVER_FAULT, message: "search error"});
     }
   }

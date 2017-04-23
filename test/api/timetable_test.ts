@@ -185,7 +185,7 @@ export = function(app, db, request) {
       .expect(200)
       .end(function(err, res) {
         if (err) done(err);
-        assert.equal(!res.body.length, false);
+        assert.equal(res.body.length, 1);
         ref_lecture = res.body[0];
         done();
       })
