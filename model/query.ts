@@ -125,8 +125,6 @@ export async function extendedSearch(lquery: LectureQuery): Promise<LectureDocum
   if (!title) return explicitSearch(lquery);
   var words = title.split(' ');
 
-  var tags = ["course_title", "credit", "instructor", "academic_year", "course_number", "classification", "category", "department"];
-
   var andQueryList = [];
   for(let i=0; i<words.length; i++) {
     var orQueryList = [];
@@ -141,12 +139,13 @@ export async function extendedSearch(lquery: LectureQuery): Promise<LectureDocum
       orQueryList.push({ category : { $regex: regex, $options: 'i' } });
       orQueryList.push({ department : { $regex: '^'+regex, $options: 'i' } });
       orQueryList.push({ classification : words[i] });
+      orQueryList.push({ academic_year : words[i] });
     } else {
       let regex = words[i];
       orQueryList.push({ course_title : { $regex: regex, $options: 'i' } });
       orQueryList.push({ instructor : { $regex: regex, $options: 'i' } });
-      orQueryList.push({ academic_year : words[i] });
       orQueryList.push({ course_number : words[i] });
+      orQueryList.push({ lecture_number : words[i] });
     }
     
     andQueryList.push({"$or" : orQueryList});
