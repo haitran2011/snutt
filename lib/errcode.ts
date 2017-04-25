@@ -47,6 +47,7 @@ class ErrorCode {
   static LECTURE_NOT_FOUND = 0x4002;
   static REF_LECTURE_NOT_FOUND = 0x4003;
   static USER_NOT_FOUND = 0x4004;
+  static COLORLIST_NOT_FOUND = 0x4005;
 }
 
 export = ErrorCode;

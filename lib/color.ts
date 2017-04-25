@@ -1,5 +1,4 @@
-class Color {
-  static legacy_colors = [
+const pastel9 = [
     { fg: "#2B8728", bg: "#B6F9B2"},
     { fg: "#45B2B8", bg: "#BFF7F8"},
     { fg: "#1579C2", bg: "#94E6FE"},
@@ -11,7 +10,7 @@ class Color {
     { fg: "#E27B35", bg: "#FFDAB7"}
   ];
 
-  static legacy_names = [
+const name9 = [
     "초록색",
     "하늘색",
     "파랑색",
@@ -22,12 +21,26 @@ class Color {
     "남색",
     "오렌지색"];
 
+class Color {
   static numColor = 9;
   static CUSTOM_COLOR = 0;
 
   static get_random_color_legacy(): { fg:string, bg:string } {
-    return this.legacy_colors[Math.floor(Math.random() * this.legacy_colors.length)]
+    return pastel9[Math.floor(Math.random() * pastel9.length)]
   };
+
+  static getLegacyColors() {
+    return pastel9;
+  }
+
+  static getLegacyNames() {
+    return name9;
+  }
+
+  static getColorList(name:string) {
+    if (name == 'legacy' || name == 'pastel') return { colors: pastel9, names: name9 };
+    return null;
+  }
 }
 
 export = Color;

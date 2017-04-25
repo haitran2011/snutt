@@ -85,7 +85,13 @@ router.use('/search_query', searchQueryRouter);
 router.use('/tags', tagsRouter);
 
 router.get('/colors', function(req, res, next) {
-  res.json({message: "ok", colors: libcolor.legacy_colors, names: libcolor.legacy_names});
+  res.json({message: "ok", colors: libcolor.getLegacyColors(), names: libcolor.getLegacyNames()});
+});
+
+router.get('/colors/:colorName', function(req, res, next) {
+  let colorWithName = libcolor.getColorList(req.params.colorName);
+  if (colorWithName) res.json({message: "ok", colors: colorWithName.colors, names: colorWithName.names});
+  else res.status(404).json({errcode:errcode.COLORLIST_NOT_FOUND, message: "color list not found"});
 });
 
 router.get('/app_version', function(req, res, next) {
