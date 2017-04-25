@@ -17,11 +17,28 @@ function isHangulCode(c:number) {
   return false;
 }
 
-function isHangulString(str:string) {
+/*
+function isNumberCode(c:number) {
+  return 0x0030<=c && c<=0x0039;
+}
+*/
+
+function isHangulInString(str:string) {
   for (let i=0; i<str.length; i++) {
-    if (!isHangulCode(str.charCodeAt(i))) return false;
+    let code = str.charCodeAt(i);
+    if (isHangulCode(code)) return true;
   }
-  return true;
+  return false;
+}
+
+/*
+ * Find like ??학점
+ */
+const creditRegex = /^(\d+)학점$/;
+function getCreditFromString(str:string): number {
+  let result = str.match(creditRegex);
+  if (result) return Number(result[1]);
+  else return null;
 }
 
 /*
@@ -113,8 +130,11 @@ export async function extendedSearch(lquery: LectureQuery): Promise<LectureDocum
   var andQueryList = [];
   for(let i=0; i<words.length; i++) {
     var orQueryList = [];
-    let isHangul = isHangulString(words[i]);
-    if (isHangul) {
+
+    var credit = getCreditFromString(words[i]);
+    if (credit) {
+      orQueryList.push({ credit : credit });
+    } else if (isHangulInString(words[i])) {
       let regex = like(words[i], false);
       orQueryList.push({ course_title : { $regex: regex, $options: 'i' } });
       orQueryList.push({ instructor : words[i] });
@@ -128,6 +148,7 @@ export async function extendedSearch(lquery: LectureQuery): Promise<LectureDocum
       orQueryList.push({ academic_year : words[i] });
       orQueryList.push({ course_number : words[i] });
     }
+    
     andQueryList.push({"$or" : orQueryList});
   }
   mquery["$or"] = [ {course_title : mquery["course_title"]}, {$and : andQueryList} ];
