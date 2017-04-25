@@ -10,6 +10,20 @@ function like(str: string, matchStartChar?: boolean): string {
   return joined;
 }
 
+function isHangulCode(c:number) {
+  if( 0x1100<=c && c<=0x11FF ) return true;
+  if( 0x3130<=c && c<=0x318F ) return true;
+  if( 0xAC00<=c && c<=0xD7A3 ) return true;
+  return false;
+}
+
+function isHangulString(str:string) {
+  for (let i=0; i<str.length; i++) {
+    if (!isHangulCode(str.charCodeAt(i))) return false;
+  }
+  return true;
+}
+
 /*
 function likeWithArray(strarr: string[]) {
   var regarr:string[] = [];
@@ -42,7 +56,7 @@ async function toMongoQuery(lquery:LectureQuery): Promise<Object> {
   mquery["year"] = lquery.year;
   mquery["semester"] = lquery.semester;
   if (lquery.title)
-    mquery["course_title"] = { $regex: like(lquery.title, true), $options: 'i' };
+    mquery["course_title"] = { $regex: like(lquery.title, false), $options: 'i' };
   if (lquery.credit && lquery.credit.length)
     mquery["credit"] = { $in: lquery.credit };
   if (lquery.instructor && lquery.instructor.length)
@@ -94,29 +108,36 @@ export async function extendedSearch(lquery: LectureQuery): Promise<LectureDocum
   if (!title) return explicitSearch(lquery);
   var words = title.split(' ');
 
+  var tags = ["course_title", "credit", "instructor", "academic_year", "course_number", "classification", "category", "department"];
+
+  var andQueryList = [];
+  for(let i=0; i<words.length; i++) {
+    var orQueryList = [];
+    let isHangul = isHangulString(words[i]);
+    if (isHangul) {
+      let regex = like(words[i], false);
+      orQueryList.push({ course_title : { $regex: regex, $options: 'i' } });
+      orQueryList.push({ instructor : words[i] });
+      orQueryList.push({ category : { $regex: regex, $options: 'i' } });
+      orQueryList.push({ department : { $regex: '^'+regex, $options: 'i' } });
+      orQueryList.push({ classification : words[i] });
+    } else {
+      let regex = words[i];
+      orQueryList.push({ course_title : { $regex: regex, $options: 'i' } });
+      orQueryList.push({ instructor : { $regex: regex, $options: 'i' } });
+      orQueryList.push({ academic_year : words[i] });
+      orQueryList.push({ course_number : words[i] });
+    }
+    andQueryList.push({"$or" : orQueryList});
+  }
+  mquery["$or"] = [ {course_title : mquery["course_title"]}, {$and : andQueryList} ];
+
   /*
    * Course title can be in the subchunk of the keyword.
    * ex) '컴공 논설실' => '논리설계실험'
    * We have to reset course_title regex to find those.
    */
   delete mquery["course_title"];
-
-  var tags = ["course_title", "credit", "instructor", "academic_year", "course_number", "classification", "category", "department"];
-
-  var andQueryList = [];
-  for(let i=0; i<words.length; i++) {
-    var orQueryList = [];
-    let regex = like(words[i], false);
-    orQueryList.push({ course_title : { $regex: '^'+regex, $options: 'i' } });
-    orQueryList.push({ instructor : { $regex: regex, $options: 'i' } });
-    orQueryList.push({ academic_year : words[i] });
-    orQueryList.push({ course_number : words[i] });
-    orQueryList.push({ classification : words[i] });
-    orQueryList.push({ category : { $regex: regex, $options: 'i' } });
-    orQueryList.push({ department : { $regex: '^'+regex, $options: 'i' } });
-    andQueryList.push({"$or" : orQueryList});
-  }
-  mquery["$and"] = andQueryList;
 
   var offset, limit;
   if (!lquery.offset) offset = 0;
