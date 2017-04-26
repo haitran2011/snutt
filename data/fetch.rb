@@ -134,6 +134,9 @@ def row_to_string(m, i, type="")
     return ""
   end
   department = m[i,2]
+  if department.length == 0
+    department = m[i,1]
+  end
   academic_year = m[i,3]
   if academic_year == "학사"
     academic_year = m[i,4]
