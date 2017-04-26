@@ -5,7 +5,7 @@ import errcode = require('../lib/errcode');
 function like(str: string, matchStartChar?: boolean): string {
   //replace every character(eg. 'c') to '.*c', except for first character
   var cstr = str.split("");
-  var joined = cstr.join('.*');
+  var joined = cstr.join('[^()]*');
   if (matchStartChar) joined = '^'+joined;
   return joined;
 }
@@ -129,20 +129,49 @@ export async function extendedSearch(lquery: LectureQuery): Promise<LectureDocum
   for(let i=0; i<words.length; i++) {
     var orQueryList = [];
 
-    var credit = getCreditFromString(words[i]);
-    if (credit) {
-      orQueryList.push({ credit : credit });
+    var result;
+    if (words[i] == '전공') {
+      /* 전공은 전선 혹은 전필 */
+      orQueryList.push({ classification : { $in: [ "전선", "전필" ] } });
+    } else if (words[i] == '석박' || words[i] == '대학원') {
+      /*
+       * 아래에서 classification은 like query가 아니므로 '석박'으로 검색하면 결과가 안나옴.
+       * '석박'이나 '대학원'은 '석박사통합'으로
+       */
+      orQueryList.push({ academic_year : "석박사통합" });
+    } else if (result = getCreditFromString(words[i])) {
+      /*
+       * LectureModel에는 학점이 정수로 저장됨.
+       * '1학점' '3학점'과 같은 단어에서 학점을 정규식으로 추출
+       */
+      orQueryList.push({ credit : result });
     } else if (isHangulInString(words[i])) {
       let regex = like(words[i], false);
       orQueryList.push({ course_title : { $regex: regex, $options: 'i' } });
+      /*
+       * 교수명을 regex로 처리하면 '수영' -> 김수영 교수님의 강좌, 조수영 교수님의 강좌와 같이
+       * 원치 않는 결과가 나옴
+       */
       orQueryList.push({ instructor : words[i] });
       orQueryList.push({ category : { $regex: regex, $options: 'i' } });
-      orQueryList.push({ department : { $regex: '^'+regex, $options: 'i' } });
+
+      /*
+       * '컴공과', '전기과' 등으로 검색할 때, 실제 학과명은 '컴퓨터공학부', '전기공학부'이므로
+       * 검색이 안됨. 만약 '과' 혹은 '부'로 끝나는 단어라면 regex의 마지막 단어를 빼버린다.
+       */
+      var lastChar = words[i].charAt(words[i].length - 1);
+      if (lastChar == '과' || lastChar == '부') {
+        orQueryList.push({ department : { $regex: '^'+regex.slice(0, -1), $options: 'i' } });
+      } else {
+        orQueryList.push({ department : { $regex: '^'+regex, $options: 'i' } });
+      }
       orQueryList.push({ classification : words[i] });
       orQueryList.push({ academic_year : words[i] });
     } else {
+      /* 한국인이므로 영문은 약자로 입력하지 않는다고 가정 */
       let regex = words[i];
       orQueryList.push({ course_title : { $regex: regex, $options: 'i' } });
+      /* 영문 이름의 교수는 성이나 이름만 입력하는 경우가 많음 */
       orQueryList.push({ instructor : { $regex: regex, $options: 'i' } });
       orQueryList.push({ course_number : words[i] });
       orQueryList.push({ lecture_number : words[i] });
