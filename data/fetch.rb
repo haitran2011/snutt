@@ -140,6 +140,9 @@ def row_to_string(m, i, type="")
   academic_year = m[i,3]
   if academic_year == "학사"
     academic_year = m[i,4]
+    if academic_year == "0"
+      academic_year = ""
+    end
   end
   course_number = m[i,5]
   lecture_number = m[i,6]
