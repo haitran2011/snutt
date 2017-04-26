@@ -139,6 +139,8 @@ export async function extendedSearch(lquery: LectureQuery): Promise<LectureDocum
        * '석박'이나 '대학원'은 '석박사통합'으로
        */
       orQueryList.push({ academic_year : "석박사통합" });
+    } else if (words[i] == '학부') {
+      orQueryList.push({ academic_year : { $not : "석박사통합" } });
     } else if (result = getCreditFromString(words[i])) {
       /*
        * LectureModel에는 학점이 정수로 저장됨.
