@@ -137,9 +137,9 @@ export async function extendedSearch(lquery: LectureQuery): Promise<LectureDocum
       /*
        * 아래에서 classification은 like query가 아니므로 '석박'으로 검색하면 결과가 안나옴.
        */
-      orQueryList.push({ academic_year : { $in : ["석사", "학사", "석박사통합"] } });
+      orQueryList.push({ academic_year : { $in : ["석사", "박사", "석박사통합"] } });
     } else if (words[i] == '학부') {
-      orQueryList.push({ academic_year : { $nin : ["석사", "학사", "석박사통합"] } });
+      orQueryList.push({ academic_year : { $nin : ["석사", "박사", "석박사통합"] } });
     } else if (result = getCreditFromString(words[i])) {
       /*
        * LectureModel에는 학점이 정수로 저장됨.
