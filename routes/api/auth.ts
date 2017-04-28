@@ -34,8 +34,8 @@ router.post('/request_temp', function(req, res, next) {
  */
 router.post('/login_local', function(req, res, next) {
   auth.local_auth(req.body.id, req.body.password, function(err, user, info) {
-    if (err) { return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"server fault"}); }
-    if (!user || !info.token) { return res.status(403).json({errcode: info.errcode, message:info.message}); }
+    if (err) { return res.status(403).json({errcode: err.errcode, message:err.message}); }
+    if (!user || !info.token) { return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"server fault"}); }
     res.json({token: info.token});
   });
 });
@@ -89,7 +89,7 @@ router.post('/login_fb', function(req, res, next) {
       if (err.errcode) return res.status(403).json({errcode:err.errcode, message:err.message});
       else return res.status(500).json({errcode:errcode.SERVER_FAULT, message:"server fault"});
     }
-    if (!info.fb_id) return res.status(403).json({errcode:info.errcode, message:info.message});
+    if (!info.fb_id) return res.status(500).json({errcode:errcode.SERVER_FAULT, message:"server fault"});
     UserModel.get_fb_or_create(info.fb_name, info.fb_id, function(err, user) {
       if (err || !user) {
         console.log(err);

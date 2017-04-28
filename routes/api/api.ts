@@ -100,14 +100,14 @@ router.get('/app_version', function(req, res, next) {
   else res.status(404).json({errcode:errcode.UNKNOWN_APP, message: "unknown app"});
 });
 
-router.post('/feedback', function(req, res, next) {
+router.post('/feedback', async function(req, res, next) {
   /*
    * date: Date
    * email: string
    * message: string
    */
   var feedback = new FeedbackModel(req.body);
-  feedback.save();
+  await feedback.save();
   res.json({message:"ok"});
 });
 
