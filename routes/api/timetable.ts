@@ -154,6 +154,9 @@ router.post('/:id/lecture', function(req, res, next) {
           return res.status(500).json({errcode: errcode.SERVER_FAULT, message:"server fault"});
         }
       }
+
+      if (!json.course_title)
+        return res.status(400).json({errcode: errcode.NO_LECTURE_TITLE, message:"no lecture title"});
       
       if (json.course_number || json.lecture_number)
         return res.status(403).json({errcode: errcode.NOT_CUSTOM_LECTURE, message:"only custom lectures allowed"});

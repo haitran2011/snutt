@@ -13,6 +13,7 @@ class ErrorCode {
   static NO_REGISTRATION_ID = 0x1008;
   static INVALID_TIMEMASK = 0x1009;
   static INVALID_COLOR = 0x100A;
+  static NO_LECTURE_TITLE = 0x100B;
 
   /* 401, 403 - Authorization-related */
   static WRONG_API_KEY = 0x2000;
