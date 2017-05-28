@@ -41,7 +41,7 @@ const vividname9 = [
   "JadeGreen",
   "Aqua",
   "WaterBlue",
-  "blueishPurple",
+  "BlueishPurple",
   "SoftPurple"
 ]
 
