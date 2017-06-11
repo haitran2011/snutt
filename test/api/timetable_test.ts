@@ -351,10 +351,7 @@ export = function(app, db, request) {
          * See to it that the server removes _id fields correctly
          */
         "_id": "56fcd83c041742971bd20a86",
-        "color": {
-          "fg": "#FFFFFF",
-          "bg": "#555555"
-        },
+        "colorIndex": 5,
         "class_time_mask": [
           0,
           12,
@@ -388,6 +385,7 @@ export = function(app, db, request) {
         lecture = res.body.lecture_list[0];
         assert.equal(lecture.instructor, "이제희");
         assert.equal(lecture.class_time_json[0].place, "302-308");
+        assert.equal(lecture.colorIndex, 5);
         done();
       });
   });
