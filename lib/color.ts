@@ -34,15 +34,15 @@ const vivid9_ios = [
   ];
 
 const vividname9 = [
-  "Red",
-  "Orange",
-  "Yellow",
-  "Pea",
-  "JadeGreen",
-  "Aqua",
-  "WaterBlue",
-  "BlueishPurple",
-  "SoftPurple"
+  "석류",
+  "감귤",
+  "들국",
+  "완두",
+  "비취",
+  "지중해",
+  "하늘",
+  "라벤더",
+  "자수정"
 ]
 
 class Color {
