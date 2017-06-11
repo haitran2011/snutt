@@ -164,8 +164,6 @@ router.post('/:id/lecture', function(req, res, next) {
       if (json["year"] && json["semester"] && (json["year"] != timetable.year || json["semester"] != timetable.semester)) {
         return res.status(403).json({errcode: errcode.WRONG_SEMESTER, message:"wrong semester"});
       }
-
-      console.log(json);
       
       if (json.color) {
         json.colorIndex = 0;
