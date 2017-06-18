@@ -165,9 +165,7 @@ router.post('/:id/lecture', function(req, res, next) {
         return res.status(403).json({errcode: errcode.WRONG_SEMESTER, message:"wrong semester"});
       }
       
-      if (json.color) {
-        json.colorIndex = 0;
-      } else {
+      if (!json.color) {
         json.color = timetable.get_new_color_legacy(); // for legacy
         if (!json.colorIndex) json.colorIndex = timetable.get_new_color();
       }
